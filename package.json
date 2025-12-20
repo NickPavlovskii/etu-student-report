@@ -11,7 +11,7 @@
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "@tailwindcss/vite": "^4.1.18",
-    "element-plus": "^2.12.0",
+    "element-plus": "^2.13.0",
     "vue": "^3.5.24",
     "vue-router": "^4.6.4",
     "vuetify": "^3.11.3"

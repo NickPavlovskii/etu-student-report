@@ -13,12 +13,8 @@
           class="drawer-logo"
         />
         <div class="drawer-header-text">
-          <v-icon size="30">
-            mdi-archive-outline
-          </v-icon>
-          <span class="drawer-title">
-            Архив отчётов
-          </span>
+          <v-icon size="30">mdi-archive-outline</v-icon>
+          <span class="drawer-title">Архив отчётов</span>
         </div>
       </div>
       <v-list
@@ -26,7 +22,7 @@
         class="drawer-list"
       >
         <v-list-item
-          to="/"
+          to="/uploadWork"
           prepend-icon="mdi-file-document-outline"
           title="Мои дисциплины"
           active-class="drawer-item--active"
@@ -47,11 +43,9 @@
       <div class="drawer-user">
         <div class="user-info">
           <div class="user-name">
-            Павловский Н.А.
+            {{ teacherFullName }}
           </div>
-          <div class="user-role">
-            Преподаватель
-          </div>
+          <div class="user-role">Преподаватель</div>
         </div>
         <v-btn
           icon
@@ -59,9 +53,7 @@
           size="small"
           class="settings-btn"
         >
-          <v-icon>
-            mdi-cog-outline
-          </v-icon>
+          <v-icon>mdi-cog-outline</v-icon>
         </v-btn>
       </div>
     </div>
@@ -69,6 +61,21 @@
 </template>
 
 <script setup lang="ts">
+  import { computed } from 'vue';
+  import disciplinesDB from '../db/db.json';
+
+  const teacherLastName = localStorage.getItem('teacher');
+
+  const teacherData = disciplinesDB.find((d) => d.LastName === teacherLastName);
+
+  const teacherFullName = computed(() => {
+    if (!teacherData) return 'Преподаватель';
+    const initials = `${
+      teacherData.FirstName ? teacherData.FirstName[0] + '.' : ''
+    }${teacherData.MiddleName ? teacherData.MiddleName[0] + '.' : ''}`;
+    return `${teacherData.LastName} ${initials}`;
+  });
+
   defineProps<{
     modelValue: boolean;
   }>();
@@ -123,7 +130,7 @@
     align-items: center;
     gap: 6px;
     font-weight: 600;
-    color: #1E3799;
+    color: #1e3799;
   }
 
   .drawer-title {

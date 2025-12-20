@@ -1,12 +1,19 @@
 <template>
-  <v-container fluid>
-    <v-card class="pa-6 mb-6">
-      <div class="d-flex justify-space-between align-center mb-2">
-        <div class="text-h6">Мои дисциплины</div>
-        <v-btn prepend-icon="mdi-plus">Добавить дисциплину</v-btn>
-      </div>
-      <div class="text-body-2 text-medium-emphasis">
-        Обзор учебных дисциплин и текущего статуса работ
+  <v-container
+    fluid
+    class="page"
+  >
+    <v-card
+      class="page-header"
+      elevation="0"
+    >
+      <div class="header-top">
+        <div>
+          <h2 class="page-title">Мои дисциплины</h2>
+          <p class="subtitle">
+            Обзор учебных дисциплин и текущего статуса работ
+          </p>
+        </div>
       </div>
 
       <v-row
@@ -15,74 +22,310 @@
       >
         <v-col
           cols="12"
+          sm="6"
           md="3"
         >
-          <v-card
-            class="pa-4"
-            color="blue-lighten-5"
-          >
-            <div class="text-caption">Дисциплины</div>
-            <div class="text-h5">5</div>
-          </v-card>
+          <stat-card
+            icon="mdi-book-outline"
+            title="Дисциплины"
+            color="blue"
+            :value="uniqueDisciplines.length"
+          />
         </v-col>
         <v-col
           cols="12"
+          sm="6"
           md="3"
         >
-          <v-card
-            class="pa-4"
-            color="green-lighten-5"
-          >
-            <div class="text-caption">Загружено работ</div>
-            <div class="text-h5">263 / 303</div>
-          </v-card>
-        </v-col>
-        <v-col
-          cols="12"
-          md="3"
-        >
-          <v-card
-            class="pa-4"
-            color="purple-lighten-5"
-          >
-            <div class="text-caption">Выполнение</div>
-            <div class="text-h5">87%</div>
-          </v-card>
-        </v-col>
-        <v-col
-          cols="12"
-          md="3"
-        >
-          <v-card
-            class="pa-4"
-            color="orange-lighten-5"
-          >
-            <div class="text-caption">Требуют внимания</div>
-            <div class="text-h5">40</div>
-          </v-card>
+          <stat-card
+            icon="mdi-account-group-outline"
+            title="Группы"
+            :value="totalGroups"
+            color="purple"
+          />
         </v-col>
       </v-row>
     </v-card>
+    <v-card
+      class="filters"
+      elevation="0"
+    >
+      <el-input
+        v-model="search"
+        placeholder="Поиск по названию дисциплины..."
+        clearable
+        class="search"
+        :prefix-icon="Search"
+      />
+      <el-select
+        v-model="semester"
+        placeholder="Все семестры"
+        class="filter"
+      >
+        <el-option
+          v-for="s in uniqueSemesters"
+          :key="s"
+          :label="'Семестр ' + s"
+          :value="s"
+        />
+      </el-select>
+    </v-card>
 
+    <!-- Cards -->
     <v-row dense>
       <v-col
+        v-for="item in filteredDisciplines"
+        :key="item.CodeRow"
         cols="12"
         md="4"
-        v-for="n in 5"
-        :key="n"
       >
-        <v-card class="pa-4">
-          <div class="text-subtitle-1">Информатика и программирование</div>
-          <div class="text-caption mb-2">2024 / 2025</div>
+        <v-card
+          class="discipline-card"
+          elevation="0"
+          @click="openDiscipline(item.CodeRow)"
+        >
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                {{ item.Discipline.replace(/"/g, '') }}
+              </div>
+              <div class="card-year">
+                Курс: {{ item.Course }}, Семестр: {{ item.Semester }}
+              </div>
+            </div>
+            <v-icon>mdi-chevron-right</v-icon>
+          </div>
 
-          <v-progress-linear
-            model-value="75"
-            height="6"
-            class="mb-2"
-          />
-          <div class="text-caption">Выполнение: 75%</div>
+          <div class="card-stats">
+            <v-chip
+              color="blue"
+              variant="tonal"
+              size="small"
+            >
+              <v-icon
+                start
+                size="16"
+              >
+                mdi-file-outline
+              </v-icon>
+              Загружено: {{ item.loaded || '0 / 0' }}
+            </v-chip>
+
+            <v-chip
+              color="orange"
+              variant="tonal"
+              size="small"
+            >
+              <v-icon
+                start
+                size="16"
+              >
+                mdi-alert-outline
+              </v-icon>
+              Проблем: {{ item.issues || 0 }}
+            </v-chip>
+          </div>
+
+          <div class="progress">
+            <div class="progress-label">
+              <span>Выполнение</span>
+              <span>{{ item.progress || 0 }}%</span>
+            </div>
+            <v-progress-linear
+              :model-value="item.progress || 0"
+              height="6"
+              rounded
+              :color="item.progress === 100 ? 'green' : 'primary'"
+            />
+          </div>
+
+          <div class="card-footer">
+            <span>
+              <v-icon size="16">mdi-account-group-outline</v-icon>
+              {{ countGroups(item) }} группа(ы)
+            </span>
+          </div>
         </v-card>
       </v-col>
     </v-row>
   </v-container>
 </template>
+
+<script setup>
+  import { ref, computed, onMounted } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { ElInput, ElSelect, ElOption } from 'element-plus';
+  import { Search } from '@element-plus/icons-vue';
+  import disciplinesDB from '../db/db.json';
+
+  const router = useRouter();
+  const search = ref('');
+  const semester = ref(null);
+
+  // Авторизация
+  const teacherName = localStorage.getItem('teacher');
+  onMounted(() => {
+    if (!teacherName) router.push('/');
+  });
+
+  const teacherDisciplines = computed(() =>
+    disciplinesDB.filter((d) => d.LastName === teacherName)
+  );
+
+  const uniqueDisciplines = computed(() => {
+    const map = new Map();
+    teacherDisciplines.value.forEach((d) => {
+      const key = `${d.Discipline}-${d.Course}-${d.Semester}`;
+      if (!map.has(key)) map.set(key, d);
+    });
+    return Array.from(map.values()).map((d) => ({
+      ...d,
+      loaded: `${d.LectureHours + d.PracticeHours} / ${
+        d.LectureHours + d.PracticeHours
+      }`,
+      issues: 0,
+      progress: 100,
+    }));
+  });
+
+  const filteredDisciplines = computed(() =>
+    uniqueDisciplines.value
+      .filter((d) => !semester.value || d.Semester === semester.value)
+      .filter(
+        (d) =>
+          !search.value ||
+          d.Discipline.toLowerCase().includes(search.value.toLowerCase())
+      )
+  );
+
+  const uniqueSemesters = computed(() => {
+    const semesters = new Set();
+    uniqueDisciplines.value.forEach((d) => semesters.add(d.Semester));
+    return Array.from(semesters);
+  });
+
+  const openDiscipline = (id) => {
+    router.push(`/discipline/${id}`);
+  };
+
+  const countGroups = (discipline) => {
+    const groups = new Set();
+    teacherDisciplines.value.forEach((d) => {
+      if (d.Group) groups.add(d.Group);
+    });
+    return groups.size;
+  };
+
+  const totalGroups = computed(() => {
+    const groups = new Set();
+    teacherDisciplines.value.forEach((d) => {
+      if (d.Group) groups.add(d.Group);
+    });
+    return groups.size;
+  });
+</script>
+
+<style scoped>
+  .page {
+    background: #f5f6f8;
+    height: 100%;
+  }
+
+  .page-header {
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .page-title {
+    font-size: 26px;
+    font-weight: 700;
+  }
+
+  .subtitle {
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    margin: 16px 0;
+    border-radius: 16px;
+    background: #fff;
+  }
+
+  .search {
+    flex: 1;
+  }
+
+  .filter {
+    width: 200px;
+  }
+
+  .discipline-card {
+    border-radius: 18px;
+    padding: 18px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    transition: 0.25s;
+    cursor: pointer;
+  }
+
+  .discipline-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .card-title {
+    font-weight: 600;
+  }
+
+  .card-year {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  .card-stats {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .progress {
+    margin-bottom: 12px;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  .tags {
+    display: flex;
+    gap: 6px;
+  }
+</style>

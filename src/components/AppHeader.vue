@@ -21,55 +21,72 @@
     <div class="date-info">
       Дата: {{ formattedDate }} &nbsp; Неделя: {{ weekNumber }}
     </div>
+    <v-btn
+      class="profile-btn"
+      small
+      @click="logout"
+    >
+      Выйти
+    </v-btn>
   </v-app-bar>
 </template>
+
 <script setup lang="ts">
-  import { computed } from 'vue';
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 
-  defineEmits(['toggle-drawer']);
+defineEmits(['toggle-drawer']);
 
-  const today = new Date();
+const router = useRouter();
 
-  const formattedDate = computed(() => {
-    return today.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+const today = new Date();
+
+const formattedDate = computed(() => {
+  return today.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   });
+});
 
-  const weekNumber = computed(() => {
-    const start = new Date(today.getFullYear(), 0, 1);
-    const diff = Number(today) - Number(start);
-    return Math.ceil((diff / 86400000 + start.getDay() + 1) / 7);
-  });
+const weekNumber = computed(() => {
+  const start = new Date(today.getFullYear(), 0, 1);
+  const diff = Number(today) - Number(start);
+  return Math.ceil((diff / 86400000 + start.getDay() + 1) / 7);
+});
+
+// Функция выхода
+const logout = () => {
+  localStorage.removeItem('teacher'); // удаляем авторизацию
+  router.push('/'); // редирект на логин
+};
 </script>
 
 <style scoped>
-  .app-header {
-    padding: 0 12px;
-  }
+.app-header {
+  padding: 0 12px;
+}
 
-  .menu-btn {
-    color: #ffffff;
-  }
+.menu-btn {
+  color: #ffffff;
+}
 
-  .header-title {
-    font-weight: 600;
-    font-size: 18px;
-  }
+.header-title {
+  font-weight: 600;
+  font-size: 18px;
+}
 
-  .date-info {
-    font-size: 14px;
-    margin-right: 16px;
-    opacity: 0.9;
-  }
+.date-info {
+  font-size: 14px;
+  margin-right: 16px;
+  opacity: 0.9;
+}
 
-  .profile-btn {
-    background: #ffffff;
-    color: #1e40af;
-    border-radius: 10px;
-    font-weight: 500;
-    text-transform: none;
-  }
+.profile-btn {
+  background: #ffffff;
+  color: #1e40af;
+  border-radius: 10px;
+  font-weight: 500;
+  text-transform: none;
+}
 </style>
