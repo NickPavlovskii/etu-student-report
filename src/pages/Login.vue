@@ -60,8 +60,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    background: #f5f6f8;
+
   }
   .login-card {
     padding: 24px;
@@ -81,7 +80,6 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: #f5f6f8;
   }
   .login-card {
     padding: 24px;

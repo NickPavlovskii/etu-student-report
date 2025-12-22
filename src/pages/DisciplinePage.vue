@@ -106,7 +106,6 @@ import disciplinesDB from '../db/db.json';
 const route = useRoute();
 const router = useRouter();
 
-// Находим дисциплину по CodeRow
 const discipline = computed(() =>
   disciplinesDB.find((d) => d.CodeRow === Number(route.params.id))
 );

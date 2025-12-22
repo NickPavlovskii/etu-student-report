@@ -1,22 +1,25 @@
-<script setup lang="ts">
-defineProps<{ modelValue: boolean }>()
-defineEmits(['update:modelValue'])
-</script>
-
 <template>
   <v-navigation-drawer
     class="app-drawer"
-    :model-value="modelValue"
-    @update:modelValue="$emit('update:modelValue', $event)"
     permanent
     app
+    :model-value="modelValue"
+    @update:modelValue="$emit('update:modelValue', $event)"
   >
     <div class="drawer-title">
-      ИС<br />
-      <span>Учёт и хранение<br />учебных работ</span>
+      ИС
+      <br />
+      <span>
+        Учёт и хранение
+        <br />
+        учебных работ
+      </span>
     </div>
 
-    <v-list nav class="drawer-list">
+    <v-list
+      nav
+      class="drawer-list"
+    >
       <v-list-item
         to="/"
         prepend-icon="mdi-file-document-outline"
@@ -45,56 +48,60 @@ defineEmits(['update:modelValue'])
   </v-navigation-drawer>
 </template>
 
+<script setup lang="ts">
+  defineProps<{ modelValue: boolean }>();
+  defineEmits(['update:modelValue']);
+</script>
+
 <style scoped>
-/* Сайдбар */
-.app-drawer {
-  background: linear-gradient(180deg, #1e3a8a, #1e40af);
-  color: #fff;
-  border-right: none;
-}
+  .app-drawer {
+    background: linear-gradient(180deg, #1e3a8a, #1e40af);
+    color: #fff;
+    border-right: none;
+  }
 
-/* Заголовок */
-.drawer-title {
-  padding: 24px 20px;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.3;
-}
+  /* Заголовок */
+  .drawer-title {
+    padding: 24px 20px;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
 
-.drawer-title span {
-  font-size: 13px;
-  font-weight: 400;
-  opacity: 0.85;
-}
+  .drawer-title span {
+    font-size: 13px;
+    font-weight: 400;
+    opacity: 0.85;
+  }
 
-/* Список */
-.drawer-list {
-  padding: 8px;
-}
+  /* Список */
+  .drawer-list {
+    padding: 8px;
+  }
 
-/* Пункты меню */
-.drawer-item {
-  border-radius: 10px;
-  margin-bottom: 6px;
-  color: #fff !important;
-}
+  /* Пункты меню */
+  .drawer-item {
+    border-radius: 10px;
+    margin-bottom: 6px;
+    color: #fff !important;
+  }
 
-/* Иконки */
-.drawer-item :deep(.v-icon) {
-  color: #c7d2fe;
-}
+  /* Иконки */
+  .drawer-item :deep(.v-icon) {
+    color: #c7d2fe;
+  }
 
-/* Активный пункт */
-.drawer-item.v-list-item--active {
-  background: rgba(255, 255, 255, 0.18);
-}
+  /* Активный пункт */
+  .drawer-item.v-list-item--active {
+    background: rgba(255, 255, 255, 0.18);
+  }
 
-.drawer-item.v-list-item--active :deep(.v-list-item-title) {
-  font-weight: 600;
-}
+  .drawer-item.v-list-item--active :deep(.v-list-item-title) {
+    font-weight: 600;
+  }
 
-/* Hover */
-.drawer-item:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
+  /* Hover */
+  .drawer-item:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
 </style>

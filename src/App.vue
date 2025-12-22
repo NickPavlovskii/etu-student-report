@@ -7,7 +7,7 @@
   const drawer = ref(false);
   const route = useRoute();
 
-  const noDrawerRoutes = ['/', '/login'];
+  const noDrawerRoutes = ['/auth', '/Login', '/EtuLogin'];
 </script>
 
 <template>
