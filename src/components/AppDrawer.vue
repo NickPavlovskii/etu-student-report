@@ -14,7 +14,7 @@
         />
         <div class="drawer-header-text">
           <v-icon size="30">mdi-archive-outline</v-icon>
-          <span class="drawer-title">Архив отчётов</span>
+          <span class="drawer-title">ИС «Отчеты»</span>
         </div>
       </div>
       <v-list
@@ -130,7 +130,7 @@
     align-items: center;
     gap: 6px;
     font-weight: 600;
-    color: #1e3799;
+
   }
 
   .drawer-title {

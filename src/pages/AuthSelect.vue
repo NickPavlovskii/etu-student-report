@@ -1,6 +1,6 @@
 <template>
   <div class="auth-page">
-    <header class="auth-header">ИС «Хранение отчетов»</header>
+    <header class="auth-header">ИС «Отчеты»</header>
 
     <div class="auth-card">
       <div class="auth-title">Авторизация</div>

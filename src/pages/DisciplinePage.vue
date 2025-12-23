@@ -5,7 +5,10 @@
     class="page"
   >
     <!-- ===== Header ===== -->
-    <v-card class="block" elevation="0">
+    <v-card
+      class="block"
+      elevation="0"
+    >
       <div class="top-row">
         <div>
           <v-btn
@@ -33,7 +36,10 @@
           </div>
 
           <!-- Темы -->
-          <div class="types" v-if="topics.length">
+          <div
+            class="types"
+            v-if="topics.length"
+          >
             <v-chip
               v-for="(topic, idx) in topics"
               :key="idx"
@@ -47,21 +53,47 @@
         </div>
 
         <div class="actions">
-          <v-btn variant="outlined">Перейти в архив</v-btn>
-          <v-btn color="primary">Загрузить работу</v-btn>
+          <etu-button
+            title="Перейти в архив"
+            :prepend-icon="ARCHIVE_ICON"
+            color="#111827"
+            :border-color="'#E5E7EB'"
+            :bg-color="'white'"
+            :border="true"
+            width="auto"
+            @click="goToArchive"
+          />
+
+          <etu-button
+            title="Загрузить работу"
+            :prepend-icon="PLUS_ICON"
+            color="white"
+            :bg-color="'#111827'"
+            :border="false"
+            width="auto"
+            @click="uploadWork"
+          />
         </div>
       </div>
     </v-card>
 
-    <!-- ===== Статистика ===== -->
-    <v-card class="block" elevation="0">
+    <v-card
+      class="block"
+      elevation="0"
+    >
       <h3 class="section-title">Статистика часов</h3>
       <div class="stats">
-        <v-card class="stat-card" elevation="0">
+        <v-card
+          class="stat-card"
+          elevation="0"
+        >
           <div class="stat-title">Лекции</div>
           <div class="stat-row">{{ discipline.LectureHours }} ч.</div>
         </v-card>
-        <v-card class="stat-card" elevation="0">
+        <v-card
+          class="stat-card"
+          elevation="0"
+        >
           <div class="stat-title">Практика</div>
           <div class="stat-row">{{ discipline.PracticeHours }} ч.</div>
         </v-card>
@@ -69,7 +101,10 @@
     </v-card>
 
     <!-- ===== Таблица групп ===== -->
-    <v-card class="block" elevation="0">
+    <v-card
+      class="block"
+      elevation="0"
+    >
       <h3 class="section-title">Учебные группы</h3>
 
       <template v-if="groups.length">
@@ -82,63 +117,92 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="group in groups" :key="group">
+            <tr
+              v-for="group in groups"
+              :key="group"
+            >
               <td>{{ group }}</td>
               <td>{{ discipline.Course }}</td>
-              <td>0 / {{ discipline.LectureHours + discipline.PracticeHours }}</td>
+              <td>
+                0 / {{ discipline.LectureHours + discipline.PracticeHours }}
+              </td>
             </tr>
           </tbody>
         </v-table>
       </template>
 
-      <div v-else class="empty">
+      <div
+        v-else
+        class="empty"
+      >
         Нет данных по учебным группам
       </div>
     </v-card>
   </v-container>
+
+  <upload-work-modal
+    v-model="uploadDialog"
+    :discipline="discipline"
+    :groups="groups"
+    :topics="topics"
+    :assessment="discipline.Assessment"
+    @close="uploadDialog = false"
+    @submit="onUpload"
+  />
 </template>
 
 <script setup>
-import { useRoute, useRouter } from 'vue-router';
-import { computed } from 'vue';
-import disciplinesDB from '../db/db.json';
+  import { useRoute, useRouter } from 'vue-router';
+  import { computed } from 'vue';
+  import disciplinesDB from '../db/db.json';
+  import ARCHIVE_ICON from '../assets/icons/archive.svg';
+  import PLUS_ICON from '../assets/icons/plus.svg';
+  import UploadWorkModal from '../components/UploadStudyWork.vue';
+  import { ref } from 'vue';
+  const route = useRoute();
+  const router = useRouter();
 
-const route = useRoute();
-const router = useRouter();
+  const discipline = computed(() =>
+    disciplinesDB.find((d) => d.CodeRow === Number(route.params.id))
+  );
+  const uploadDialog = ref(false);
 
-const discipline = computed(() =>
-  disciplinesDB.find((d) => d.CodeRow === Number(route.params.id))
-);
+  const uploadWork = () => {
+    uploadDialog.value = true;
+  };
 
-const goBack = () => router.push('/uploadWork');
+  const closeUploadDialog = () => {
+    uploadDialog.value = false;
+  };
 
-// Разбираем Topics в массив
-const topics = computed(() => {
-  if (!discipline.value || !discipline.value.Topics) return [];
-  try {
-    return JSON.parse(discipline.value.Topics);
-  } catch (e) {
-    return [discipline.value.Topics];
-  }
-});
+  const goBack = () => router.push('/uploadWork');
 
-// Собираем уникальные группы по дисциплине
-const groups = computed(() => {
-  const set = new Set();
-  disciplinesDB.forEach((d) => {
-    if (
-      d.Discipline === discipline.value.Discipline &&
-      d.Course === discipline.value.Course &&
-      d.Semester === discipline.value.Semester &&
-      d.Group
-    ) {
-      set.add(d.Group);
+  // Разбираем Topics в массив
+  const topics = computed(() => {
+    if (!discipline.value || !discipline.value.Topics) return [];
+    try {
+      return JSON.parse(discipline.value.Topics);
+    } catch (e) {
+      return [discipline.value.Topics];
     }
   });
-  return Array.from(set);
-});
-</script>
 
+  // Собираем уникальные группы по дисциплине
+  const groups = computed(() => {
+    const set = new Set();
+    disciplinesDB.forEach((d) => {
+      if (
+        d.Discipline === discipline.value.Discipline &&
+        d.Course === discipline.value.Course &&
+        d.Semester === discipline.value.Semester &&
+        d.Group
+      ) {
+        set.add(d.Group);
+      }
+    });
+    return Array.from(set);
+  });
+</script>
 
 <style scoped>
   .page {
