@@ -7,11 +7,12 @@
       class="upload-card"
       elevation="1"
     >
+      <!-- ===== Header ===== -->
       <div class="header">
         <h3>Загрузить учебную работу</h3>
         <v-btn
           icon
-          text
+          variant="text"
           @click="close"
         >
           <v-icon>mdi-close</v-icon>
@@ -36,9 +37,7 @@
 
           <div class="drop-sub">PDF, DOC, DOCX до 50 МБ</div>
 
-          <div class="drop-hint">
-            💡 Используйте формат ФамилияИО_Дисциплина_ТипРаботы
-          </div>
+          <div class="drop-hint">💡 ФамилияИО_Дисциплина_ТипРаботы</div>
 
           <input
             ref="fileInput"
@@ -49,6 +48,7 @@
           />
         </div>
 
+        <!-- ===== Form ===== -->
         <v-row
           dense
           class="form-row"
@@ -58,7 +58,6 @@
               v-model="selectedGroup"
               label="Учебная группа *"
               :items="groups"
-              required
               outlined
               dense
               hide-details
@@ -66,19 +65,22 @@
           </v-col>
 
           <v-col cols="6">
-            <v-text-field
-              v-model="student"
-              label="ФИО студента *"
-              required
+            <v-select
+              v-model="selectedStudentId"
+              label="Студент *"
+              :items="studentsForSelect"
+              item-title="name"
+              item-value="id"
               outlined
               dense
               hide-details
+              :disabled="!selectedGroup"
             />
           </v-col>
 
           <v-col cols="6">
             <v-text-field
-              label="Дисциплина *"
+              label="Дисциплина"
               :model-value="discipline.Name"
               disabled
               outlined
@@ -102,7 +104,6 @@
             <v-text-field
               v-model="workTitle"
               label="Название работы *"
-              placeholder="Например: Лабораторная работа №1"
               outlined
               dense
               hide-details
@@ -115,11 +116,10 @@
           >
             <v-select
               v-model="topic"
-              label="Тема *"
+              label="Тема"
               :items="topics"
               outlined
               dense
-              placeholder="Подробное описание темы работы..."
               hide-details
             />
           </v-col>
@@ -138,15 +138,14 @@
 
         <v-checkbox
           v-model="autoCheck"
-          label="Требуется автоматическая проверка оформления по шаблону"
-          class="auto-check"
+          label="Автоматическая проверка оформления"
           hide-details
         />
       </v-card-text>
 
       <v-card-actions class="actions">
         <v-btn
-          text
+          variant="text"
           @click="close"
         >
           Отмена
@@ -156,8 +155,8 @@
           :disabled="!isValid"
           @click="submitWork"
         >
-          <v-icon left>mdi-upload</v-icon>
-          Загрузить работу
+          <v-icon start>mdi-upload</v-icon>
+          Загрузить
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -166,30 +165,44 @@
 
 <script setup lang="ts">
   import { ref, computed, onMounted } from 'vue';
+  const selectedGroup = ref('');
+  const selectedStudentId = ref<number | null>(null);
+
+  const studentsForSelect = computed(() => {
+    if (!selectedGroup.value) return [];
+
+    return (props.studentsByGroup[selectedGroup.value] || []).map((s) => ({
+      id: s['ID ИОТ'],
+      name: s['ФИО'] ?? s['Фамилия И.О.'] ?? s['ID ИОТ'],
+    }));
+  });
 
   const props = defineProps<{
     discipline: any;
     groups: string[];
+    studentsByGroup: Record<string, any[]>;
+    topics: string[];
+    assessment: string;
   }>();
 
-  const emit = defineEmits(['close', 'submit']);
+  const emit = defineEmits<{
+    (e: 'close'): void;
+    (e: 'submit', payload: any): void;
+  }>();
 
+  /* ===== Dialog ===== */
   const dialog = ref(true);
 
-  // ===== File drop =====
+  /* ===== File ===== */
   const file = ref<File | null>(null);
   const fileInput = ref<HTMLInputElement | null>(null);
   const isDragOver = ref(false);
 
-  const openFileDialog = () => {
-    fileInput.value?.click();
-  };
+  const openFileDialog = () => fileInput.value?.click();
 
   const onFileChange = (e: Event) => {
     const input = e.target as HTMLInputElement;
-    if (input.files?.length) {
-      file.value = input.files[0];
-    }
+    if (input.files?.length) file.value = input.files[0];
   };
 
   const onDrop = (e: DragEvent) => {
@@ -198,14 +211,9 @@
       file.value = e.dataTransfer.files[0];
     }
   };
-  const close = () => {
-    dialog.value = false;
-    emit('close');
-  };
 
-  // ===== Form =====
-  const selectedGroup = ref('');
-  const student = ref('');
+  /* ===== Form ===== */
+
   const workType = ref('');
   const topic = ref('');
   const workTitle = ref('');
@@ -225,34 +233,46 @@
     }
 
     if (props.discipline.Assessment) {
-      workTypes.value = props.discipline.Assessment.split('/').map(
-        (s: string) => s.trim()
+      workTypes.value = props.discipline.Assessment.split('/').map((s) =>
+        s.trim()
       );
       workType.value = workTypes.value[0] || '';
     }
   });
 
+  /* ===== Validation ===== */
   const isValid = computed(
     () =>
       !!file.value &&
       !!selectedGroup.value &&
-      !!student.value &&
+      !!selectedStudentId.value &&
       !!workTitle.value &&
       !!workType.value
   );
 
+  /* ===== Submit ===== */
   const submitWork = () => {
     emit('submit', {
-      file: file.value,
+      studentId: selectedStudentId.value,
       group: selectedGroup.value,
-      student: student.value,
-      discipline: props.discipline,
+      discipline: props.discipline.Name,
+      fileName: file.value!.name,
       workType: workType.value,
       topic: topic.value,
       workTitle: workTitle.value,
       academicYear: academicYear.value,
       autoCheck: autoCheck.value,
+      uploadDate: new Date().toISOString().slice(0, 10),
+      version: 1,
+      check: autoCheck.value ? Math.floor(85 + Math.random() * 15) : null,
+      status: 'Загружен',
     });
+
+    close();
+  };
+
+  const close = () => {
+    dialog.value = false;
     emit('close');
   };
 </script>

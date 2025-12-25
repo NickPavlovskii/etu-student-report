@@ -59,9 +59,33 @@
       />
       <el-select
         v-model="semester"
+        multiple
+        clearable
+        collapse-tags
         placeholder="Все семестры"
-        class="filter"
+        popper-class="custom-header"
+        :max-collapse-tags="1"
+        style="width: 240px"
       >
+        <template #header>
+          <el-checkbox
+            v-model="checkAll"
+            :indeterminate="indeterminate"
+            @change="handleCheckAll"
+          >
+            Все семестры
+          </el-checkbox>
+        </template>
+        <template #tag>
+          <el-tag
+            v-if="isAllSelected"
+            closable
+            @close="clearAllSemesters"
+          >
+            Все семестры
+          </el-tag>
+        </template>
+
         <el-option
           v-for="s in uniqueSemesters"
           :key="s"
@@ -71,7 +95,6 @@
       </el-select>
     </v-card>
 
-    <!-- Cards -->
     <v-row dense>
       <v-col
         v-for="item in filteredDisciplines"
@@ -142,7 +165,7 @@
           <div class="card-footer">
             <span>
               <v-icon size="16">mdi-account-group-outline</v-icon>
-              {{ countGroups(item) }} группа(ы)
+              {{ countGroups(item) }}
             </span>
           </div>
         </v-card>
@@ -152,17 +175,28 @@
 </template>
 
 <script setup>
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, computed, onMounted, watch } from 'vue';
   import { useRouter } from 'vue-router';
-  import { ElInput, ElSelect, ElOption } from 'element-plus';
   import { Search } from '@element-plus/icons-vue';
   import disciplinesDB from '../db/db.json';
+  const isAllSelected = computed(
+    () =>
+      semester.value.length === uniqueSemesters.value.length &&
+      uniqueSemesters.value.length > 0
+  );
+  const clearAllSemesters = () => {
+    semester.value = [];
+    checkAll.value = false;
+    indeterminate.value = false;
+  };
 
   const router = useRouter();
-  const search = ref('');
-  const semester = ref(null);
 
-  // Авторизация
+  const search = ref('');
+  const semester = ref([]);
+  const checkAll = ref(false);
+  const indeterminate = ref(false);
+
   const teacherName = localStorage.getItem('teacher');
   onMounted(() => {
     if (!teacherName) router.push('/');
@@ -174,23 +208,62 @@
 
   const uniqueDisciplines = computed(() => {
     const map = new Map();
+
     teacherDisciplines.value.forEach((d) => {
       const key = `${d.Discipline}-${d.Course}-${d.Semester}`;
-      if (!map.has(key)) map.set(key, d);
+      if (!map.has(key)) {
+        map.set(key, {
+          ...d,
+          loaded: `${Number(d.LectureHours) + Number(d.PracticeHours)} / ${
+            Number(d.LectureHours) + Number(d.PracticeHours)
+          }`,
+          issues: 0,
+          progress: 100,
+        });
+      }
     });
-    return Array.from(map.values()).map((d) => ({
-      ...d,
-      loaded: `${d.LectureHours + d.PracticeHours} / ${
-        d.LectureHours + d.PracticeHours
-      }`,
-      issues: 0,
-      progress: 100,
-    }));
+
+    return Array.from(map.values());
+  });
+
+  const uniqueSemesters = computed(() => {
+    return [...new Set(uniqueDisciplines.value.map((d) => d.Semester))];
+  });
+
+  watch(
+    uniqueSemesters,
+    (val) => {
+      if (val.length && semester.value.length === 0) {
+        semester.value = [...val];
+        checkAll.value = true;
+      }
+    },
+    { immediate: true }
+  );
+
+  const handleCheckAll = (val) => {
+    semester.value = val ? [...uniqueSemesters.value] : [];
+    indeterminate.value = false;
+  };
+
+  watch(semester, (val) => {
+    if (val.length === 0) {
+      checkAll.value = false;
+      indeterminate.value = false;
+    } else if (val.length === uniqueSemesters.value.length) {
+      checkAll.value = true;
+      indeterminate.value = false;
+    } else {
+      checkAll.value = false;
+      indeterminate.value = true;
+    }
   });
 
   const filteredDisciplines = computed(() =>
     uniqueDisciplines.value
-      .filter((d) => !semester.value || d.Semester === semester.value)
+      .filter(
+        (d) => !semester.value.length || semester.value.includes(d.Semester)
+      )
       .filter(
         (d) =>
           !search.value ||
@@ -198,31 +271,32 @@
       )
   );
 
-  const uniqueSemesters = computed(() => {
-    const semesters = new Set();
-    uniqueDisciplines.value.forEach((d) => semesters.add(d.Semester));
-    return Array.from(semesters);
+  const groupsByDiscipline = computed(() => {
+    const map = {};
+
+    teacherDisciplines.value.forEach((d) => {
+      const key = `${d.Discipline}-${d.Course}-${d.Semester}`;
+      if (!map[key]) map[key] = new Set();
+      if (d.Group) map[key].add(d.Group);
+    });
+
+    return map;
+  });
+
+  const countGroups = (discipline) => {
+    const key = `${discipline.Discipline}-${discipline.Course}-${discipline.Semester}`;
+    return groupsByDiscipline.value[key]?.size || 0;
+  };
+
+  const totalGroups = computed(() => {
+    const groups = new Set();
+    teacherDisciplines.value.forEach((d) => d.Group && groups.add(d.Group));
+    return groups.size;
   });
 
   const openDiscipline = (id) => {
     router.push(`/discipline/${id}`);
   };
-
-  const countGroups = (discipline) => {
-    const groups = new Set();
-    teacherDisciplines.value.forEach((d) => {
-      if (d.Group) groups.add(d.Group);
-    });
-    return groups.size;
-  };
-
-  const totalGroups = computed(() => {
-    const groups = new Set();
-    teacherDisciplines.value.forEach((d) => {
-      if (d.Group) groups.add(d.Group);
-    });
-    return groups.size;
-  });
 </script>
 
 <style scoped>

@@ -1,6 +1,5 @@
 <template>
   <el-card class="discipline-card">
-    <!-- Header -->
     <div class="discipline-header">
       <div>
         <h3 class="title">{{ title }}</h3>
@@ -9,7 +8,6 @@
       <v-icon>mdi-chevron-right</v-icon>
     </div>
 
-    <!-- Status blocks -->
     <div class="status-row">
       <div class="status blue">
         <v-icon size="18">mdi-upload-outline</v-icon>
@@ -24,7 +22,6 @@
       </div>
     </div>
 
-    <!-- Progress -->
     <div class="progress">
       <div class="progress-label">
         Выполнение
@@ -44,7 +41,6 @@
       {{ groups }} группы
     </div>
 
-    <!-- Tags -->
     <div class="tags">
       <el-tag
         type="warning"
