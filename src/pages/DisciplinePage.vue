@@ -4,7 +4,6 @@
     fluid
     class="page"
   >
-    <!-- ШАПКА -->
     <v-card
       class="block"
       elevation="0"
@@ -70,7 +69,6 @@
       </div>
     </v-card>
 
-    <!-- СТАТИСТИКА -->
     <v-card
       class="block"
       elevation="0"
@@ -127,8 +125,59 @@
 
   const { addReport, getByStudentId } = useReportsStorage();
 
+  const reports = ref([]);
+
   const onUpload = (payload) => {
+    // Сохраняем через composable
     addReport(payload);
+
+    // Добавляем в локальный список, чтобы сразу отображалось в таблице
+    reports.value.push(payload);
+
+    // Обновляем studentsByGroup для таблицы
+    const group = payload.group;
+    const student = studentsByGroup.value[group].find(
+      (s) => s['ID ИОТ'] === payload.studentId
+    );
+    if (student) {
+      student.UploadDate = payload.uploadDate;
+      student.Version = payload.version;
+      student.Check = payload.check;
+      student.status = payload.status; // можно добавить поле статуса
+    }
+
+    // Обновляем статистику (кол-во загруженных отчётов)
+    updateProgress();
+  };
+  const updateProgress = () => {
+    if (!discipline.value) return;
+
+    const related = disciplinesDB.filter(
+      (d) =>
+        d.Discipline === discipline.value.Discipline &&
+        d.Course === discipline.value.Course &&
+        d.Semester === discipline.value.Semester
+    );
+
+    const studentsSet = new Set();
+    const uploadedSet = new Set();
+
+    related.forEach((d) => {
+      (d.Students || []).forEach((student) => {
+        if (student['Статус.1'] === 'Отчислен') return;
+        const id = student['ID ИОТ'];
+        studentsSet.add(id);
+
+        if (reports.value.some((r) => r.studentId === id)) {
+          uploadedSet.add(id);
+        }
+      });
+    });
+
+    discipline.value.loaded = `${uploadedSet.size} / ${studentsSet.size}`;
+    discipline.value.progress = studentsSet.size
+      ? Math.round((uploadedSet.size / studentsSet.size) * 100)
+      : 0;
   };
 
   const route = useRoute();

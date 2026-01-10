@@ -1,40 +1,61 @@
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import type { Report } from '../types/report';
 
-type Report = {
-  studentId: number;
-  topic: string;
-  uploadDate: string;
-  version: number;
-  check: number | null;
-  url: string;
-};
+const STORAGE_KEY = 'reports_storage';
 
-const reports = ref<Record<string, Report>>({});
+const savedReports = localStorage.getItem(STORAGE_KEY);
+export const reports = ref<Report[]>(savedReports ? JSON.parse(savedReports) : []);
 
-/**
- * ключ: `${studentId}__${topic}`
- */
+watch(
+  reports,
+  (val) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(val));
+  },
+  { deep: true }
+);
+
 export function useReportsStorage() {
-  const makeKey = (studentId: number, topic: string) =>
-    `${studentId}__${topic}`;
+  const loadReports = () => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      reports.value = JSON.parse(saved);
+    }
+  };
 
   const addReport = (report: Report) => {
-    reports.value[makeKey(report.studentId, report.topic)] = report;
+    const index = reports.value.findIndex(
+      (r) => r.studentId === report.studentId && r.topic === report.topic
+    );
+    if (index !== -1) {
+      reports.value[index] = report;
+    } else {
+      reports.value.push(report);
+    }
   };
 
   const getReport = (studentId: number, topic: string) => {
-    return reports.value[makeKey(studentId, topic)] ?? null;
-  };
-
-  const getReportsByStudent = (studentId: number) => {
-    return Object.values(reports.value).filter(
-      (r) => r.studentId === studentId
+    return (
+      reports.value.find(
+        (r) => r.studentId === studentId && r.topic === topic
+      ) ?? null
     );
   };
 
+  const getReportsByStudent = (studentId: number) => {
+    return reports.value.filter((r) => r.studentId === studentId);
+  };
+
+  const getByStudentId = (studentId: number) => {
+    const studentReports = getReportsByStudent(studentId);
+    return studentReports.length > 0 ? studentReports[0] : null;
+  };
+
   return {
+    reports,
+    loadReports,
     addReport,
     getReport,
     getReportsByStudent,
+    getByStudentId,
   };
 }

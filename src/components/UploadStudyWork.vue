@@ -7,7 +7,6 @@
       class="upload-card"
       elevation="1"
     >
-      <!-- ===== Header ===== -->
       <div class="header">
         <h3>Загрузить учебную работу</h3>
         <v-btn
@@ -20,7 +19,7 @@
       </div>
 
       <v-card-text>
-        <!-- ===== Drop zone ===== -->
+        <!-- Drop zone -->
         <div
           class="file-dropzone"
           :class="{ 'is-dragover': isDragOver }"
@@ -30,15 +29,11 @@
           @drop.prevent="onDrop"
         >
           <v-icon size="36">mdi-upload</v-icon>
-
           <div class="drop-title">
             {{ file ? file.name : 'Нажмите для выбора файла' }}
           </div>
-
           <div class="drop-sub">PDF, DOC, DOCX до 50 МБ</div>
-
           <div class="drop-hint">💡 ФамилияИО_Дисциплина_ТипРаботы</div>
-
           <input
             ref="fileInput"
             type="file"
@@ -48,7 +43,7 @@
           />
         </div>
 
-        <!-- ===== Form ===== -->
+        <!-- Form -->
         <v-row
           dense
           class="form-row"
@@ -165,17 +160,7 @@
 
 <script setup lang="ts">
   import { ref, computed, onMounted } from 'vue';
-  const selectedGroup = ref('');
-  const selectedStudentId = ref<number | null>(null);
-
-  const studentsForSelect = computed(() => {
-    if (!selectedGroup.value) return [];
-
-    return (props.studentsByGroup[selectedGroup.value] || []).map((s) => ({
-      id: s['ID ИОТ'],
-      name: s['ФИО'] ?? s['Фамилия И.О.'] ?? s['ID ИОТ'],
-    }));
-  });
+  import { useReportsStorage } from '../composables/useReportsStorage';
 
   const props = defineProps<{
     discipline: any;
@@ -190,30 +175,15 @@
     (e: 'submit', payload: any): void;
   }>();
 
-  /* ===== Dialog ===== */
-  const dialog = ref(true);
+  const { addReport } = useReportsStorage();
 
-  /* ===== File ===== */
+  const dialog = ref(true);
   const file = ref<File | null>(null);
   const fileInput = ref<HTMLInputElement | null>(null);
   const isDragOver = ref(false);
 
-  const openFileDialog = () => fileInput.value?.click();
-
-  const onFileChange = (e: Event) => {
-    const input = e.target as HTMLInputElement;
-    if (input.files?.length) file.value = input.files[0];
-  };
-
-  const onDrop = (e: DragEvent) => {
-    isDragOver.value = false;
-    if (e.dataTransfer?.files.length) {
-      file.value = e.dataTransfer.files[0];
-    }
-  };
-
-  /* ===== Form ===== */
-
+  const selectedGroup = ref('');
+  const selectedStudentId = ref<number | null>(null);
   const workType = ref('');
   const topic = ref('');
   const workTitle = ref('');
@@ -240,7 +210,24 @@
     }
   });
 
-  /* ===== Validation ===== */
+  const openFileDialog = () => fileInput.value?.click();
+  const onFileChange = (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    if (input.files?.length) file.value = input.files[0];
+  };
+  const onDrop = (e: DragEvent) => {
+    isDragOver.value = false;
+    if (e.dataTransfer?.files.length) file.value = e.dataTransfer.files[0];
+  };
+
+  const studentsForSelect = computed(() => {
+    if (!selectedGroup.value) return [];
+    return (props.studentsByGroup[selectedGroup.value] || []).map((s) => ({
+      id: s['ID ИОТ'],
+      name: s['ФИО'] ?? s['Фамилия И.О.'] ?? s['ID ИОТ'],
+    }));
+  });
+
   const isValid = computed(
     () =>
       !!file.value &&
@@ -250,24 +237,37 @@
       !!workType.value
   );
 
-  /* ===== Submit ===== */
-  const submitWork = () => {
-    emit('submit', {
-      studentId: selectedStudentId.value,
+  const submitWork = async () => {
+    if (!file.value) return;
+
+    const arrayBuffer = await file.value.arrayBuffer();
+    const fileContent = new Uint8Array(arrayBuffer);
+
+    const reportPayload = {
+      studentId: selectedStudentId.value!,
       group: selectedGroup.value,
       discipline: props.discipline.Name,
-      fileName: file.value!.name,
       workType: workType.value,
       topic: topic.value,
       workTitle: workTitle.value,
+      file: {
+        name: file.value.name,
+        type: file.value.type,
+        content: fileContent,
+        url: URL.createObjectURL(file.value),
+        size: file.value.size,
+      },
       academicYear: academicYear.value,
       autoCheck: autoCheck.value,
       uploadDate: new Date().toISOString().slice(0, 10),
       version: 1,
       check: autoCheck.value ? Math.floor(85 + Math.random() * 15) : null,
       status: 'Загружен',
-    });
+      uploadedBy: localStorage.getItem('teacher') || 'unknown', // <--- важно
+    };
 
+    addReport(reportPayload);
+    emit('submit', reportPayload);
     close();
   };
 

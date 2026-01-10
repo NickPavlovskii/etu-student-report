@@ -15,7 +15,6 @@
           </p>
         </div>
       </div>
-
       <v-row
         dense
         class="mt-4"
@@ -40,8 +39,8 @@
           <stat-card
             icon="mdi-account-group-outline"
             title="Группы"
-            :value="totalGroups"
             color="purple"
+            :value="totalGroups"
           />
         </v-col>
       </v-row>
@@ -85,7 +84,6 @@
             Все семестры
           </el-tag>
         </template>
-
         <el-option
           v-for="s in uniqueSemesters"
           :key="s"
@@ -108,7 +106,7 @@
           @click="openDiscipline(item.CodeRow)"
         >
           <div class="card-header">
-            <div>
+            <div style="width: 100%;">
               <div class="card-title">
                 {{ item.Discipline.replace(/"/g, '') }}
               </div>
@@ -131,9 +129,8 @@
               >
                 mdi-file-outline
               </v-icon>
-              Загружено: {{ item.loaded || '0 / 0' }}
+              Загружено: {{ item.loaded }}
             </v-chip>
-
             <v-chip
               color="orange"
               variant="tonal"
@@ -145,19 +142,19 @@
               >
                 mdi-alert-outline
               </v-icon>
-              Проблем: {{ item.issues || 0 }}
+              Проблем: {{ item.issues }}
             </v-chip>
           </div>
 
           <div class="progress">
             <div class="progress-label">
               <span>Выполнение</span>
-              <span>{{ item.progress || 0 }}%</span>
+              <span>{{ item.progress }}%</span>
             </div>
             <v-progress-linear
-              :model-value="item.progress || 0"
               height="6"
               rounded
+              :model-value="item.progress"
               :color="item.progress === 100 ? 'green' : 'primary'"
             />
           </div>
@@ -179,19 +176,11 @@
   import { useRouter } from 'vue-router';
   import { Search } from '@element-plus/icons-vue';
   import disciplinesDB from '../db/db.json';
-  const isAllSelected = computed(
-    () =>
-      semester.value.length === uniqueSemesters.value.length &&
-      uniqueSemesters.value.length > 0
-  );
-  const clearAllSemesters = () => {
-    semester.value = [];
-    checkAll.value = false;
-    indeterminate.value = false;
-  };
+  import { useReportsStorage } from '../composables/useReportsStorage';
+
+  const { reports } = useReportsStorage();
 
   const router = useRouter();
-
   const search = ref('');
   const semester = ref([]);
   const checkAll = ref(false);
@@ -211,24 +200,48 @@
 
     teacherDisciplines.value.forEach((d) => {
       const key = `${d.Discipline}-${d.Course}-${d.Semester}`;
-      if (!map.has(key)) {
-        map.set(key, {
-          ...d,
-          loaded: `${Number(d.LectureHours) + Number(d.PracticeHours)} / ${
-            Number(d.LectureHours) + Number(d.PracticeHours)
-          }`,
-          issues: 0,
-          progress: 100,
+      if (map.has(key)) return;
+
+      const related = disciplinesDB.filter(
+        (x) =>
+          x.Discipline === d.Discipline &&
+          x.Course === d.Course &&
+          x.Semester === d.Semester
+      );
+
+      const students = new Set();
+      const loadedReports = new Set();
+
+      related.forEach((disc) => {
+        (disc.Students || []).forEach((student) => {
+          if (student['Статус.1'] === 'Отчислен') return;
+          const id = student['ID ИОТ'];
+          students.add(id);
+
+          reports.value
+            .filter((r) => r.studentId === id)
+            .forEach((r) => loadedReports.add(`${id}-${r.topic}`));
         });
-      }
+      });
+
+      const total = students.size;
+      const loaded = loadedReports.size;
+      const progress = total ? Math.round((loaded / total) * 100) : 0;
+
+      map.set(key, {
+        ...d,
+        loaded: `${loaded} / ${total}`,
+        issues: 0,
+        progress,
+      });
     });
 
-    return Array.from(map.values());
+    return [...map.values()];
   });
 
-  const uniqueSemesters = computed(() => {
-    return [...new Set(uniqueDisciplines.value.map((d) => d.Semester))];
-  });
+  const uniqueSemesters = computed(() => [
+    ...new Set(uniqueDisciplines.value.map((d) => d.Semester)),
+  ]);
 
   watch(
     uniqueSemesters,
@@ -247,16 +260,8 @@
   };
 
   watch(semester, (val) => {
-    if (val.length === 0) {
-      checkAll.value = false;
-      indeterminate.value = false;
-    } else if (val.length === uniqueSemesters.value.length) {
-      checkAll.value = true;
-      indeterminate.value = false;
-    } else {
-      checkAll.value = false;
-      indeterminate.value = true;
-    }
+    checkAll.value = val.length === uniqueSemesters.value.length;
+    indeterminate.value = val.length > 0 && !checkAll.value;
   });
 
   const filteredDisciplines = computed(() =>
@@ -271,32 +276,43 @@
       )
   );
 
-  const groupsByDiscipline = computed(() => {
-    const map = {};
-
-    teacherDisciplines.value.forEach((d) => {
-      const key = `${d.Discipline}-${d.Course}-${d.Semester}`;
-      if (!map[key]) map[key] = new Set();
-      if (d.Group) map[key].add(d.Group);
-    });
-
-    return map;
-  });
-
-  const countGroups = (discipline) => {
-    const key = `${discipline.Discipline}-${discipline.Course}-${discipline.Semester}`;
-    return groupsByDiscipline.value[key]?.size || 0;
-  };
-
   const totalGroups = computed(() => {
     const groups = new Set();
     teacherDisciplines.value.forEach((d) => d.Group && groups.add(d.Group));
     return groups.size;
   });
 
-  const openDiscipline = (id) => {
-    router.push(`/discipline/${id}`);
+  const countGroups = (d) => {
+    const groups = new Set();
+    disciplinesDB.forEach((x) => {
+      if (
+        x.Discipline === d.Discipline &&
+        x.Course === d.Course &&
+        x.Semester === d.Semester
+      ) {
+        (x.Students || []).forEach((s) => {
+          if (s['Статус.1'] !== 'Отчислен') groups.add(s['Группа'] ?? s.Group);
+        });
+      }
+    });
+    return groups.size;
   };
+
+  const isAllSelected = computed(
+    () =>
+      semester.value.length === uniqueSemesters.value.length &&
+      uniqueSemesters.value.length
+  );
+
+  const clearAllSemesters = () => {
+    semester.value = [];
+    checkAll.value = false;
+    indeterminate.value = false;
+  };
+
+  const openDiscipline = (id) => router.push(`/discipline/${id}`);
+
+  watch(reports, () => {}, { deep: true });
 </script>
 
 <style scoped>
@@ -358,6 +374,7 @@
   }
 
   .card-header {
+    width: 96%;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -365,6 +382,10 @@
   }
 
   .card-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
     font-weight: 600;
   }
 
