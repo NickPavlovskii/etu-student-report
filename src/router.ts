@@ -1,21 +1,81 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import Login from './pages/Login.vue'
-import UploadWork from './pages/UploadWork.vue'
-import WorksList from './pages/WorksList.vue'
-import DisciplinePage from './pages/DisciplinePage.vue'
-import AuthSelect from './pages/AuthSelect.vue'
-import EtuLogin from './pages/EtuLogin.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+
+const routes = [
+  {
+    path: '/',
+    name: 'Home',
+    meta: { requiresAuth: true, layout: 'main' },
+    redirect: '/disciplines',
+  },
+  {
+    path: '/auth',
+    name: 'auth',
+    meta: { requiresAuth: false, layout: 'default' },
+    component: () => import('@/modules/auth/AuthSelectPage.vue'),
+  },
+  {
+    path: '/login',
+    name: 'login',
+    meta: { requiresAuth: false, layout: 'default' },
+    component: () => import('@/modules/auth/LoginPage.vue'),
+  },
+  {
+    path: '/EtuLogin',
+    redirect: '/etu-login',
+  },
+  {
+    path: '/etu-login',
+    name: 'etuLogin',
+    meta: { requiresAuth: false, layout: 'default' },
+    component: () => import('@/modules/auth/EtuLoginPage.vue'),
+  },
+  {
+    path: '/uploadWork',
+    redirect: '/disciplines',
+  },
+  {
+    path: '/disciplines',
+    name: 'disciplines',
+    meta: { requiresAuth: true, layout: 'main' },
+    component: () => import('@/modules/disciplines/DisciplinesPage.vue'),
+  },
+  {
+    path: '/discipline/:id',
+    name: 'discipline',
+    meta: { requiresAuth: true, layout: 'main' },
+    component: () => import('@/modules/discipline/DisciplineDetailPage.vue'),
+  },
+  {
+    path: '/archive',
+    name: 'archive',
+    meta: { requiresAuth: true, layout: 'main' },
+    component: () => import('@/modules/archive/ArchivePage.vue'),
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'notFound',
+    meta: { requiresAuth: true, layout: 'main' },
+    redirect: '/disciplines',
+  },
+];
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes: [
-    { path: '/auth', component: AuthSelect },
-    { path: '/login', component: Login },
-    { path: '/EtuLogin', component: EtuLogin },
-    { path: '/uploadWork', component: UploadWork },
-    { path: '/discipline/:id', component: DisciplinePage },
-    { path: '/archive', component: WorksList },
-  ],
-})
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes,
+});
 
-export default router
+router.beforeEach((to, _from, next) => {
+  const user = localStorage.getItem('user');
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+  if (requiresAuth) {
+    if (user) {
+      next();
+    } else {
+      next('/auth');
+    }
+  } else {
+    next();
+  }
+});
+
+export default router;

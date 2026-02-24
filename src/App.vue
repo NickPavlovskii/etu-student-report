@@ -1,27 +1,25 @@
-<script setup lang="ts">
-  import { ref } from 'vue';
-  import { useRoute } from 'vue-router';
-  import AppHeader from './components/AppHeader.vue';
-  import AppDrawer from './components/AppDrawer.vue';
-
-  const drawer = ref(false);
-  const route = useRoute();
-
-  const noDrawerRoutes = ['/auth', '/Login', '/EtuLogin'];
-</script>
-
 <template>
   <v-app>
-    <AppDrawer
-      v-if="!noDrawerRoutes.includes(route.path)"
-      v-model="drawer"
+    <component
+      :is="getLayout"
+      class="page"
     />
-    <AppHeader
-      v-if="!noDrawerRoutes.includes(route.path)"
-      @toggle-drawer="drawer = !drawer"
-    />
-    <v-main>
-      <router-view />
-    </v-main>
   </v-app>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+import TheDefault from '@/layouts/TheDefault.vue';
+import TheMain from '@/layouts/TheMain.vue';
+
+const route = useRoute();
+
+const getLayout = computed(() => {
+  const layouts = {
+    default: TheDefault,
+    main: TheMain,
+  };
+  return layouts[(route.meta.layout as keyof typeof layouts) || 'default'] ?? layouts.default;
+});
+</script>

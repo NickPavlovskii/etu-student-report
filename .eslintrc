@@ -1,0 +1,45 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "es2021": true,
+    "serviceworker": true,
+    "vue/setup-compiler-macros": true
+  },
+  "extends": [
+    "plugin:vue/vue3-recommended",
+    "@vue/eslint-config-airbnb-with-typescript",
+    "plugin:vue/base",
+    "eslint:recommended",
+    "plugin:sonarjs/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "plugins": [
+    "vue", 
+    "@typescript-eslint",
+    "sonarjs"
+  ],
+  "parserOptions": {
+    "parser": "@typescript-eslint/parser",
+    "sourceType": "module"
+  },
+  "parser": "vue-eslint-parser",
+  "overrides": [
+    {
+      "files": ["bin/*.js", "lib/*.js"],
+      "excludedFiles": ["*.test.ts", "*.test.js"]
+    }
+  ],
+  "rules": {
+    "max-len": ["error", { "code": 100 }],
+    "no-underscore-dangle": [
+      "error", {"allowAfterThis": true}
+    ],
+    "no-param-reassign": ["error", { "props": false }],
+    "linebreak-style": "off"
+
+  }
+}

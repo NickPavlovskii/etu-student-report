@@ -20,8 +20,7 @@
 
       <v-card-text>
         <div
-          class="file-dropzone"
-          :class="{ 'is-dragover': isDragOver }"
+          :class="['file-dropzone', {'is-dragover': isDragOver}]"
           @click="openFileDialog"
           @dragover.prevent="isDragOver = true"
           @dragleave.prevent="isDragOver = false"
@@ -36,7 +35,7 @@
           <input
             ref="fileInput"
             type="file"
-            :accept="UPLOAD_MODAL_ACCEPT"
+            accept=".pdf,.doc,.docx"
             hidden
             @change="onFileChange"
           />
@@ -50,10 +49,10 @@
             <v-select
               v-model="selectedGroup"
               label="Учебная группа *"
-              :items="groups"
               outlined
               dense
               hide-details
+              :items="groups"
             />
           </v-col>
 
@@ -61,20 +60,20 @@
             <v-select
               v-model="selectedStudentId"
               label="Студент *"
-              :items="studentsForSelect"
               item-title="name"
               item-value="id"
               outlined
               dense
               hide-details
               :disabled="!selectedGroup"
+              :items="studentsForSelect"
             />
           </v-col>
 
           <v-col cols="6">
             <v-text-field
-              label="Дисциплина"
               :model-value="disciplineTitle"
+              label="Дисциплина"
               disabled
               outlined
               dense
@@ -86,10 +85,10 @@
             <v-select
               v-model="workType"
               label="Вид контроля *"
-              :items="workTypes"
               outlined
               dense
               hide-details
+              :items="controlTypesOptions"
             />
           </v-col>
 
@@ -110,10 +109,10 @@
             <v-select
               v-model="topic"
               label="Тема"
-              :items="topicsList"
               outlined
               dense
               hide-details
+              :items="topicsList"
             />
           </v-col>
 
@@ -156,26 +155,45 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { useAcademicYear } from '@/composables/useAcademicYear';
-import type { DisciplineUi, UploadWorkPayload } from '@/types/uploadWorkModal';
-import { UPLOAD_MODAL_ACCEPT } from '@/types/uploadWorkModal';
+  import { ref, computed, watch } from 'vue';
+  import { useAcademicYear } from '@/composables/useAcademicYear';
 
-const { academicYear } = useAcademicYear();
+  const { academicYear } = useAcademicYear();
 
-const props = defineProps<{
-  discipline: DisciplineUi | null;
-  groups: string[];
-  studentsByGroup: Record<string, unknown[]>;
-  topics: string[];
-  controls: unknown[];
-  assessment: string;
-}>();
+  type DisciplineUi = {
+    Discipline?: string;
+    Name?: string;
+    Assessment?: string;
+  };
 
-const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'submit', payload: UploadWorkPayload): void;
-}>();
+  const props = defineProps<{
+    discipline: DisciplineUi | null;
+    groups: string[];
+    studentsByGroup: Record<string, any[]>;
+    topics: string[];
+    controls: any[];
+    assessment: string;
+  }>();
+
+  const emit = defineEmits<{
+    (e: 'close'): void;
+    (
+      e: 'submit',
+      payload: {
+        studentId: number;
+        groupName: string;
+        topic: string;
+        workType: string;
+        workTitle: string;
+        academicYear: string;
+        autoCheck: boolean;
+        check?: number | null;
+        status: string;
+        uploadedBy: string;
+        file: File;
+      }
+    ): void;
+  }>();
 
   const dialog = ref(true);
 
@@ -197,40 +215,41 @@ const emit = defineEmits<{
   });
 
   const topicsList = computed(() => props.topics ?? []);
-  const workTypes = ref<string[]>([]);
 
-  watch(
-    () => props.assessment,
-    (val) => {
-      const raw = (val ?? '').trim();
-      if (raw) {
-        workTypes.value = raw
-          .split('/')
-          .map((s) => s.trim())
-          .filter(Boolean);
-
-        const hasWorkType = workType.value;
-        if (hasWorkType) {
-          // keep current
-        } else {
-          workType.value = workTypes.value[0] ?? '';
+  const controlTypesOptions = computed(() => {
+    const group = String(selectedGroup.value ?? '').trim();
+    const list: string[] = [];
+    const seen = new Set<string>();
+    for (const c of props.controls ?? []) {
+      const controlGroup = String(c?.groupName ?? '').trim();
+      const controlText = String(c?.controlText ?? '').trim();
+      if (controlText && (group === '' || controlGroup === group)) {
+        if (!seen.has(controlText)) {
+          seen.add(controlText);
+          list.push(controlText);
         }
-      } else {
-        workTypes.value = [];
-        workType.value = '';
       }
-    },
-    { immediate: true }
-  );
+    }
+    return list.sort();
+  });
 
   watch(selectedGroup, () => {
     selectedStudentId.value = null;
+    const opts = controlTypesOptions.value;
+    const current = workType.value;
+    if (opts.length > 0 && !opts.includes(current)) {
+      workType.value = opts[0] ?? '';
+    }
   });
 
+  watch(controlTypesOptions, (opts) => {
+    if (opts.length > 0 && !opts.includes(workType.value)) {
+      workType.value = opts[0] ?? '';
+    }
+  }, { immediate: true });
+
   watch(topicsList, (val) => {
-    if (val?.length) {
-      // keep topic
-    } else {
+    if (!val?.length) {
       topic.value = '';
     }
   });
@@ -240,13 +259,17 @@ const emit = defineEmits<{
   const onFileChange = (e: Event) => {
     const input = e.target as HTMLInputElement;
     const f = input.files?.[0];
-    if (f) file.value = f;
+    if (f) {
+      file.value = f;
+    }
   };
 
   const onDrop = (e: DragEvent) => {
     isDragOver.value = false;
     const f = e.dataTransfer?.files?.[0];
-    if (f) file.value = f;
+    if (f) {
+      file.value = f;
+    }
   };
 
   function getStudentIdRaw(s: any): number {
@@ -257,10 +280,13 @@ const emit = defineEmits<{
 
   const studentsForSelect = computed(() => {
     const group = selectedGroup.value;
-    if (group) {
-      const seen = new Set<number>();
+    if (!group) {
+      return [];
+    }
 
-      return (props.studentsByGroup[group] ?? [])
+    const seen = new Set<number>();
+
+    return (props.studentsByGroup[group] ?? [])
       .map((s) => {
         const id = getStudentIdRaw(s);
         return {
@@ -269,17 +295,11 @@ const emit = defineEmits<{
         };
       })
       .filter((x) => {
-        if (x.id === 0) {
-          return false;
-        }
-        if (seen.has(x.id)) {
-          return false;
-        }
+        if (x.id === 0) return false;
+        if (seen.has(x.id)) return false;
         seen.add(x.id);
         return true;
       });
-    }
-    return [];
   });
 
   const isValid = computed(() => {
@@ -331,8 +351,7 @@ const emit = defineEmits<{
     const group = String(selectedGroup.value ?? '').trim();
     const chosenTopic = String(topic.value ?? '').trim();
 
-    const hasGroupAndTopic = group && chosenTopic;
-    if (hasGroupAndTopic) {
+    if (group && chosenTopic) {
       for (const c of props.controls ?? []) {
         const controlGroup = String(c?.groupName ?? '').trim();
         const controlText = String(c?.controlText ?? '').trim();
@@ -355,22 +374,21 @@ const emit = defineEmits<{
 
     if (isValid.value && sid !== null && f instanceof File) {
       const payload = {
-      studentId: sid,
-      groupName: selectedGroup.value,
-      topic: topicsList.value.length ? topic.value || '' : '',
-      controlType: resolvedControlType.value, 
-      workType: workType.value,
-      workTitle: workTitle.value,
-      academicYear: academicYear.value,
-      autoCheck: autoCheck.value,
-      check: autoCheck.value ? Math.floor(85 + Math.random() * 15) : null,
-      status: 'Загружен',
-      uploadedBy: getUploadedBy(),
-      file: f,
+        studentId: sid,
+        groupName: selectedGroup.value,
+        topic: topicsList.value.length ? topic.value || '' : '',
+        controlType: resolvedControlType.value,
+        workType: workType.value,
+        workTitle: workTitle.value,
+        academicYear: academicYear.value,
+        autoCheck: autoCheck.value,
+        check: autoCheck.value ? Math.floor(85 + Math.random() * 15) : null,
+        status: 'Загружен',
+        uploadedBy: getUploadedBy(),
+        file: f,
       };
 
       emit('submit', payload);
-
       close();
     }
   };

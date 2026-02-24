@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 
 import router from './router'
+import './scss/main.scss';
 
 // ================= Vuetify =================
 import 'vuetify/styles'
@@ -16,7 +17,7 @@ import 'element-plus/dist/index.css'
 // ================= Icons =================
 import '@mdi/font/css/materialdesignicons.css'
 
-import GlobalComponents from '../src/components/global/index'
+import GlobalComponents from './components/global/index'
 
 const vuetify = createVuetify({
   components,
