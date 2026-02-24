@@ -1,4 +1,5 @@
 import { http } from './http';
+import type { ControlScheduleDto, UploadReportPayload } from './model';
 
 export async function getDisciplineCards(lastName: string, academicYear?: string) {
   const params = academicYear ? { academicYear } : {};
@@ -64,13 +65,7 @@ export async function getDisciplineReports(
   return data;
 }
 
-export type ControlScheduleDto = {
-  groupName: string;
-  weekStart: number;
-  weekEnd: number;
-  controlText: string;
-  topics: string[];
-};
+export type { ControlScheduleDto } from './model';
 
 export async function getDisciplineControls(
   lastName: string,
@@ -85,20 +80,7 @@ export async function getDisciplineControls(
   return data;
 }
 
-export type UploadReportPayload = {
-  studentId: number;
-  groupName: string;
-  topic?: string;
-  controlType: string;
-  workType: string;
-  workTitle: string;
-  academicYear: string;
-  autoCheck: boolean;
-  check?: number | null;
-  status: string;
-  uploadedBy: string;
-  file: File;
-};
+export type { UploadReportPayload } from './model';
 
 export async function uploadDisciplineReport(
   lastName: string,

@@ -1,4 +1,5 @@
 import { http } from './http';
+import type { UploadReportPayload } from './model';
 
 export async function getDisciplineCards(lastName: string, academicYear?: string) {
   const params = academicYear ? { academicYear } : {};
@@ -65,19 +66,7 @@ export async function getDisciplineReports(
 export async function uploadDisciplineReport(
   lastName: string,
   planRowId: number,
-  payload: {
-    studentId: number;
-    groupName: string;
-    topic?: string;
-    workType: string;
-    workTitle: string;
-    academicYear: string;
-    autoCheck: boolean;
-    check?: number | null;
-    status: string;
-    uploadedBy: string;
-    file: File;
-  }
+  payload: Omit<UploadReportPayload, 'controlType'>
 ) {
   const form = new FormData();
   form.append('studentId', String(payload.studentId));
