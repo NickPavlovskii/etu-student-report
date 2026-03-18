@@ -1,0 +1,61 @@
+<mxfile host="app.diagrams.net" modified="2026-03-18" type="device">
+  <diagram name="Deployment Diagram" id="deploy1">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="&lt;b&gt;Диаграмма развёртывания (Deployment)&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="350" y="20" width="400" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Server Node -->
+        <mxCell id="server" value="&lt;b&gt;Production Server&lt;/b&gt;" style="shape=mxgraph.sysml.package;html=1;overflow=fill;fillColor=#f5f5f5;strokeColor=#333333;verticalAlign=top;fontSize=14;tabWidth=200;tabHeight=30;" vertex="1" parent="1">
+          <mxGeometry x="200" y="70" width="700" height="550" as="geometry"/>
+        </mxCell>
+        <!-- Docker Compose -->
+        <mxCell id="docker" value="&lt;b&gt;Docker Compose&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;fontSize=13;arcSize=5;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="120" width="620" height="470" as="geometry"/>
+        </mxCell>
+        <!-- Nginx -->
+        <mxCell id="nginx" value="&lt;b&gt;Nginx Container&lt;/b&gt;&lt;br&gt;(Alpine)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;fontSize=12;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="280" y="170" width="250" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="static" value="&lt;b&gt;Static Files&lt;/b&gt;&lt;br&gt;Vue SPA Build&lt;br&gt;/usr/share/nginx/html/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="300" y="230" width="200" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="port80" value="Port 80 ← :8080" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="310" y="310" width="120" height="20" as="geometry"/>
+        </mxCell>
+        <!-- Spring Boot -->
+        <mxCell id="spring" value="&lt;b&gt;Spring Boot&lt;/b&gt;&lt;br&gt;Backend&lt;br&gt;Port 8081" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontSize=12;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="580" y="170" width="240" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="services" value="&lt;b&gt;Services&lt;/b&gt;&lt;br&gt;Auth | Reports | Validation&lt;br&gt;Templates | Analytics | Admin" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="600" y="230" width="200" height="60" as="geometry"/>
+        </mxCell>
+        <!-- Arrow nginx -> spring -->
+        <mxCell id="proxy" value="/api/* proxy" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeWidth=2;" edge="1" source="nginx" target="spring" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Database -->
+        <mxCell id="db" value="&lt;b&gt;Database&lt;/b&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="380" y="440" width="130" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_db" style="strokeWidth=2;" edge="1" source="spring" target="db" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <!-- File Storage -->
+        <mxCell id="fs" value="&lt;b&gt;File Storage&lt;/b&gt;&lt;br&gt;(документы студентов)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="580" y="440" width="170" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_fs" style="strokeWidth=2;" edge="1" source="spring" target="fs" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <!-- External actors -->
+        <mxCell id="browser" value="&lt;b&gt;Браузер&lt;/b&gt;&lt;br&gt;пользователя" style="shape=mxgraph.cisco.computers_and_peripherals.laptop;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="30" y="200" width="100" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_browser" value="HTTPS" style="strokeWidth=2;dashed=1;fontSize=11;" edge="1" source="browser" target="nginx" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="etu_sys" value="&lt;b&gt;ETU System&lt;/b&gt;&lt;br&gt;(внешняя)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="960" y="220" width="130" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_etu" value="API" style="strokeWidth=2;dashed=1;fontSize=11;" edge="1" source="spring" target="etu_sys" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

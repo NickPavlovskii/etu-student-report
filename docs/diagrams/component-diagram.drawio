@@ -1,0 +1,115 @@
+<mxfile host="app.diagrams.net" modified="2026-03-18" type="device">
+  <diagram name="Component Diagram" id="comp1">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title1" value="&lt;b&gt;Диаграмма компонентов системы &quot;Студенческие работы&quot;&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="450" y="20" width="500" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Frontend Container -->
+        <mxCell id="fe_container" value="&lt;b&gt;FRONTEND (Vue 3 SPA)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;fontSize=14;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="100" y="70" width="1200" height="280" as="geometry"/>
+        </mxCell>
+        <!-- Frontend Modules -->
+        <mxCell id="mod_auth" value="&lt;b&gt;Auth&lt;/b&gt;&lt;br&gt;Module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="130" y="110" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="mod_disc" value="&lt;b&gt;Disciplines&lt;/b&gt;&lt;br&gt;Module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="270" y="110" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="mod_detail" value="&lt;b&gt;Discipline&lt;/b&gt;&lt;br&gt;Detail Module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="410" y="110" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="mod_archive" value="&lt;b&gt;Archive&lt;/b&gt;&lt;br&gt;Module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="550" y="110" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="mod_analytics" value="&lt;b&gt;Analytics&lt;/b&gt;&lt;br&gt;Module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="690" y="110" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="mod_settings" value="&lt;b&gt;Settings&lt;/b&gt;&lt;br&gt;Module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="830" y="110" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="mod_admin" value="&lt;b&gt;Admin&lt;/b&gt;&lt;br&gt;Module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="970" y="110" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <!-- Shared layer -->
+        <mxCell id="shared" value="&lt;b&gt;Shared Components &amp; Composables&lt;/b&gt;&lt;br&gt;EtuSideBar | EtuButton | EtuStatCard | EtuPageHeader | useAuth | useUser | useDownload" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="130" y="200" width="960" height="50" as="geometry"/>
+        </mxCell>
+        <!-- API Layer -->
+        <mxCell id="api_layer" value="&lt;b&gt;API Layer (Axios)&lt;/b&gt;&lt;br&gt;auth.ts | disciplines.ts | disciplinesCard.ts | archive.ts | analytics.ts | validation.ts | templates.ts | admin.ts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="130" y="275" width="960" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Arrow FE to BE -->
+        <mxCell id="arrow1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeWidth=2;strokeColor=#333333;" edge="1" source="fe_container" target="be_container" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow1_label" value="REST API&lt;br&gt;(JSON / FormData)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="arrow1">
+          <mxGeometry x="-0.1" relative="1" as="geometry" />
+        </mxCell>
+        <!-- Backend Container -->
+        <mxCell id="be_container" value="&lt;b&gt;BACKEND (Spring Boot)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontSize=14;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="100" y="420" width="1200" height="200" as="geometry"/>
+        </mxCell>
+        <!-- Backend Services -->
+        <mxCell id="svc_auth" value="&lt;b&gt;Auth&lt;/b&gt;&lt;br&gt;Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="130" y="460" width="130" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="svc_reports" value="&lt;b&gt;Reports&lt;/b&gt;&lt;br&gt;Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="280" y="460" width="130" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="svc_valid" value="&lt;b&gt;Validation&lt;/b&gt;&lt;br&gt;Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="430" y="460" width="130" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="svc_tmpl" value="&lt;b&gt;Template&lt;/b&gt;&lt;br&gt;Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="580" y="460" width="130" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="svc_analytics" value="&lt;b&gt;Analytics&lt;/b&gt;&lt;br&gt;Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="730" y="460" width="130" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="svc_admin" value="&lt;b&gt;Admin&lt;/b&gt;&lt;br&gt;Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="880" y="460" width="130" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="svc_audit" value="&lt;b&gt;Audit&lt;/b&gt;&lt;br&gt;Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1030" y="460" width="130" height="55" as="geometry"/>
+        </mxCell>
+        <!-- Database -->
+        <mxCell id="db" value="&lt;b&gt;Database&lt;/b&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="530" y="550" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow_db" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeWidth=2;" edge="1" source="be_container" target="db" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- File Storage -->
+        <mxCell id="fs" value="&lt;b&gt;File Storage&lt;/b&gt;&lt;br&gt;(документы)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="730" y="550" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <!-- Infrastructure -->
+        <mxCell id="infra" value="&lt;b&gt;ИНФРАСТРУКТУРА&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontSize=14;arcSize=5;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="650" width="1200" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="nginx" value="&lt;b&gt;Nginx&lt;/b&gt;&lt;br&gt;Reverse Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="200" y="685" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="docker" value="&lt;b&gt;Docker&lt;/b&gt;&lt;br&gt;Compose" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="500" y="685" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Users -->
+        <mxCell id="user_browser" value="Браузер&lt;br&gt;пользователя" style="shape=actor;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="150" width="80" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow_user" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeWidth=2;dashed=1;" edge="1" source="user_browser" target="fe_container" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="etu" value="ETU&lt;br&gt;System" style="shape=actor;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1350" y="460" width="80" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow_etu" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeWidth=2;dashed=1;" edge="1" source="etu" target="be_container" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
