@@ -4,35 +4,51 @@
     v-else
     fluid
     class="page"
-    >
-    <div class="page-head">
-      <h1 class="title">Архив учебных работ</h1>
-      <p class="subtitle">
-        Централизованное хранилище всех учебных работ кафедры
-      </p>
-    </div>
+  >
+    <etu-page-header
+      icon="mdi-archive-outline"
+      title="Архив учебных работ"
+      subtitle="Централизованное хранилище всех учебных работ кафедры"
+    />
 
     <archive-filters
       v-model:search="search"
       v-model:filter-discipline="filterDiscipline"
       v-model:filter-group="filterGroup"
+      v-model:filter-work-type="filterWorkType"
       v-model:filter-teacher="filterTeacher"
       v-model:date-from="dateFrom"
       v-model:date-to="dateTo"
       :disciplines="disciplines"
       :groups="groups"
+      :work-types="workTypes"
       :teachers="teachers"
       :can-see-all="canSeeAll"
       :count="filteredRows.length"
       @reset="resetFilters"
-    />
+    >
+      <template #export>
+        <div class="export-btn-wrap">
+          <etu-button
+            title="Экспорт отчёта"
+            width="auto"
+            :prepend-icon="DOWNLOAD_ICON"
+            :bg-color="'white'"
+            :color="'#374151'"
+            :border-color="'#e5e7eb'"
+            :border="true"
+            @click="handleExportExcel"
+          />
+        </div>
+      </template>
+    </archive-filters>
 
     <archive-table
       :headers="headers"
       :items="filteredRows"
       :loading="loading"
       :format-date="formatArchiveDate"
-      @download="handleDownload"
+      @download="(item, format) => handleDownload(item, format)"
     />
   </v-container>
 </template>
@@ -43,19 +59,23 @@ import { useRouter } from 'vue-router';
 import { downloadArchiveReport } from '@/api/archive';
 import { useUser } from '@/composables/useUser';
 import { useDownload } from '@/composables/useDownload';
+import { useExportExcel } from './composables/useExportExcel';
 import ArchiveFilters from './components/ArchiveFilters.vue';
 import ArchiveTable from './components/ArchiveTable.vue';
 import { useArchive } from './composables/UseArchive';
 import { formatArchiveDate } from './utils';
 import type { ArchiveReportRow } from '@/types/reports';
+import DOWNLOAD_ICON from '@/assets/icons/download.svg';
 
 const router = useRouter();
 const { user } = useUser();
 const { downloadBlob } = useDownload();
+const { exportToExcel } = useExportExcel();
 
 const search = ref('');
 const filterDiscipline = ref('');
 const filterGroup = ref('');
+const filterWorkType = ref('');
 const filterTeacher = ref('');
 const dateFrom = ref('');
 const dateTo = ref('');
@@ -65,6 +85,7 @@ const {
   loadAll,
   disciplines,
   groups,
+  workTypes,
   teachers,
   filteredRows,
   headers,
@@ -73,6 +94,7 @@ const {
   search,
   filterDiscipline,
   filterGroup,
+  filterWorkType,
   filterTeacher,
   dateFrom,
   dateTo,
@@ -91,14 +113,21 @@ function resetFilters() {
   search.value = '';
   filterDiscipline.value = '';
   filterGroup.value = '';
+  filterWorkType.value = '';
   filterTeacher.value = '';
   dateFrom.value = '';
   dateTo.value = '';
 }
 
-async function handleDownload(item: ArchiveReportRow) {
-  const blob = await downloadArchiveReport(item.id);
-  downloadBlob(blob, item.fileName || 'report');
+async function handleDownload(item: ArchiveReportRow, format?: 'docx' | 'pdf') {
+  const blob = await downloadArchiveReport(item.id, format);
+  const base = (item.fileName || 'report').replace(/\.(docx?|pdf)$/i, '');
+  const ext = format === 'pdf' ? '.pdf' : '.docx';
+  downloadBlob(blob, base + ext);
+}
+
+function handleExportExcel() {
+  exportToExcel(filteredRows.value, canSeeAll.value);
 }
 </script>
 
@@ -109,20 +138,12 @@ async function handleDownload(item: ArchiveReportRow) {
   padding: 28px 30px 50px;
   position: relative;
 }
-.page-head {
-  margin-top: 8px;
-  margin-bottom: 22px;
+
+.export-btn-wrap :deep(.etu-btn) {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
-.title {
-  margin: 0;
-  font-size: 34px;
-  line-height: 1.15;
-  font-weight: 700;
-  color: #111827;
-}
-.subtitle {
-  margin: 10px 0 0;
-  font-size: 14px;
-  color: #6b7280;
+
+.export-btn-wrap :deep(.etu-btn:hover) {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 </style>

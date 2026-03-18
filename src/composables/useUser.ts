@@ -1,11 +1,14 @@
 import { computed } from 'vue';
 
-const ADMIN_POSITIONS = new Set([
-  'администратор',
-  'заведущий',
-  'заведующий',
-  'зам заведующего',
-]);
+/** Проверка, что в роли есть ADMIN (role приходит как TEACHER | ADMIN или "TEACHER,ADMIN") */
+function hasAdminRole(role: string | undefined): boolean {
+  if (!role) return false;
+  return role
+    .toUpperCase()
+    .split(',')
+    .map((r) => r.trim())
+    .includes('ADMIN');
+}
 
 export function useUser() {
   const user = computed(() => {
@@ -25,11 +28,16 @@ export function useUser() {
     String(user.value?.position ?? '').trim().toLowerCase()
   );
 
-  const canSeeAll = computed(() => ADMIN_POSITIONS.has(position.value));
+  const role = computed(() => String(user.value?.role ?? 'TEACHER').trim().toUpperCase());
+  const roleDisplay = computed(() =>
+    String(user.value?.roleDisplay ?? (hasAdminRole(user.value?.role) ? 'Администратор' : 'Преподаватель')).trim()
+  );
+
+  const canSeeAll = computed(() => hasAdminRole(user.value?.role));
 
   const uploadedBy = computed(() =>
     user.value?.fioShort ?? user.value?.lastName ?? 'unknown'
   );
 
-  return { user, lastName, fioKey, position, canSeeAll, uploadedBy };
+  return { user, lastName, fioKey, position, role, roleDisplay, canSeeAll, uploadedBy };
 }

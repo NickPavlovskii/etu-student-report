@@ -5,6 +5,7 @@ export const ARCHIVE_COLUMNS = [
     title: 'Студент',
     key: 'studentName',
     ...thFilled,
+    cellProps: () => ({ class: 'cell-bold' }),
   },
   {
     title: 'Группа',
@@ -17,7 +18,7 @@ export const ARCHIVE_COLUMNS = [
     ...thFilled,
   },
   {
-    title: 'Вид контроля',
+    title: 'Тип работы',
     key: 'workControl',
     ...thFilled,
   },
@@ -37,6 +38,7 @@ export const ARCHIVE_COLUMN_TEACHER = {
   title: 'Преподаватель',
   key: 'uploadedBy',
   ...thFilled,
+  cellProps: () => ({ class: 'cell-bold' }),
 };
 
 export const ARCHIVE_COLUMN_ACTIONS = {

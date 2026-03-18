@@ -73,13 +73,17 @@
         return;
       }
 
+      const roleRaw = (profile.role ?? 'TEACHER').toString().toUpperCase().trim();
+      const role = roleRaw || 'TEACHER';
+
       const userToStore = {
         lastName: profile.lastName ?? ln,
         firstName: profile.firstName ?? '',
         patronymic: profile.patronymic ?? '',
         fioShort: profile.fioShort ?? makeFioShort(profile),
 
-        role: profile.role ?? 'teacher',
+        role,
+        roleDisplay: profile.roleDisplay ?? (role === 'ADMIN' ? 'Администратор' : 'Преподаватель'),
         status: profile.status ?? 'active',
 
         department: profile.department ?? profile.departmentName ?? '',

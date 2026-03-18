@@ -69,6 +69,7 @@ export function useArchive(filters: {
   search: Ref<string>;
   filterDiscipline: Ref<string>;
   filterGroup: Ref<string>;
+  filterWorkType: Ref<string>;
   filterTeacher: Ref<string>;
   dateFrom: Ref<string>;
   dateTo: Ref<string>;
@@ -107,6 +108,9 @@ export function useArchive(filters: {
   const teachers = computed(() =>
     uniqSorted(rows.value.map((r) => String(r.uploadedBy ?? '').trim()))
   );
+  const workTypes = computed(() =>
+    uniqSorted(rows.value.map((r) => String(r.workControl ?? '').trim()))
+  );
 
   const roleFiltered = computed(() => {
     if (canSeeAll.value) {
@@ -122,6 +126,7 @@ export function useArchive(filters: {
     const q = filters.search.value.trim().toLowerCase();
     const fd = filters.filterDiscipline.value;
     const fg = filters.filterGroup.value;
+    const fwt = filters.filterWorkType.value;
     const ft = filters.filterTeacher.value;
     const df = filters.dateFrom.value;
     const dt = filters.dateTo.value;
@@ -132,19 +137,11 @@ export function useArchive(filters: {
         norm(r.studentName).includes(q) ||
         norm(r.topic).includes(q);
       if (matchesSearch) {
-        if (fd && r.disciplineName !== fd) {
-          return false;
-        }
-        if (fg && r.groupName !== fg) {
-          return false;
-        }
-        if (canSeeAll.value && ft && r.uploadedBy !== ft) {
-          return false;
-        }
-        const inDateRange = inRange(r.uploadDate, df, dt);
-        if (inDateRange) {
-          return true;
-        }
+        if (fd && r.disciplineName !== fd) return false;
+        if (fg && r.groupName !== fg) return false;
+        if (fwt && r.workControl !== fwt) return false;
+        if (canSeeAll.value && ft && r.uploadedBy !== ft) return false;
+        return inRange(r.uploadDate, df, dt);
       }
       return false;
     });
@@ -167,6 +164,7 @@ export function useArchive(filters: {
     loadAll,
     disciplines,
     groups,
+    workTypes,
     teachers,
     filteredRows,
     headers,

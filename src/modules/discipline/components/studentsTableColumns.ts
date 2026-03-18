@@ -12,15 +12,10 @@ export const STUDENTS_TABLE_COLUMNS: StudentsTableColumn[] = [
     header: '',
     headerClass: 'col-expand th-empty',
   },
-  { key: 'ФИО/id',
-    class: 'col-id',
-    header: 'ID лк',
-    headerClass: 'th-filled'
-  },
   {
-    key: 'gradebook',
-    class: 'col-gradebook',
-    header: 'Зачётка',
+    key: 'id',
+    class: 'col-id',
+    header: 'ID лк / Зачётка',
     headerClass: 'th-filled',
   },
   {

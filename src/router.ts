@@ -52,6 +52,24 @@ const routes = [
     component: () => import('@/modules/archive/ArchivePage.vue'),
   },
   {
+    path: '/analytics',
+    name: 'analytics',
+    meta: { requiresAuth: true, layout: 'main' },
+    component: () => import('@/modules/analytics/AnalyticsPage.vue'),
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    meta: { requiresAuth: true, layout: 'main' },
+    component: () => import('@/modules/settings/SettingsPage.vue'),
+  },
+  {
+    path: '/admin',
+    name: 'admin',
+    meta: { requiresAuth: true, layout: 'main' },
+    component: () => import('@/modules/admin/AdminPage.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'notFound',
     meta: { requiresAuth: true, layout: 'main' },

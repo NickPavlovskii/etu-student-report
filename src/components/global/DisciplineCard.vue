@@ -13,9 +13,22 @@
           Курс: {{ item.Course }}, Семестр: {{ item.Semester }}
         </div>
         <div
+          v-if="item.teacherFio"
+          class="card-teacher"
+        >
+          <v-icon size="14" class="card-teacher-icon">mdi-account-outline</v-icon>
+          {{ item.teacherFio }}
+        </div>
+        <div
           v-if="item.educationForm || item.educationLevel"
           class="card-meta"
         >
+          <v-icon
+            size="18"
+            class="card-meta-icon"
+          >
+            {{ disciplineIcon }}
+          </v-icon>
           <span v-if="item.educationLevel">
             {{ item.educationLevel }}
           </span>
@@ -63,32 +76,58 @@
     </div>
 
     <div class="card-footer">
-      <span>
-        <v-icon size="16">
-          mdi-account-group-outline
-        </v-icon>
-        {{ item.groupsCount }}
-      </span>
+      <div class="card-footer-groups">
+        <span class="card-footer-count">
+          <v-icon size="16">
+            mdi-account-group-outline
+          </v-icon>
+          {{ item.groupsCount }}
+        </span>
+        <div v-if="item.groups?.length" class="card-footer-chips">
+          <v-chip
+            v-for="group in item.groups"
+            :key="group"
+            size="x-small"
+            variant="tonal"
+            color="grey"
+            class="group-chip"
+          >
+            {{ formatGroupDisplay(group) }}
+          </v-chip>
+        </div>
+      </div>
     </div>
   </v-card>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
-import { sanitizeTitle } from '../composables/UseDisciplines';
+import { sanitizeTitle } from '@/utils/sanitizeTitle';
 
-const props = defineProps({
-  item: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  item: Record<string, unknown>;
+}>();
 
-defineEmits(['click']);
+defineEmits<{ click: [codeRow: string | number] }>();
+
+function formatGroupDisplay(group: unknown): string {
+  const s = String(group ?? '').trim();
+  if (s.length === 3 && /^\d{3}$/.test(s)) return '0' + s;
+  return s || String(group);
+}
 
 const progressColor = computed(() =>
-  props.item.progress === 100 ? 'green' : 'primary'
+  (props.item?.progress as number) === 100 ? 'green' : 'primary'
 );
+
+const disciplineIcon = computed(() => {
+  const level = String(props.item?.educationLevel ?? '').toLowerCase();
+  if (level.includes('магистр')) return 'mdi-school';
+  if (level.includes('бакалавр') || level.includes('бакалавриат')) return 'mdi-school-outline';
+  const form = String(props.item?.educationForm ?? '').toLowerCase();
+  if (form.includes('очн') || form.includes('заочн')) return 'mdi-book-open-page-variant-outline';
+  return 'mdi-book-education-outline';
+});
 </script>
 
 <style scoped>
@@ -121,18 +160,42 @@ const progressColor = computed(() =>
   text-overflow: ellipsis;
   display: block;
   font-weight: 600;
+  transition: color 0.2s ease;
+}
+.discipline-card:hover .card-title {
+  color: #2563eb;
 }
 .card-year {
   font-size: 12px;
   color: #6b7280;
 }
+.card-teacher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+.card-teacher-icon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
 .card-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   color: #9ca3af;
   margin-top: 4px;
 }
+.card-meta-icon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
 .card-meta span + span::before {
   content: ' · ';
+  margin-right: 2px;
 }
 .card-stats {
   display: flex;
@@ -150,9 +213,29 @@ const progressColor = computed(() =>
 }
 .card-footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   font-size: 12px;
   color: #6b7280;
+}
+.card-footer-groups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.card-footer-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.card-footer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.group-chip {
+  font-size: 11px;
 }
 </style>

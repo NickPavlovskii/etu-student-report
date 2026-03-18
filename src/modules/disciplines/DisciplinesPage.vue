@@ -1,59 +1,49 @@
 <template>
   <etu-loading-page v-if="loading" />
   <v-container v-else fluid class="page">
-    <v-card class="stats-card" elevation="0">
-      <div class="header-top">
-        <h2 class="page-title">
-          Мои дисциплины
-        </h2>
-        <p class="subtitle">
-          Обзор учебных дисциплин и текущего статуса работ
-        </p>
-      </div>
-      <v-row dense>
-        <v-col
-          cols="12"
-          sm="6"
-          md="4"
-        >
-          <etu-stat-card
-            icon="mdi-book-outline"
-            title="Дисциплины"
-            color="blue"
-            :value="uniqueDisciplines.length"
-          />
-        </v-col>
-        <v-col
-          cols="12"
-          sm="6"
-          md="4"
-        >
-          <etu-stat-card
-            icon="mdi-account-group-outline"
-            title="Группы"
-            color="purple"
-            :value="totalGroups"
-          />
-        </v-col>
-        <v-col
-          cols="12"
-          sm="6"
-          md="4"
-        >
-          <etu-stat-card
-            icon="mdi-file-upload-outline"
-            title="Работ загружено"
-            color="green"
-            :value="`${totalWorksStats.uploaded} / ${totalWorksStats.total}`"
-          />
-        </v-col>
-      </v-row>
-    </v-card>
+    <etu-page-header
+      icon="mdi-view-grid-outline"
+      title="Мои дисциплины"
+      subtitle="Обзор учебных дисциплин и текущего статуса работ"
+    >
+      <template #right>
+        <semester-half-switcher
+          v-model="semesterHalf"
+        />
+      </template>
+    </etu-page-header>
+
+    <v-row dense class="info-cards-row">
+      <v-col cols="12" sm="6" md="4">
+        <etu-info-card
+          title="Дисциплины"
+          :value="uniqueDisciplines.length"
+          icon="mdi-book-outline"
+          color="blue"
+        />
+      </v-col>
+      <v-col cols="12" sm="6" md="4">
+        <etu-info-card
+          title="Группы"
+          :value="totalGroups"
+          icon="mdi-account-group-outline"
+          color="purple"
+        />
+      </v-col>
+      <v-col cols="12" sm="6" md="4">
+        <etu-info-card
+          title="Работ загружено"
+          :value="`${totalWorksStats.uploaded} / ${totalWorksStats.total}`"
+          icon="mdi-file-upload-outline"
+          color="green"
+        />
+      </v-col>
+    </v-row>
 
     <disciplines-filters
       v-model:search="search"
       v-model:semester="semester"
-      :unique-semesters="uniqueSemesters"
+      :unique-semesters="semestersForHalf"
       :check-all="checkAll"
       :indeterminate="indeterminate"
       :is-all-selected="isAllSelected"
@@ -61,10 +51,7 @@
       @clear-all="clearAllSemesters"
     />
 
-    <v-card
-      class="cards-wrap"
-      elevation="0"
-    >
+    <v-card class="cards-wrap" elevation="0">
       <v-row dense>
         <v-col
           v-for="item in visibleDisciplines"
@@ -72,7 +59,7 @@
           cols="12"
           md="4"
         >
-          <discipline-card
+          <etu-discipline-card
             :item="item"
             @click="openDiscipline"
           />
@@ -86,7 +73,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import DisciplinesFilters from './components/Disciplinesfilters.vue';
-import DisciplineCard from './components/DisciplineCard.vue';
+import SemesterHalfSwitcher from './components/SemesterHalfSwitcher.vue';
 import { useDisciplines } from './composables/UseDisciplines';
 import { useSemesterFilter } from './composables/UseSemesterFilter';
 import { useAcademicYear } from '@/composables/useAcademicYear';
@@ -96,6 +83,13 @@ const router = useRouter();
 const { academicYear } = useAcademicYear();
 const { user } = useUser();
 const search = ref('');
+
+/** Текущая половина года: осень = нечётные семестры (1,3,5,7), весна = чётные (2,4,6,8). Сентябрь–январь = осень, февраль–июль = весна. */
+function defaultSemesterHalf() {
+  const month = new Date().getMonth();
+  return month >= 1 && month <= 6 ? 'spring' : 'autumn';
+}
+const semesterHalf = ref(defaultSemesterHalf());
 
 const filteredRef = ref([]);
 const {
@@ -107,6 +101,17 @@ const {
   totalWorksStats,
 } = useDisciplines(filteredRef);
 
+/** Семестры, соответствующие выбранной половине года (только нечётные или только чётные). */
+const semestersForHalf = computed(() => {
+  const list = uniqueSemesters.value;
+  const odd = semesterHalf.value === 'autumn';
+  return list.filter((s) => {
+    const n = Number(s);
+    if (Number.isNaN(n)) return true;
+    return odd ? n % 2 === 1 : n % 2 === 0;
+  });
+});
+
 const {
   semester,
   checkAll,
@@ -114,11 +119,20 @@ const {
   isAllSelected,
   handleCheckAll,
   clearAllSemesters,
-} = useSemesterFilter(uniqueSemesters);
+} = useSemesterFilter(computed(() => semestersForHalf.value));
 
 const filteredDisciplines = computed(() =>
   uniqueDisciplines.value
     .filter((d) => d.educationForm && d.educationLevel)
+    .filter((d) => {
+      const s = Number(d.Semester);
+      if (!Number.isNaN(s)) {
+        const odd = semesterHalf.value === 'autumn';
+        if (odd && s % 2 !== 1) return false;
+        if (!odd && s % 2 !== 0) return false;
+      }
+      return true;
+    })
     .filter((d) => !semester.value.length || semester.value.includes(d.Semester))
     .filter((d) => {
       const q = search.value.toLowerCase();
@@ -127,6 +141,10 @@ const filteredDisciplines = computed(() =>
 );
 
 watch(filteredDisciplines, (val) => { filteredRef.value = val; }, { immediate: true });
+
+watch(semesterHalf, () => {
+  semester.value = [...semestersForHalf.value];
+});
 
 const visibleDisciplines = computed(() =>
   filteredDisciplines.value.filter((d) => (d.groupsCount ?? 0) > 0)
@@ -158,37 +176,19 @@ function openDiscipline(planRowId) {
   padding: 24px 28px 40px;
 }
 
-
-.header-top {
-  margin-bottom: 20px;
-  padding: 0 4px;
-}
-
-.page-title {
-  font-size: 26px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 6px;
-}
-
-.subtitle {
-  color: #6b7280;
-  font-size: 14px;
-  margin: 0;
-}
-
-.stats-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 20px 24px;
+.info-cards-row {
   margin-bottom: 18px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e5e7eb;
+}
+
+.info-cards-row .v-col {
+  margin-bottom: 0;
 }
 
 .cards-wrap {
-  background: #f5f6f8;
-  border-radius: 16px;
-  padding: 20px 24px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  border: none;
 }
 </style>

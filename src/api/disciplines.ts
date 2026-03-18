@@ -67,6 +67,28 @@ export async function getDisciplineReports(
 
 export type { ControlScheduleDto } from './model';
 
+/** Справочник видов контроля — уникальные controlText из controls (если есть отдельный API, заменить) */
+export async function getControlTypesFromApi(
+  lastName: string,
+  planRowIds: number[],
+  academicYear?: string
+): Promise<string[]> {
+  const seen = new Set<string>();
+  const year = academicYear;
+  for (const id of planRowIds) {
+    try {
+      const controls = await getDisciplineControls(lastName, id, year);
+      for (const c of controls ?? []) {
+        const t = String(c?.controlText ?? '').trim();
+        if (t) seen.add(t);
+      }
+    } catch {
+      // ignore failed discipline
+    }
+  }
+  return [...seen].sort((a, b) => a.localeCompare(b));
+}
+
 export async function getDisciplineControls(
   lastName: string,
   planRowId: number,

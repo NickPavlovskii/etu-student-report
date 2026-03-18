@@ -5,6 +5,21 @@
     fluid
     class="page"
   >
+    <v-alert
+      v-if="viewingAsAdmin"
+      type="warning"
+      variant="tonal"
+      class="admin-view-alert"
+      density="comfortable"
+      border="start"
+    >
+      <template #prepend>
+        <v-icon icon="mdi-shield-account-outline" size="24" />
+      </template>
+      <strong>Просмотр от имени администратора.</strong>
+      Вы просматриваете дисциплину преподавателя: {{ viewingAsAdminTeacherFio }}.
+      Это не ваша дисциплина — действия выполняются в режиме администрирования.
+    </v-alert>
     <v-card
       class="block"
       elevation="0"
@@ -45,6 +60,10 @@
           </div>
         </div>
         <h2 class="title">{{ cleanTitle(uiDiscipline.Discipline) }}</h2>
+        <p v-if="viewingAsAdmin && viewingAsAdminTeacherFio" class="discipline-teacher-line">
+          <v-icon size="18">mdi-account-outline</v-icon>
+          Преподаватель: {{ viewingAsAdminTeacherFio }}
+        </p>
         <discipline-meta :discipline="uiDiscipline" />
       </div>
     </v-card>
@@ -53,7 +72,7 @@
       class="block"
       elevation="0"
     >
-      <h3 class="section-title">Статистика часов</h3>
+      <h3 class="section-title">Статистика</h3>
       <div class="stats">
         <etu-stat-card
           icon="mdi-book-open-outline"
@@ -69,6 +88,12 @@
           :value="Number(uiDiscipline.PracticeHours ?? 0)"
           unit="ч."
         />
+        <etu-info-card
+          title="Загружено отчётов"
+          :value="`${disciplineWorksStats.uploaded} / ${disciplineWorksStats.total}`"
+          icon="mdi-file-upload-outline"
+          color="green"
+        />
       </div>
     </v-card>
 
@@ -77,7 +102,10 @@
       :students-by-group="studentsByGroup"
       :reports="reports"
       :controls="controls"
+      :visible-control-types="visibleControlTypes"
+      :displayed-topics-by-control-type="displayedTopicsByControlType"
       @download="handleDownload"
+      @view-report="handleViewReport"
     />
   </v-container>
 
@@ -92,6 +120,12 @@
     @close="uploadDialog = false"
     @submit="onUpload"
   />
+
+  <validation-report-modal
+    v-model="validationReportVisible"
+    :result="validationReportResult"
+    :breadcrumb="validationReportBreadcrumb"
+  />
 </template>
 
 <script setup lang="ts">
@@ -102,6 +136,7 @@
   import UploadWorkModal from './components/UploadStudyWork.vue';
   import StudentsReportsTable from './components/StudentsReportsTable.vue';
   import DisciplineMeta from './components/DisciplineMeta.vue';
+  import ValidationReportModal from './components/ValidationReportModal.vue';
   import type { ReportDto } from '@/types/reports';
   import {
     getDisciplineCard,
@@ -111,9 +146,12 @@
     downloadReport as apiDownloadReport,
     getDisciplineControls,
   } from '@/api/disciplines';
+  import { validateDocument } from '@/api/validation';
   import { useAcademicYear } from '@/composables/useAcademicYear';
   import { useUser } from '@/composables/useUser';
   import { useDownload } from '@/composables/useDownload';
+  import { getVisibleControlTitles, getDisplayedTopicsByControlType } from '@/modules/settings/composables/useDisciplineControlTypes';
+  import { useDisciplines } from './composables/useDisciplines';
 
   const route = useRoute();
   const router = useRouter();
@@ -123,12 +161,34 @@
 
   const loading = ref(false);
   const uploadDialog = ref(false);
+  const validationReportVisible = ref(false);
+  const validationReportResult = ref<any>(null);
+  const validationReportBreadcrumb = ref('');
   const controls = ref<any[]>([]);
   const discipline = ref<any | null>(null);
   const students = ref<any[]>([]);
   const reports = ref<ReportDto[]>([]);
 
   const planRowId = computed(() => Number(route.params.id));
+
+  const viewingAsAdmin = computed(() => route.query.fromAdmin === '1' || route.query.fromAdmin === 'true');
+  const viewingAsAdminTeacherFio = computed(() => (route.query.teacherFio as string) || '—');
+  /** Для API: при просмотре от имени админа — фамилия преподавателя из teacherFio, иначе текущий пользователь */
+  const effectiveLastName = computed(() => {
+    if (viewingAsAdmin.value && viewingAsAdminTeacherFio.value && viewingAsAdminTeacherFio.value !== '—') {
+      const firstWord = String(viewingAsAdminTeacherFio.value).trim().split(/\s+/)[0];
+      if (firstWord) return firstWord;
+    }
+    return lastName.value ?? '';
+  });
+
+  const visibleControlTypes = computed(() =>
+    getVisibleControlTitles(String(planRowId.value))
+  );
+
+  const displayedTopicsByControlType = computed(() =>
+    getDisplayedTopicsByControlType(String(planRowId.value))
+  );
 
   const uiDiscipline = computed(() => {
     const d = discipline.value;
@@ -184,6 +244,14 @@
     return res;
   });
 
+  const { disciplineWorksStats } = useDisciplines(
+    studentsByGroup,
+    reports,
+    controls,
+    visibleControlTypes,
+    displayedTopicsByControlType
+  );
+
   const hasStudents = computed(
     () => Object.keys(studentsByGroup.value).length > 0
   );
@@ -195,7 +263,7 @@
     try {
       const year = academicYear.value;
       const id = planRowId.value;
-      const ln = lastName.value;
+      const ln = effectiveLastName.value;
 
       [discipline.value, students.value, controls.value] = await Promise.all([
         getDisciplineCard(ln, id, year),
@@ -215,7 +283,7 @@
   }
 
   onMounted(async () => {
-    if (lastName.value) {
+    if (effectiveLastName.value) {
       await loadAll();
     } else {
       router.push('/auth');
@@ -223,17 +291,26 @@
   });
 
   watch(academicYear, () => {
-    if (lastName.value) {
+    if (effectiveLastName.value) {
       loadAll();
     }
   });
+
+  watch(
+    () => [route.params.id, route.query.teacherFio],
+    () => {
+      if (effectiveLastName.value) {
+        loadAll();
+      }
+    }
+  );
 
   const uploadWork = () => (uploadDialog.value = true);
   const goBack = () => router.push('/disciplines');
   const goToArchive = () => router.push('/archive');
 
   async function onUpload(payload: any) {
-    const dto = await uploadDisciplineReport(lastName.value, planRowId.value, {
+    const dto = await uploadDisciplineReport(effectiveLastName.value, planRowId.value, {
       studentId: payload.studentId,
       groupName: payload.groupName,
       topic: payload.topic ?? '',
@@ -255,6 +332,29 @@
     const blob = await apiDownloadReport(reportDto.id);
     downloadBlob(blob, reportDto.fileName || 'report');
   }
+
+  async function handleViewReport(report: ReportDto) {
+    try {
+      const blob = await apiDownloadReport(report.id);
+      const fileName = report.fileName || 'report.docx';
+      const file = new File([blob], fileName, { type: blob.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const result = await validateDocument(file, { annotate: true });
+      validationReportResult.value = result;
+      const workTitle = (report.workTitle || report.topic || '').toString().slice(0, 60);
+      validationReportBreadcrumb.value = `${report.workType || 'Работа'} > ${workTitle}${workTitle.length >= 60 ? '...' : ''}`;
+      validationReportVisible.value = true;
+    } catch (e) {
+      console.error('Ошибка проверки отчёта:', e);
+      validationReportResult.value = {
+        valid: false,
+        percent: report.check ?? 0,
+        errors: [{ code: 'ERROR', message: 'Не удалось выполнить проверку', passed: false }],
+        warnings: [],
+      };
+      validationReportBreadcrumb.value = `${report.workType || ''} > ${(report.workTitle || report.topic || '').toString().slice(0, 50)}`;
+      validationReportVisible.value = true;
+    }
+  }
 </script>
 
 <style scoped>
@@ -262,6 +362,17 @@
     height: 100%;
     background: #f5f6f8;
     padding: 16px;
+  }
+  .admin-view-alert {
+    margin-bottom: 16px;
+  }
+  .discipline-teacher-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0 0;
+    font-size: 14px;
+    color: #374151;
   }
   .block {
     border-radius: 16px;

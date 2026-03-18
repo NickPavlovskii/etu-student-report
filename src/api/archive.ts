@@ -25,9 +25,16 @@ export async function fetchArchiveReportsAll(
   return data;
 }
 
-export async function downloadArchiveReport(reportId: number): Promise<Blob> {
+export type DownloadFormat = 'docx' | 'pdf';
+
+export async function downloadArchiveReport(
+  reportId: number,
+  format?: DownloadFormat
+): Promise<Blob> {
+  const params = format ? { format } : {};
   const res = await http.get(`/reports/${reportId}/download`, {
     responseType: 'blob',
+    params: Object.keys(params).length ? params : undefined,
   });
   return res.data;
 }

@@ -20,18 +20,10 @@
   const { user } = useAuth();
   const router = useRouter();
 
-  const isAdminRole = computed(() =>
-    new Set([
-      'администратор',
-      'заведущий',
-      'заведующий',
-      'зам заведующего',
-    ]).has(
-      String(user.value?.position ?? '')
-        .trim()
-        .toLowerCase()
-    )
-  );
+  const isAdminRole = computed(() => {
+    const role = String(user.value?.role ?? '').toUpperCase();
+    return role.split(',').map((r) => r.trim()).includes('ADMIN');
+  });
 
   const baseItems: SideBarItem[] = [
     {
@@ -52,14 +44,14 @@
       path: '/archive',
       mdiIcon: 'mdi-archive-outline',
     },
-  ];
-  const adminItems: SideBarItem[] = [
     {
       title: 'Настройки',
       name: 'settings',
       path: '/settings',
       mdiIcon: 'mdi-cog-outline',
     },
+  ];
+  const adminItems: SideBarItem[] = [
     {
       title: 'Администрирование',
       name: 'admin',

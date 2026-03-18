@@ -1,19 +1,15 @@
 import { ref, computed } from 'vue';
 import {
   getDisciplineCards,
-  getTeacherGroups,
+  getDisciplineGroups,
   getDisciplineReports,
   getDisciplineStudents,
+  getTeacherGroups,
 } from '@/api/disciplinesCard';
 import { useAcademicYear } from '@/composables/useAcademicYear';
+import { sanitizeTitle } from '@/utils/sanitizeTitle';
 
-export function sanitizeTitle(v) {
-  return (
-    String(v ?? '')
-      .replace(/"/g, '')
-      .trim() || '—'
-  );
-}
+export { sanitizeTitle };
 
 function toArray(res) {
   const raw = Array.isArray(res) ? res : (res?.data ?? res?.cards ?? []);
@@ -54,6 +50,7 @@ export function useDisciplines(filteredDisciplines) {
   const cards = ref([]);
   const groups = ref([]);
   const reportsByPlanRowId = ref({});
+  const groupsByPlanRowId = ref({});
   const studentsByPlanRowId = ref({});
 
   async function loadData(user) {
@@ -79,13 +76,22 @@ export function useDisciplines(filteredDisciplines) {
 
         const pairs = await Promise.all(
           planIds.map(async (id) => {
-            const [reports, students] = await Promise.all([
+            const [reports, students, groupsRes] = await Promise.all([
               getDisciplineReports(user.lastName, id, year).catch(() => []),
               getDisciplineStudents(user.lastName, id, year).catch(() => []),
+              getDisciplineGroups(user.lastName, id, year).catch(() => []),
             ]);
+            const rawGroups = toArray(groupsRes);
+            const groupNames = rawGroups.map((g) =>
+              typeof g === 'string' ? g : (g?.groupName ?? g?.name ?? g?.title ?? String(g ?? '')).trim()
+            ).filter(Boolean);
             return [
               id,
-              { reports: toArray(reports), students: toArray(students) },
+              {
+                reports: toArray(reports),
+                students: toArray(students),
+                groups: groupNames,
+              },
             ];
           })
         );
@@ -95,6 +101,9 @@ export function useDisciplines(filteredDisciplines) {
         );
         studentsByPlanRowId.value = Object.fromEntries(
           pairs.map(([id, v]) => [id, v.students])
+        );
+        groupsByPlanRowId.value = Object.fromEntries(
+          pairs.map(([id, v]) => [id, v.groups])
         );
       } catch (e) {
         console.error('[useDisciplines] loadData error:', e);
@@ -164,6 +173,7 @@ export function useDisciplines(filteredDisciplines) {
         totalStudents === 0
           ? 0
           : Math.round((studentsWithReports.size / totalStudents) * 100);
+      const groupsList = groupsByPlanRowId.value?.[planId] ?? [];
 
       return {
         CodeRow: x.CodeRow,
@@ -178,6 +188,8 @@ export function useDisciplines(filteredDisciplines) {
             : x.hasPass
               ? 'Зачёт'
               : '—',
+        groupsCount: x.groupsCount,
+        groups: groupsList,
         groupsCount: x.groupsCount,
         loadedCount,
         totalStudents,

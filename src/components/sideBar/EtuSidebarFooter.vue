@@ -19,17 +19,40 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue';
+  import { computed, watch } from 'vue';
   import { useAuth } from '@/composables/useAuth';
 
   const { user, isTeacher, isHead } = useAuth();
 
+  watch(
+    user,
+    (u) => {
+      console.log('[EtuSidebarFooter] Роли пользователя:', {
+        role: u?.role,
+        roleDisplay: u?.roleDisplay,
+        raw: u ? { ...u, role: u.role, roleDisplay: u.roleDisplay } : null,
+      });
+    },
+    { immediate: true }
+  );
+
   const teacherFullName = computed(() => user.value?.fioShort ?? 'Преподаватель');
   const teacherDept = computed(() => user.value?.department ?? '');
   const teacherRole = computed(() => {
-    if (isHead.value) return 'Заведующий';
-    if (isTeacher.value) return 'Преподаватель';
-    return 'Пользователь';
+    const rawRole = (user.value?.role ?? '').toString().trim();
+    const role = rawRole.toUpperCase().split(',').map((r: string) => r.trim()).filter(Boolean);
+    const roleDisplay = (user.value?.roleDisplay ?? '').toString().trim();
+    const hasAdmin =
+      role.includes('ADMIN') ||
+      roleDisplay.toLowerCase().includes('администратор');
+    const hasTeacher =
+      role.includes('TEACHER') ||
+      roleDisplay.toLowerCase().includes('преподаватель') ||
+      !role.length;
+    if (hasAdmin) return 'Преподаватель / Администратор';
+    if (hasTeacher) return 'Преподаватель';
+    if (roleDisplay) return roleDisplay;
+    return 'Преподаватель';
   });
 </script>
 

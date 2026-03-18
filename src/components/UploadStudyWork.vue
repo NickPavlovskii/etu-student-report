@@ -2,6 +2,7 @@
   <v-dialog
     v-model="dialog"
     max-width="700"
+    persistent
   >
     <v-card
       class="upload-card"
@@ -144,13 +145,92 @@
         </v-btn>
         <v-btn
           color="#111827"
-          :disabled="!isValid"
+          :disabled="!isValid || validating"
+          :loading="validating"
           @click="submitWork"
         >
           <v-icon start>mdi-upload</v-icon>
-          Загрузить
+          {{ validating ? 'Проверка...' : 'Загрузить' }}
         </v-btn>
       </v-card-actions>
+
+      <!-- Результаты проверки -->
+      <v-dialog
+        v-model="showValidationResult"
+        max-width="520"
+        persistent
+      >
+        <v-card class="validation-result-card">
+          <div class="validation-header">
+            <v-icon :color="validationResult?.valid ? 'success' : 'warning'" size="28">
+              {{ validationResult?.valid ? 'mdi-check-circle' : 'mdi-alert-circle' }}
+            </v-icon>
+            <div>
+              <h3 class="validation-title">
+                {{ validationResult?.valid ? 'Проверка пройдена' : 'Найдены замечания' }}
+              </h3>
+              <div
+                v-if="validationResult?.percent != null"
+                class="validation-percent"
+              >
+                Соответствие: {{ validationResult.percent }}%
+              </div>
+            </div>
+          </div>
+          <v-card-text v-if="validationResult">
+            <div class="validation-criteria-list">
+              <div
+                v-for="(c, idx) in allCriteria"
+                :key="c.code + '-' + idx"
+                class="validation-item"
+                :class="{ error: !c.passed && c.level === 'error', warning: !c.passed && c.level !== 'error', passed: c.passed }"
+              >
+                <v-icon
+                  v-if="c.passed"
+                  size="18"
+                  color="success"
+                >mdi-check-circle</v-icon>
+                <v-icon
+                  v-else-if="c.level === 'error'"
+                  size="18"
+                  color="error"
+                >mdi-close-circle</v-icon>
+                <v-icon
+                  v-else
+                  size="18"
+                  color="warning"
+                >mdi-alert</v-icon>
+                <div class="criteria-content">
+                  <span class="criteria-title">{{ c.title || c.code }}:</span>
+                  <span class="criteria-message">{{ c.message }}</span>
+                  <div
+                    v-if="(c.expected || c.actual) && !c.passed"
+                    class="criteria-details"
+                  >
+                    <span v-if="c.expected">Ожидалось: {{ c.expected }}</span>
+                    <span v-if="c.actual">· Фактически: {{ c.actual }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn
+              variant="text"
+              @click="showValidationResult = false"
+            >
+              Отмена
+            </v-btn>
+            <v-btn
+              color="primary"
+              @click="confirmUploadDespiteValidation"
+            >
+              {{ validationResult?.valid ? 'Загрузить' : 'Загрузить несмотря на замечания' }}
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-card>
   </v-dialog>
 </template>
@@ -160,6 +240,8 @@ import { ref, computed, watch } from 'vue';
 import { useAcademicYear } from '@/composables/useAcademicYear';
 import type { DisciplineUi, UploadWorkPayload } from '@/types/uploadWorkModal';
 import { UPLOAD_MODAL_ACCEPT } from '@/types/uploadWorkModal';
+import { validateDocument } from '@/api/validation';
+import type { ValidationResult } from '@/api/validation';
 
 const { academicYear } = useAcademicYear();
 
@@ -190,6 +272,17 @@ const emit = defineEmits<{
   const topic = ref('');
   const workTitle = ref('');
   const autoCheck = ref(true);
+  const validating = ref(false);
+  const showValidationResult = ref(false);
+  const validationResult = ref<ValidationResult | null>(null);
+  const pendingSubmitPayload = ref<UploadWorkPayload | null>(null);
+
+  const allCriteria = computed(() => {
+    const r = validationResult.value;
+    if (!r) return [];
+    if (r.criteria?.length) return r.criteria;
+    return [...(r.errors ?? []), ...(r.warnings ?? [])];
+  });
 
   const disciplineTitle = computed(() => {
     const d: any = props.discipline;
@@ -349,16 +442,17 @@ const emit = defineEmits<{
     return '';
   });
 
-  const submitWork = () => {
+  async function submitWork() {
     const sid = selectedStudentId.value;
     const f = file.value;
 
-    if (isValid.value && sid !== null && f instanceof File) {
-      const payload = {
+    if (!isValid.value || sid === null || !(f instanceof File)) return;
+
+    const payload: UploadWorkPayload = {
       studentId: sid,
       groupName: selectedGroup.value,
       topic: topicsList.value.length ? topic.value || '' : '',
-      controlType: resolvedControlType.value, 
+      controlType: resolvedControlType.value,
       workType: workType.value,
       workTitle: workTitle.value,
       academicYear: academicYear.value,
@@ -367,13 +461,38 @@ const emit = defineEmits<{
       status: 'Загружен',
       uploadedBy: getUploadedBy(),
       file: f,
-      };
+    };
 
+    if (autoCheck.value) {
+      validating.value = true;
+      try {
+        const result = await validateDocument(f);
+        validationResult.value = result;
+        pendingSubmitPayload.value = payload;
+        showValidationResult.value = true;
+      } catch (err) {
+        console.warn('Сервис проверки недоступен, загрузка без проверки:', err);
+        emit('submit', payload);
+        close();
+      } finally {
+        validating.value = false;
+      }
+    } else {
       emit('submit', payload);
-
       close();
     }
-  };
+  }
+
+  function confirmUploadDespiteValidation() {
+    const p = pendingSubmitPayload.value;
+    showValidationResult.value = false;
+    validationResult.value = null;
+    pendingSubmitPayload.value = null;
+    if (p) {
+      emit('submit', p);
+      close();
+    }
+  }
 
   const close = () => {
     dialog.value = false;
@@ -529,4 +648,112 @@ const emit = defineEmits<{
       }
     }
   }
+
+  .validation-result-card {
+    border-radius: 16px;
+    padding: 8px 0;
+  }
+  .validation-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px 8px;
+  }
+  .validation-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+  }
+  .validation-errors {
+    padding: 0 24px 16px;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+  .validation-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #374151;
+    &.error {
+      color: #dc2626;
+    }
+    &.warning {
+      color: #d97706;
+    }
+  }
+</style>
+
+<style lang="scss">
+/* Стили для диалога проверки (контент рендерится через teleport) */
+.validation-result-card {
+  border-radius: 16px;
+  padding: 8px 0;
+}
+.validation-result-card .validation-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px 8px;
+}
+.validation-result-card .validation-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+.validation-percent {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+.validation-result-card .validation-errors {
+  padding: 0 24px 16px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.validation-result-card .validation-criteria-list {
+  padding: 0 24px 16px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+.validation-result-card .validation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 14px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.validation-result-card .validation-item:last-child {
+  border-bottom: none;
+}
+.validation-result-card .validation-item.passed {
+  color: #15803d;
+}
+.validation-result-card .validation-item.error {
+  color: #dc2626;
+}
+.validation-result-card .validation-item.warning {
+  color: #d97706;
+}
+.validation-result-card .criteria-content {
+  flex: 1;
+  min-width: 0;
+}
+.validation-result-card .criteria-title {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+.validation-result-card .criteria-message {
+  display: block;
+}
+.validation-result-card .criteria-details {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
 </style>

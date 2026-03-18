@@ -1,5 +1,6 @@
 <template>
-  <v-table class="students-table">
+  <div class="students-table-wrap">
+    <v-table class="students-table">
     <colgroup>
       <col
         v-for="col in STUDENTS_TABLE_COLUMNS"
@@ -37,8 +38,21 @@
               }}
             </v-icon>
           </td>
-          <td colspan="9">
+          <td colspan="7">
             Группа {{ group }} · {{ students.length }} студентов
+          </td>
+          <td class="group-stats-cell">
+            <span
+              class="upload-stat"
+              :class="
+                groupUploadStats(group).uploaded === groupUploadStats(group).total
+                  && groupUploadStats(group).total > 0
+                  ? 'stat-full'
+                  : ''
+              "
+            >
+              {{ groupUploadStats(group).uploaded }} / {{ groupUploadStats(group).total }}
+            </span>
           </td>
         </tr>
 
@@ -64,9 +78,28 @@
               </v-icon>
             </td>
 
-            <td>{{ getStudentId(student) || '—' }}</td>
-            <td>{{ getGradebook(student) || '—' }}</td>
-            <td colspan="7"></td>
+            <td class="col-id">
+              <div>{{ getStudentDisplayName(student) }}</div>
+              <div v-if="getGradebook(student)" class="student-gradebook">
+                Зачётка: {{ getGradebook(student) }}
+              </div>
+            </td>
+            <td colspan="6" />
+            <td class="student-stats-cell">
+              <span
+                class="upload-stat"
+                :class="
+                  studentUploadStats(group, student).uploaded
+                    === studentUploadStats(group, student).total
+                    && studentUploadStats(group, student).total > 0
+                    ? 'stat-full'
+                    : 'stat-partial'
+                "
+              >
+                {{ studentUploadStats(group, student).uploaded }}
+                / {{ studentUploadStats(group, student).total }}
+              </span>
+            </td>
           </tr>
 
           <tr
@@ -75,9 +108,8 @@
             v-show="openedGroups[group]?.students?.[getStudentId(student)]"
             class="topic-row"
           >
-            <td></td>
-            <td></td>
-            <td></td>
+            <td />
+            <td />
             <td
               v-if="row.showControl"
               :rowspan="row.controlRowSpan"
@@ -179,25 +211,53 @@
                 Не загружен
               </span>
             </td>
-            <td class="action-cell">
-              <v-btn
-                v-if="reportForTopic(student, row.topic)"
-                icon
-                variant="text"
-                @click="onDownload(student, row.topic)"
-              >
-                <v-icon>mdi-download</v-icon>
-              </v-btn>
+            <td class="col-action action-cell">
+              <div class="action-cell-inner">
+                <template v-if="reportForTopic(student, row.topic)">
+                  <v-btn
+                    icon
+                    variant="text"
+                    size="small"
+                    class="action-icon-btn"
+                    title="Скачать"
+                    @click.stop="onDownload(student, row.topic)"
+                  >
+                    <img
+                      :src="downloadIcon"
+                      alt="Скачать"
+                      class="action-icon-img"
+                    >
+                  </v-btn>
+                  <v-btn
+                    v-if="reportForTopic(student, row.topic)!.check != null"
+                    icon
+                    variant="text"
+                    size="small"
+                    class="action-icon-btn"
+                    title="Отчет о проверке оформления"
+                    @click.stop="onViewReport(student, row.topic)"
+                  >
+                    <img
+                      :src="eyeIcon"
+                      alt="Просмотр отчёта"
+                      class="action-icon-img"
+                    >
+                  </v-btn>
+                </template>
+              </div>
             </td>
           </tr>
         </template>
       </template>
     </tbody>
-  </v-table>
+    </v-table>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, computed } from 'vue';
+import downloadIcon from '@/assets/icons/download.svg';
+import eyeIcon from '@/assets/icons/eye.svg';
 import type {
   ReportDto,
   ControlScheduleDto,
@@ -210,14 +270,22 @@ import { STUDENTS_TABLE_COLUMNS } from './studentsTableColumns';
  * Группы раскрываются по клику; для каждого студента показываются темы из controls,
  * статус загрузки отчёта, проверка и кнопка скачивания.
  */
-const props = defineProps<{
-  studentsByGroup: Record<string, any[]>;
-  reports: ReportDto[];
-  controls: ControlScheduleDto[];
-}>();
+const props = withDefaults(
+  defineProps<{
+    studentsByGroup: Record<string, any[]>;
+    reports: ReportDto[];
+    controls: ControlScheduleDto[];
+    /** Виды контроля для отображения в таблице (по названию). Если пусто — показывать все */
+    visibleControlTypes?: string[];
+    /** Темы для отображения по видам контроля (название вида -> массив тем). undefined/пусто = все темы */
+    displayedTopicsByControlType?: Record<string, string[] | undefined>;
+  }>(),
+  { visibleControlTypes: undefined, displayedTopicsByControlType: () => ({}) }
+);
 
 const emit = defineEmits<{
   (e: 'download', report: ReportDto): void;
+  (e: 'viewReport', report: ReportDto): void;
 }>();
 
 /** Состояние раскрытия групп и студентов: opened — группа раскрыта, students — список раскрытых studentId */
@@ -253,16 +321,24 @@ function toggleStudent(group: string, studentId: number) {
 
 /** Извлекает ID студента из объекта (поддерживает разные имена полей API) */
 function getStudentId(student: any): number {
-    const raw =
-      student?.studentId ??
-      student?.student_id ??
-      student?.iotId ??
-      student?.iot_id ??
-      student?.lkId ??
-      student?.lk_id;
+  const raw =
+    student?.studentId ??
+    student?.student_id ??
+    student?.iotId ??
+    student?.iot_id ??
+    student?.lkId ??
+    student?.lk_id;
 
   const n = Number(raw);
   return Number.isFinite(n) ? n : 0;
+}
+
+/** Отображаемое значение в колонке «ID лк»: ФИО, если есть, иначе ID */
+function getStudentDisplayName(student: any): string {
+  const fio = (student?.fio ?? student?.Fio ?? '').toString().trim();
+  if (fio) return fio;
+  const id = getStudentId(student);
+  return id ? String(id) : '—';
 }
 
 /** Уникальный ключ студента для v-for */
@@ -303,6 +379,14 @@ function onDownload(student: any, topic: string) {
   const r = reportForTopic(student, topic);
   if (r) {
     emit('download', r);
+  }
+}
+
+/** Открыть отчёт о проверке оформления */
+function onViewReport(student: any, topic: string) {
+  const r = reportForTopic(student, topic);
+  if (r && r.check != null) {
+    emit('viewReport', r);
   }
 }
 
@@ -364,6 +448,11 @@ const topicRowsByGroup = computed<Record<string, TopicRow[]>>(() => {
       );
     });
 
+    const visibleSet =
+      props.visibleControlTypes === undefined
+        ? null
+        : new Set(props.visibleControlTypes.map((s) => String(s).trim().toLowerCase()));
+
     for (const c of controls) {
       const group = String(c.groupName ?? '').trim();
       if (group.length > 0) {
@@ -371,9 +460,23 @@ const topicRowsByGroup = computed<Record<string, TopicRow[]>>(() => {
         const we = Number(c.weekEnd ?? 0);
         const ct = String(c.controlText ?? '').trim();
 
-        const topics = normalizeTopics(c.topics).flatMap((t) =>
+        if (visibleSet !== null && !visibleSet.has(ct.toLowerCase())) {
+          continue;
+        }
+
+        let topics = normalizeTopics(c.topics).flatMap((t) =>
           splitTopics(String(t))
         );
+
+        const allowedTopics = props.displayedTopicsByControlType?.[ct];
+        if (allowedTopics !== undefined) {
+          if (allowedTopics.length > 0) {
+            const allowedSet = new Set(allowedTopics.map((s) => s.trim()));
+            topics = topics.filter((t) => allowedSet.has(String(t).trim()));
+          } else {
+            topics = [];
+          }
+        }
 
         if (topics.length > 0) {
 
@@ -438,9 +541,42 @@ const topicRowsByGroup = computed<Record<string, TopicRow[]>>(() => {
 
     return map;
   });
+
+  /** Кол-во загруженных отчётов для группы: уникальных (studentId + topic) */
+function groupUploadStats(group: string): { uploaded: number; total: number } {
+  const rows = topicRowsByGroup.value[group] ?? [];
+  const students = props.studentsByGroup[group] ?? [];
+  const total = rows.length * students.length;
+  let uploaded = 0;
+  for (const student of students) {
+    for (const row of rows) {
+      if (reportForTopic(student, row.topic)) uploaded++;
+    }
+  }
+  return { uploaded, total };
+}
+
+/** Кол-во загруженных отчётов для конкретного студента */
+function studentUploadStats(
+  group: string,
+  student: any
+): { uploaded: number; total: number } {
+  const rows = topicRowsByGroup.value[group] ?? [];
+  const total = rows.length;
+  let uploaded = 0;
+  for (const row of rows) {
+    if (reportForTopic(student, row.topic)) uploaded++;
+  }
+  return { uploaded, total };
+}
 </script>
 
 <style scoped>
+  .students-table-wrap {
+    overflow-x: auto;
+    width: 100%;
+  }
+
   .table-icon {
     display: inline-block;
     vertical-align: middle;
@@ -450,40 +586,73 @@ const topicRowsByGroup = computed<Record<string, TopicRow[]>>(() => {
 
   .students-table {
     width: 100%;
+    min-width: 1266px;
     border-collapse: collapse;
     font-size: 14px;
     table-layout: fixed;
   }
-
+.upload-stat {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.upload-stat.stat-full {
+  background: #dcfce7;
+  color: #15803d;
+}
+.upload-stat.stat-partial {
+  background: #fef3c7;
+  color: #b45309;
+}
+.group-stats-cell,
+.student-stats-cell {
+  text-align: right;
+  white-space: nowrap;
+}
   .col-expand {
-    width: 56px;
+    width: 36px;
+    min-width: 36px;
   }
   .col-id {
-    width: 110px;
+    width: 220px;
+    min-width: 220px;
   }
-  .col-gradebook {
-    width: 130px;
-  }
-  .col-topic {
-    width: 25%;
+  .student-gradebook,
+  .control-sub {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 2px;
   }
   .col-control {
     width: 180px;
+    min-width: 180px;
+  }
+  .col-topic {
+    width: 240px;
+    min-width: 240px;
   }
   .col-date {
     width: 140px;
+    min-width: 140px;
   }
   .col-version {
     width: 90px;
+    min-width: 90px;
   }
   .col-check {
     width: 120px;
+    min-width: 120px;
   }
   .col-status {
     width: 140px;
+    min-width: 140px;
   }
   .col-action {
-    width: 56px;
+    width: 90px;
+    min-width: 90px;
   }
 
   .students-table th,
@@ -495,6 +664,10 @@ const topicRowsByGroup = computed<Record<string, TopicRow[]>>(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .students-table td.col-id {
+    white-space: normal;
   }
 
   .students-table td.col-topic,
@@ -521,22 +694,6 @@ const topicRowsByGroup = computed<Record<string, TopicRow[]>>(() => {
     height: 60%;
     width: 1px;
     background: #e5e7eb;
-  }
-
-  .students-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-  }
-  .students-table th,
-  .students-table td {
-    padding: 8px 12px;
-    border-bottom: 1px solid #e5e7eb;
-    text-align: left;
-  }
-
-  .col-expand {
-    width: 36px;
   }
 
   .group-row {
@@ -595,6 +752,16 @@ const topicRowsByGroup = computed<Record<string, TopicRow[]>>(() => {
 
   .action-cell {
     text-align: right;
+    vertical-align: middle;
+    overflow: visible;
+    white-space: nowrap;
+  }
+
+  .action-cell-inner {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: flex-end;
   }
 
   .no-report {
@@ -630,5 +797,25 @@ const topicRowsByGroup = computed<Record<string, TopicRow[]>>(() => {
     padding: 10px;
     border-radius: 14px;
     color: #1d4ed8;
+  }
+
+  .header-icon {
+    vertical-align: middle;
+  }
+
+  .mr-2 {
+    margin-right: 8px;
+  }
+
+  .action-icon-btn {
+    min-width: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .action-icon-img {
+    width: 16px;
+    height: 16px;
+    display: block;
   }
 </style>
