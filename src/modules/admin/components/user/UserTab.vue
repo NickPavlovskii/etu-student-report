@@ -1,7 +1,7 @@
 <template>
   <div class="user-panel">
     <user-toolbar
-      v-model:users-search="u.usersSearch"
+      v-model:users-search="usersSearch"
       :count-label="countLabel"
       :debounced-load-teachers="u.debouncedLoadTeachers"
     />
@@ -139,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, inject, reactive, ref } from 'vue';
+  import { computed, inject, reactive, ref, toRef } from 'vue';
   import type { TeacherDto } from '@/api/admin';
   import type { TableColumn } from '@/components/global/etu-data-table/types';
   import UserToolbar from './UserToolbar.vue';
@@ -157,6 +157,9 @@
   if (!u) {
     throw new Error('UserTab: adminUsersKey не найден (ожидается AdminPage)');
   }
+
+  /** top-level ref для v-model — иначе u.usersSearch в шаблоне даёт [object Object] */
+  const usersSearch = toRef(u, 'usersSearch');
 
   const teachers = computed(() => u.teachers.value);
 
