@@ -1,5 +1,8 @@
 <template>
-  <v-card :class="cardClass" elevation="0">
+  <v-card
+    elevation="0"
+    :class="cardClass"
+  >
     <div class="header-top">
       <div class="head-inner">
         <div
@@ -41,13 +44,9 @@ withDefaults(
   defineProps<{
     title: string;
     subtitle?: string;
-    /** Иконка MDI, например mdi-cog-outline */
     icon?: string;
-    /** Цвет иконки (по умолчанию синий) */
     iconColor?: string;
-    /** Фон круга иконки (по умолчанию светло-синий) */
     iconBgColor?: string;
-    /** Дополнительный класс для карточки (например stats-card) */
     cardClass?: string;
   }>(),
   {
