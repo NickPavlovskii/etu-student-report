@@ -3,8 +3,7 @@
     <div class="tab-buttons">
       <button
         type="button"
-        class="tab-btn"
-        :class="{ active: modelValue === 'templates' }"
+        :class="['tab-btn', { active: modelValue === 'templates' }]"
         @click="$emit('update:modelValue', 'templates')"
       >
         <v-icon size="18">mdi-file-document-outline</v-icon>
@@ -12,8 +11,7 @@
       </button>
       <button
         type="button"
-        class="tab-btn"
-        :class="{ active: modelValue === 'control-types' }"
+        :class="['tab-btn', { active: modelValue === 'control-types' }]"
         @click="$emit('update:modelValue', 'control-types')"
       >
         <v-icon size="18">mdi-format-list-checks</v-icon>
