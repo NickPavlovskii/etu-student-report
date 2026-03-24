@@ -7,7 +7,6 @@ export type TemplateItem = {
   font: string;
   minPages: string;
   minSources: string;
-  /** Исходные данные из API (для редактирования) */
   raw?: Record<string, unknown>;
 };
 
@@ -16,10 +15,8 @@ export type ControlTypeItem = {
   title: string;
   description: string;
   active: boolean;
-  /** Показывать в таблице дисциплины со студентами */
   showInTable: boolean;
   templateId: string | null;
-  /** Темы для отображения в таблице (пусто/undefined = все темы) */
   displayedTopics?: string[];
 };
 

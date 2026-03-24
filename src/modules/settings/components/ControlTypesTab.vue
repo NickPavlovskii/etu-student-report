@@ -24,7 +24,7 @@
               loading-text="Загрузка…"
               prepend-icon="mdi-book-open-page-variant"
               search-placeholder="Поиск…"
-              empty-text="Не найдено"  
+              empty-text="Не найдено"
               :clearable="false"
               :show-null-option="false"
               :model-value="disciplineId"
@@ -108,7 +108,7 @@
 <script setup lang="ts">
   import { computed } from 'vue';
   import ControlTypeCard from './ControlTypeCard.vue';
-  import type { TemplateItem, ControlTypeItem } from '../types';
+  import type { TemplateItem, ControlTypeItem } from '../modal';
 
   const props = withDefaults(
     defineProps<{

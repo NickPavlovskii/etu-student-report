@@ -3,9 +3,8 @@
  * Использует Java Spring backend: POST /api/validate
  */
 import { http } from './http';
-import type { AddTemplateForm } from '@/modules/settings/types';
+import type { AddTemplateForm } from '@/modules/settings/modal';
 
-/** Ответ Java backend: CriteriaResultDto */
 export type ValidationErrorItem = {
   code: string;
   title?: string;
@@ -14,13 +13,10 @@ export type ValidationErrorItem = {
   expected?: string;
   actual?: string;
   level?: string;
-  /** Расположение в документе (страница, абзац) */
   location?: string;
-  /** Категория (Шрифт, Интервалы, Нумерация и т.д.) */
   category?: string;
 };
 
-/** Ответ Java backend: ValidationResultDto */
 export type ValidationResult = {
   valid: boolean;
   percent?: number;
@@ -28,14 +24,13 @@ export type ValidationResult = {
   criteria?: ValidationErrorItem[];
   errors: ValidationErrorItem[];
   warnings: ValidationErrorItem[];
-  /** Base64 аннотированного файла (при annotate=true) */
   annotatedFileBase64?: string;
-  /** Имя аннотированного файла */
   annotatedFileName?: string;
 };
 
-/** Маппинг AddTemplateForm -> TemplateCriteriaDto для Java */
-function toTemplateCriteriaDto(form: Partial<AddTemplateForm>): Record<string, unknown> {
+function toTemplateCriteriaDto(
+  form: Partial<AddTemplateForm>
+): Record<string, unknown> {
   return {
     fileFormat: form.fileFormat ?? '.doc или .docx',
     font: form.font ?? 'Times New Roman',
@@ -57,8 +52,6 @@ function toTemplateCriteriaDto(form: Partial<AddTemplateForm>): Record<string, u
     hasAppendices: form.hasAppendices ?? false,
   };
 }
-
-/** Критерии по умолчанию */
 const defaultTemplate: Partial<AddTemplateForm> = {
   fileFormat: '.doc или .docx',
   font: 'Times New Roman',
@@ -76,11 +69,8 @@ const defaultTemplate: Partial<AddTemplateForm> = {
 };
 
 export type ValidateOptions = {
-  /** ID шаблона из БД (приоритет над template) */
   templateId?: string | number | null;
-  /** Критерии шаблона (если templateId не указан) */
   template?: Partial<AddTemplateForm> | null;
-  /** Вернуть файл с выделенными замечаниями (DOCX/PDF) */
   annotate?: boolean;
 };
 
@@ -94,7 +84,12 @@ export type ValidateOptions = {
  */
 export async function validateDocument(
   file: File,
-  optionsOrTemplateId?: ValidateOptions | Partial<AddTemplateForm> | string | number | null,
+  optionsOrTemplateId?:
+    | ValidateOptions
+    | Partial<AddTemplateForm>
+    | string
+    | number
+    | null,
   annotateFlag?: boolean
 ): Promise<ValidationResult> {
   let opts: ValidateOptions | Partial<AddTemplateForm> | null = null;
@@ -105,8 +100,14 @@ export async function validateDocument(
       !Array.isArray(optionsOrTemplateId)
     ) {
       opts = { ...(optionsOrTemplateId as ValidateOptions) };
-    } else if (typeof optionsOrTemplateId === 'string' || typeof optionsOrTemplateId === 'number') {
-      opts = { templateId: optionsOrTemplateId, annotate: annotateFlag ?? false };
+    } else if (
+      typeof optionsOrTemplateId === 'string' ||
+      typeof optionsOrTemplateId === 'number'
+    ) {
+      opts = {
+        templateId: optionsOrTemplateId,
+        annotate: annotateFlag ?? false,
+      };
     }
   }
   if (opts && typeof annotateFlag === 'boolean') {
@@ -114,14 +115,20 @@ export async function validateDocument(
   }
 
   const templateId = opts && 'templateId' in opts ? opts.templateId : null;
-  const template = opts && 'template' in opts ? opts.template : (opts as Partial<AddTemplateForm> | undefined);
-  const annotate = opts && 'annotate' in opts ? opts.annotate : annotateFlag ?? false;
+  const template =
+    opts && 'template' in opts
+      ? opts.template
+      : (opts as Partial<AddTemplateForm> | undefined);
+  const annotate =
+    opts && 'annotate' in opts ? opts.annotate : (annotateFlag ?? false);
 
   const form = new FormData();
   form.append('file', file);
 
   const params: Record<string, string | boolean> = {};
-  if (annotate) params.annotate = true;
+  if (annotate) {
+    params.annotate = true;
+  }
   if (templateId != null && templateId !== '') {
     form.append('templateId', String(templateId));
     params.templateId = String(templateId);
@@ -139,12 +146,11 @@ export async function validateDocument(
     headers: { 'Content-Type': undefined } as Record<string, unknown>,
   });
 
-  // Нормализуем percent (0–100), если backend вернул некорректное значение
-  const percent = data.percent != null
-    ? Math.min(100, Math.max(0, Math.round(Number(data.percent))))
-    : undefined;
+  const percent =
+    data.percent != null
+      ? Math.min(100, Math.max(0, Math.round(Number(data.percent))))
+      : undefined;
 
-  // Java возвращает errorMessage при фатальных ошибках — приводим к единому формату
   if (data.errorMessage && (!data.errors || data.errors.length === 0)) {
     return {
       ...data,

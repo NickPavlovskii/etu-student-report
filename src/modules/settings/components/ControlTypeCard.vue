@@ -208,7 +208,7 @@
   import infoCircleSvg from '@/assets/icons/info-circle.svg?raw';
   import list14Svg from '@/assets/icons/list-14.svg?raw';
   import tag13Svg from '@/assets/icons/tag-13.svg?raw';
-  import type { TemplateItem, ControlTypeItem } from '../types';
+  import type { TemplateItem, ControlTypeItem } from '../modal';
 
   const props = withDefaults(
     defineProps<{
@@ -361,7 +361,6 @@
     opacity: 0.7;
   }
 
-
   .card-header {
     display: flex;
     align-items: center;
@@ -416,7 +415,6 @@
   .toggle-on .toggle-thumb {
     transform: translateX(17px);
   }
-
 
   .card-title-block {
     min-width: 0;
