@@ -1,8 +1,13 @@
+import type { StudentDto } from './student';
+
 export type DisciplineUi = {
   Discipline?: string;
   Name?: string;
   Assessment?: string;
 };
+
+/** Студент в группе (совпадает с моделью таблицы отчётов по дисциплине) */
+export type StudentInGroupRow = StudentDto;
 
 export type UploadWorkPayload = {
   studentId: number;
@@ -19,14 +24,30 @@ export type UploadWorkPayload = {
   file: File;
 };
 
+/** Строка настройки вида контроля (группа, темы) */
+export type DisciplineControlRow = {
+  groupName?: string;
+  controlText?: string;
+  topics?: unknown;
+};
+
 export type UploadWorkModalProps = {
   discipline: DisciplineUi | null;
   groups: string[];
-  studentsByGroup: Record<string, unknown[]>;
+  studentsByGroup: Record<string, StudentInGroupRow[]>;
   topics: string[];
-  controls: unknown[];
+  controls: DisciplineControlRow[];
   assessment: string;
 };
+
+/** Доп. поля модалки на странице дисциплины (шаблоны проверки) */
+export type UploadWorkModalDisciplineExtraProps = {
+  templateId?: string | number | null;
+  templateIdByWorkType?: Record<string, string | number>;
+};
+
+export type UploadDisciplineModalProps = UploadWorkModalProps &
+  UploadWorkModalDisciplineExtraProps;
 
 export const UPLOAD_MODAL_ACCEPT = '.pdf,.doc,.docx';
 export const UPLOAD_MODAL_MAX_SIZE_MB = 50;
