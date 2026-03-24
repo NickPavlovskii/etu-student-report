@@ -1,48 +1,55 @@
-const thFilled = { headerProps: { class: 'th-filled' } as const };
+import type { TableColumn } from '@/components/global/etu-data-table/types';
+import type { ArchiveReportRow } from '@/modules/archive/model/reports';
 
-export const ARCHIVE_COLUMNS = [
+const thSep = 'th th-sep';
+
+export const ARCHIVE_TABLE_COLUMNS: TableColumn<ArchiveReportRow>[] = [
   {
-    title: 'Студент',
     key: 'studentName',
-    ...thFilled,
-    cellProps: () => ({ class: 'cell-bold' }),
+    header: 'Студент',
+    headerClass: thSep,
+    cellClass: 'cell-bold',
   },
   {
-    title: 'Группа',
     key: 'groupName',
-    ...thFilled,
+    header: 'Группа',
+    headerClass: thSep,
   },
   {
-    title: 'Дисциплина',
     key: 'disciplineName',
-    ...thFilled,
+    header: 'Дисциплина',
+    headerClass: thSep,
   },
   {
-    title: 'Тип работы',
     key: 'workControl',
-    ...thFilled,
+    header: 'Тип работы',
+    headerClass: thSep,
+    width: '200px',
+    cellStyle: { minWidth: '200px', verticalAlign: 'middle' },
   },
   {
-    title: 'Тема',
     key: 'topic',
-    ...thFilled,
+    header: 'Тема',
+    headerClass: thSep,
   },
   {
-    title: 'Дата загрузки',
     key: 'uploadDate',
-    ...thFilled,
+    header: 'Дата загрузки',
+    headerClass: thSep,
   },
 ];
 
-export const ARCHIVE_COLUMN_TEACHER = {
-  title: 'Преподаватель',
+export const ARCHIVE_COLUMN_TEACHER: TableColumn<ArchiveReportRow> = {
   key: 'uploadedBy',
-  ...thFilled,
-  cellProps: () => ({ class: 'cell-bold' }),
+  header: 'Преподаватель',
+  headerClass: thSep,
+  cellClass: 'cell-bold',
 };
 
-export const ARCHIVE_COLUMN_ACTIONS = {
-  title: '',
+export const ARCHIVE_COLUMN_ACTIONS: TableColumn<ArchiveReportRow> = {
   key: 'actions',
+  header: '',
+  headerClass: 'th col-actions',
   sortable: false,
+  ariaLabel: 'Действия',
 };
