@@ -7,8 +7,6 @@
     />
 
     <etu-data-table
-      empty-icon="mdi-account-search-outline"
-      empty-text="Ничего не нашлось"
       :columns="columnsForTable"
       :rows="teachers"
       :loading="usersLoading"
@@ -16,6 +14,8 @@
       :shadow="true"
       :row-class="() => 'users-table__tr'"
       :row-style="userRowStyle"
+      empty-icon="mdi-account-search-outline"
+      empty-text="Ничего не нашлось"
     >
       <template #colgroup>
         <colgroup>
@@ -158,7 +158,6 @@
     throw new Error('UserTab: adminUsersKey не найден (ожидается AdminPage)');
   }
 
-  /** top-level ref для v-model — иначе u.usersSearch в шаблоне даёт [object Object] */
   const usersSearch = toRef(u, 'usersSearch');
 
   const teachers = computed(() => u.teachers.value);
