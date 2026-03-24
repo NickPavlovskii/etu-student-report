@@ -6,22 +6,20 @@ import {
 } from '@/api/archive';
 import { useAcademicYear } from '@/composables/useAcademicYear';
 import { useUser } from '@/composables/useUser';
-import type { ArchiveReportRow } from '@/types/reports';
+import type { ArchiveReportRow } from '@/modules/archive/model/reports';
 import {
-  ARCHIVE_COLUMNS,
+  ARCHIVE_TABLE_COLUMNS,
   ARCHIVE_COLUMN_TEACHER,
   ARCHIVE_COLUMN_ACTIONS,
 } from '../columns';
 
 function norm(v: unknown) {
-  return String(v ?? '').trim().toLowerCase();
+  return String(v ?? '')
+    .trim()
+    .toLowerCase();
 }
 
-function inRange(
-  uploadDate: string | null,
-  from: string,
-  to: string
-): boolean {
+function inRange(uploadDate: string | null, from: string, to: string): boolean {
   const hasDateFilter = from || to;
   if (hasDateFilter) {
     if (uploadDate) {
@@ -46,13 +44,14 @@ function normalizeStatus(check: number | null): ArchiveReportRow['status'] {
 
 function mapReport(r: Record<string, unknown>): ArchiveReportRow {
   const check = (r.check ?? r.checkPercent ?? null) as number | null;
+  const topic = String(r.topic ?? '').trim() || '—';
   return {
     id: Number(r.id),
     studentName: String(r.studentName ?? '—'),
     groupName: String(r.groupName ?? '—'),
     disciplineName: String(r.disciplineName ?? '—'),
     workControl: String(r.controlType ?? '—'),
-    topic: String(r.topic ?? '—'),
+    topic,
     uploadDate: (r.uploadDate as string) ?? null,
     uploadedBy: String(r.uploadedBy ?? r.teacherLastName ?? '—'),
     check,
@@ -89,6 +88,14 @@ export function useArchive(filters: {
         const data = canSeeAll.value
           ? await fetchArchiveReportsAll(undefined, year)
           : await fetchArchiveReportsForTeacher(lastName.value, year);
+        if (import.meta.env.DEV) {
+          console.log('[archive/reports] ответ сервера', {
+            academicYear: year,
+            mode: canSeeAll.value ? 'all' : 'teacher',
+            teacherLastName: canSeeAll.value ? undefined : lastName.value,
+            raw: data,
+          });
+        }
         const raw = Array.isArray(data) ? data : [];
         rows.value = raw.map((r) => mapReport(r as Record<string, unknown>));
       } finally {
@@ -117,9 +124,7 @@ export function useArchive(filters: {
       return rows.value;
     }
     const mine = fioKey.value;
-    return rows.value.filter(
-      (r) => String(r.uploadedBy ?? '').trim() === mine
-    );
+    return rows.value.filter((r) => String(r.uploadedBy ?? '').trim() === mine);
   });
 
   const filteredRows = computed(() => {
@@ -133,9 +138,7 @@ export function useArchive(filters: {
 
     return roleFiltered.value.filter((r) => {
       const matchesSearch =
-        !q ||
-        norm(r.studentName).includes(q) ||
-        norm(r.topic).includes(q);
+        !q || norm(r.studentName).includes(q) || norm(r.topic).includes(q);
       if (matchesSearch) {
         if (fd && r.disciplineName !== fd) return false;
         if (fg && r.groupName !== fg) return false;
@@ -147,15 +150,11 @@ export function useArchive(filters: {
     });
   });
 
-  const headers = computed(() => {
+  const columns = computed(() => {
     const base = canSeeAll.value
-      ? [
-          { ...ARCHIVE_COLUMN_TEACHER },
-          ...ARCHIVE_COLUMNS,
-        ]
-      : [...ARCHIVE_COLUMNS];
-    base.push(ARCHIVE_COLUMN_ACTIONS);
-    return base;
+      ? [ARCHIVE_COLUMN_TEACHER, ...ARCHIVE_TABLE_COLUMNS]
+      : [...ARCHIVE_TABLE_COLUMNS];
+    return [...base, ARCHIVE_COLUMN_ACTIONS];
   });
 
   return {
@@ -167,7 +166,7 @@ export function useArchive(filters: {
     workTypes,
     teachers,
     filteredRows,
-    headers,
+    columns,
     canSeeAll,
   };
 }

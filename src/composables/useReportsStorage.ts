@@ -1,10 +1,12 @@
 import { ref, watch } from 'vue';
-import type { ReportDto } from '@/types/reports';
+import type { ReportDto } from '@/modules/disciplines/modal/reports';
 
 const STORAGE_KEY = 'reports_storage';
 
 const savedReports = localStorage.getItem(STORAGE_KEY);
-export const reports = ref<ReportDto[]>(savedReports ? JSON.parse(savedReports) : []);
+export const reports = ref<ReportDto[]>(
+  savedReports ? JSON.parse(savedReports) : []
+);
 
 watch(
   reports,

@@ -18,12 +18,18 @@ import 'element-plus/dist/index.css'
 import '@mdi/font/css/materialdesignicons.css'
 
 import GlobalComponents from './components/global/index'
+import { ru } from 'vuetify/locale'
 
 const vuetify = createVuetify({
   components,
   directives,
   icons: {
     defaultSet: 'mdi',
+  },
+  locale: {
+    locale: 'ru',
+    fallback: 'en',
+    messages: { ru },
   },
 })
 

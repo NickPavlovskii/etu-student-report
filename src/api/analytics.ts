@@ -209,6 +209,8 @@ export async function getTeacherStatsProblematicGroups(
 export type DisciplineWithTeacherRowDto = {
   disciplineName: string;
   teacherFio: string;
+  /** Если есть — надёжнее, чем первая часть ФИО для запросов по фамилии */
+  teacherLastName?: string;
   course?: string | number;
   semester?: string | number;
   educationLevel?: string;

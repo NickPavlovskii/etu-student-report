@@ -2,8 +2,7 @@
   <v-card class="etu-info-card" elevation="0">
     <div class="info-inner">
       <div
-        class="info-icon-wrap"
-        :class="color"
+        :class="['info-icon-wrap', color]"
       >
         <v-icon size="28" :icon="icon" />
       </div>

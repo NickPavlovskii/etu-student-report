@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import type { ArchiveReportRow } from '@/types/reports';
+import type { ArchiveReportRow } from '@/modules/archive/model/reports';
 import { useDownload } from '@/composables/useDownload';
 import { formatArchiveDate } from '../utils';
 
@@ -12,8 +12,23 @@ export function useExportExcel() {
     filename = 'архив_учебных_работ.xlsx'
   ) {
     const headers = includeTeacher
-      ? ['Преподаватель', 'Студент', 'Группа', 'Дисциплина', 'Тип работы', 'Тема', 'Дата загрузки']
-      : ['Студент', 'Группа', 'Дисциплина', 'Тип работы', 'Тема', 'Дата загрузки'];
+      ? [
+          'Преподаватель',
+          'Студент',
+          'Группа',
+          'Дисциплина',
+          'Тип работы',
+          'Тема',
+          'Дата загрузки',
+        ]
+      : [
+          'Студент',
+          'Группа',
+          'Дисциплина',
+          'Тип работы',
+          'Тема',
+          'Дата загрузки',
+        ];
 
     const data = rows.map((r) => {
       const row = includeTeacher
@@ -40,9 +55,13 @@ export function useExportExcel() {
     const wsData = [headers, ...data];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-    const colWidths = wsData[0]?.map((_, i) => ({
-      wch: Math.min(Math.max(...wsData.map((row) => String(row[i] ?? '').length), 10), 50),
-    })) ?? [];
+    const colWidths =
+      wsData[0]?.map((_, i) => ({
+        wch: Math.min(
+          Math.max(...wsData.map((row) => String(row[i] ?? '').length), 10),
+          50
+        ),
+      })) ?? [];
     ws['!cols'] = colWidths;
 
     const wb = XLSX.utils.book_new();
