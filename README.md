@@ -1,5 +1,152 @@
-# Vue 3 + TypeScript + Vite
+<div align="center">
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+# Student Works
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+**Веб-клиент информационной системы учёта учебных работ**
+
+*Vue 3 · TypeScript · Vite*
+
+</div>
+
+---
+
+## О системе
+
+**Информационная система (ИС)** предназначена для автоматизации работы с учебными работами в вузе:
+
+| Роль / сценарий | Возможности |
+|-----------------|-------------|
+| **Преподаватель** | Просмотр своих дисциплин, загрузка и проверка отчётов студентов, переход в архив по работам |
+| **Кафедра / администратор** | Управление пользователями, просмотр дисциплин кафедры, журнал событий (аудит) |
+| **Аналитика** | Сводные данные по ошибкам и показателям (модуль аналитики) |
+| **Настройки** | Типы контроля и связанные параметры для дисциплин |
+
+Этот репозиторий — **фронтенд (SPA/PWA)**: интерфейс в браузере, данные приходят с **бэкенд-API** (отдельный сервер).
+
+---
+
+## Технологический стек
+
+| Слой | Технологии |
+|------|------------|
+| **Фреймворк** | [Vue 3](https://vuejs.org/) (Composition API, `<script setup>`) |
+| **Язык** | [TypeScript](https://www.typescriptlang.org/) |
+| **Сборка** | [Vite](https://vitejs.dev/) |
+| **Маршрутизация** | [Vue Router](https://router.vuejs.org/) |
+| **UI** | [Vuetify 3](https://vuetifyjs.com/), [Element Plus](https://element-plus.org/), иконки [MDI](https://materialdesignicons.com/) |
+| **Стили** | SCSS, [Tailwind CSS](https://tailwindcss.com/) (через Vite) |
+| **HTTP** | [Axios](https://axios-http.com/) |
+| **Таблицы / Excel** | [SheetJS (xlsx)](https://sheetjs.com/) |
+
+Инструменты разработки: ESLint, `vue-tsc` для проверки типов перед сборкой.
+
+---
+
+## Тесты, макеты и Storybook
+
+В проекте **заложены** (и будут отражены в репозитории после настройки): юнит-тесты, Figma и Storybook для глобального UI-kit.
+
+| Направление | Назначение | Ссылка / команда |
+|-------------|------------|------------------|
+| **Unit-тесты** | Проверка утилит, composables и ключевых компонентов (планируется, например, Vitest + Vue Test Utils). В `package.json` появится скрипт вроде `npm run test`. | *команда — после настройки* |
+| **Figma** | Макеты интерфейса, сетки и согласованность с дизайн-системой. | *ссылка на файл Figma — будет добавлена* |
+| **Storybook** | Документация и изолированная разработка глобальных компонентов в [`src/components/global/`](src/components/global/) (префикс `Etu*`: кнопки, таблицы, селекты и т.д.). | *локально: `npm run storybook` или ссылка на деплой — после настройки* |
+
+> **Примечание.** Пока Storybook и тестовый раннер не подключены в сборке — обновите таблицу выше реальными URL и командами, когда они появятся.
+
+---
+
+## Структура проекта
+
+```
+student-works-pw/
+├── src/
+│   ├── api/                 # HTTP-запросы к бэкенду
+│   ├── assets/              # Статика (иконки и др.)
+│   ├── components/global/   # Общий UI-kit (кнопки, таблицы, селекты — префикс Etu*)
+│   ├── composables/         # Переиспользуемая логика Vue
+│   ├── modules/             # Страницы по разделам ИС
+│   │   ├── auth/            # Вход, выбор способа авторизации
+│   │   ├── disciplines/     # Список дисциплин и карточка дисциплины
+│   │   ├── archive/         # Архив отчётов
+│   │   ├── admin/           # Администрирование (сотрудники, дисциплины кафедры, журнал)
+│   │   ├── analytics/       # Аналитика
+│   │   └── settings/        # Настройки (типы контроля и т.д.)
+│   ├── router.ts            # Маршруты и guard авторизации
+│   ├── types/               # Общие типы (например, пользователь)
+│   ├── utils/               # Утилиты
+│   ├── App.vue
+│   └── main.ts
+├── public/
+├── vite.config.ts           # Сборка, путь `outDir`, прокси `/api`
+├── tsconfig.*.json
+└── package.json
+```
+
+---
+
+## Быстрый старт
+
+### Требования
+
+- **Node.js** 18+ (рекомендуется актуальный LTS)
+- **npm** (или `pnpm` / `yarn`)
+
+### Установка зависимостей
+
+```bash
+npm install
+```
+
+### Режим разработки
+
+```bash
+npm run dev
+```
+
+Откройте в браузере адрес из консоли (обычно **http://localhost:5173**).  
+Для работы с данными нужен **бэкенд**: в dev-режиме запросы к `/api` проксируются на **http://localhost:8081** (см. `vite.config.ts`).
+
+### Продакшен-сборка
+
+```bash
+npm run build
+```
+
+Выполняется проверка типов (`vue-tsc`) и сборка. Результат:
+
+`dist/frontend/contents/panda/client`
+
+Путь задан под раздачу статики бэкендом; при необходимости измените `build.outDir` в `vite.config.ts`.
+
+### Просмотр собранного приложения
+
+```bash
+npm run preview
+```
+
+---
+
+## Скрипты npm
+
+| Команда | Описание |
+|---------|----------|
+| `npm run dev` | Запуск dev-сервера Vite с HMR |
+| `npm run build` | Проверка типов + production-сборка |
+| `npm run preview` | Локальный просмотр билда |
+| `npm run lint` | ESLint для `.ts` и `.vue` |
+| `npm run lint:fix` | То же + автоисправления |
+| `npm run docker:build` | Сборка Docker-образа |
+| `npm run docker:run` | Запуск контейнера на порту 8080 |
+
+---
+
+## Разработка и API
+
+- **Прокси:** в `vite.config.ts` настроен `server.proxy` для префикса `/api` → бэкенд (по умолчанию порт `8081`).
+- **Алиас `@/`** указывает на каталог `src/` (удобно для импортов).
+
+---
+
+
+Проект **`private`** (см. `package.json`), распространение ограничено.
