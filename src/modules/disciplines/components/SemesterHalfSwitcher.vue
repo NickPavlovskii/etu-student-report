@@ -6,16 +6,20 @@
   >
     <button
       type="button"
-      class="semester-switcher__option"
-      :class="{ 'semester-switcher__option--active': modelValue === 'autumn' }"
+      :class="[
+        'semester-switcher__option',
+        { 'semester-switcher__option--active': modelValue === 'autumn' },
+      ]"
       @click="$emit('update:modelValue', 'autumn')"
     >
       Осень (нечётные)
     </button>
     <button
       type="button"
-      class="semester-switcher__option"
-      :class="{ 'semester-switcher__option--active': modelValue === 'spring' }"
+      :class="[
+        'semester-switcher__option',
+        { 'semester-switcher__option--active': modelValue === 'spring' },
+      ]"
       @click="$emit('update:modelValue', 'spring')"
     >
       Весна (чётные)

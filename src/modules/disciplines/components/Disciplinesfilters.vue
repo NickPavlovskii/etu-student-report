@@ -4,128 +4,186 @@
     elevation="0"
   >
     <div class="filters-row">
-      <div class="search-bar-wrap">
-        <el-input
-          class="search"
-          placeholder="Поиск по названию дисциплины..."
-          clearable
-          :model-value="search"
-          :prefix-icon="Search"
-          @update:model-value="$emit('update:search', $event)"
-        />
-        <el-select
-          class="semester-select"
-          multiple
-          clearable
-          collapse-tags
-          placeholder="Все семестры"
-          popper-class="custom-header"
-          :model-value="semester"
-          :max-collapse-tags="1"
-          @update:model-value="$emit('update:semester', $event)"
-        >
-        <template #header>
-          <el-checkbox
-            :model-value="checkAll"
-            :indeterminate="indeterminate"
-            @change="$emit('check-all', $event)"
-          >
-            Все семестры
-          </el-checkbox>
+      <v-text-field
+        :model-value="search"
+        class="disciplines-search pill-input"
+        variant="outlined"
+        density="compact"
+        hide-details
+        clearable
+        placeholder="Поиск по названию дисциплины…"
+        prepend-inner-icon="mdi-magnify"
+        @update:model-value="$emit('update:search', $event)"
+      />
+
+      <etu-pill-search-select
+        class="semester-pill"
+        :model-value="semesterStrings"
+        :items="semesterItems"
+        multiple
+        placeholder="Все семестры"
+        prepend-icon="mdi-calendar-month-outline"
+        search-placeholder="Поиск…"
+        empty-text="Не найдено"
+        location="bottom start"
+        :clearable="true"
+        :show-null-option="false"
+        :close-on-content-click="false"
+        :menu-width="300"
+        :max-list-height="280"
+        @update:model-value="onSemesterUpdate"
+      >
+        <template #footer>
+          <div class="semester-pill-footer">
+            <v-btn
+              variant="text"
+              size="small"
+              class="semester-pill-footer__btn"
+              @click="$emit('check-all', true)"
+            >
+              Выбрать все
+            </v-btn>
+            <v-btn
+              variant="text"
+              size="small"
+              class="semester-pill-footer__btn"
+              @click="$emit('clear-all')"
+            >
+              Сбросить
+            </v-btn>
+          </div>
         </template>
-        <template #tag>
-          <el-tag
-            v-if="isAllSelected"
-            closable
-            @close="$emit('clear-all')"
-          >
-            Все семестры
-          </el-tag>
-        </template>
-        <el-option
-          v-for="s in uniqueSemesters"
-          :key="s"
-          :label="`Семестр ${s}`"
-          :value="s"
-        />
-        </el-select>
-      </div>
+      </etu-pill-search-select>
     </div>
   </v-card>
 </template>
 
-<script setup>
-import { Search } from '@element-plus/icons-vue';
+<script setup lang="ts">
+  import { computed } from 'vue';
 
-defineProps({
-  search: { type: String, default: '' },
-  semester: { type: Array, default: () => [] },
-  uniqueSemesters: { type: Array, default: () => [] },
-  checkAll: { type: Boolean, default: false },
-  indeterminate: { type: Boolean, default: false },
-  isAllSelected: { type: Boolean, default: false },
-});
+  const props = defineProps<{
+    search: string;
+    semester: (number | string)[];
+    uniqueSemesters: (number | string)[];
+  }>();
 
-defineEmits(['update:search', 'update:semester', 'check-all', 'clear-all']);
+  const emit = defineEmits<{
+    'update:search': [value: string];
+    'update:semester': [value: (number | string)[]];
+    'check-all': [value: boolean];
+    'clear-all': [];
+  }>();
+
+  const semesterItems = computed(() =>
+    (props.uniqueSemesters ?? []).map((s) => ({
+      title: `Семестр ${s}`,
+      value: String(s),
+    }))
+  );
+
+  const semesterStrings = computed(() =>
+    (props.semester ?? []).map((x) => String(x))
+  );
+
+  function onSemesterUpdate(v: string | null | string[]) {
+    if (!Array.isArray(v)) {
+      emit('update:semester', []);
+      return;
+    }
+    emit(
+      'update:semester',
+      v.map((s) => {
+        const n = Number(s);
+        return Number.isFinite(n) ? n : s;
+      })
+    );
+  }
 </script>
 
 <style scoped>
-.filters {
-  padding: 18px 22px 20px;
-  margin: 0 0 20px;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
+  .filters {
+    padding: 18px 22px 20px;
+    margin: 0 0 20px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e5e7eb;
+  }
 
-.filters-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
+  .filters-row {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
 
-.search-bar-wrap {
-  display: flex;
-  align-items: stretch;
-  flex: 1;
-  min-width: 280px;
-  border-radius: 10px;
-  border: 1px solid #e8eaed;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-}
+  .disciplines-search {
+    flex: 1 1 260px;
+    min-width: 0;
+  }
 
-.search {
-  flex: 1;
-  min-width: 0;
-}
+  .semester-pill {
+    flex: 0 1 280px;
+    min-width: 220px;
+  }
 
-.search :deep(.el-input__wrapper) {
-  border-radius: 0;
-  border: none;
-  box-shadow: none;
-  background: transparent;
-}
+  .semester-pill :deep(.v-menu) {
+    display: block;
+    width: 100%;
+  }
 
-.semester-select {
-  width: 200px;
-  flex-shrink: 0;
-}
+  .semester-pill :deep(.etu-pss-trigger) {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
 
-.semester-select :deep(.el-input__wrapper) {
-  border-radius: 0;
-  border: none;
-  border-left: 1px solid #e5e7eb;
-  box-shadow: none;
-  background: transparent;
-}
+  .pill-input :deep(.v-field__outline) {
+    display: none !important;
+  }
 
-.semester-select :deep(.el-input__inner),
-.semester-select :deep(.el-select__placeholder) {
-  color: rgb(37, 99, 235);
-  font-weight: 500;
-}
+  .pill-input :deep(.v-field) {
+    border-radius: 12px !important;
+    border: 1.5px solid #bfdbfe !important;
+    background: #eff6ff !important;
+    box-shadow: none !important;
+    transition:
+      border-color 0.18s,
+      box-shadow 0.18s,
+      background 0.18s;
+  }
+
+  .pill-input :deep(.v-field__input) {
+    min-height: 38px;
+    font-size: 13px;
+    color: #111827;
+  }
+
+  .pill-input :deep(.v-field--focused) {
+    border-color: #2563eb !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+  }
+
+  .pill-input :deep(.v-field__prepend-inner .v-icon) {
+    color: #9ca3af !important;
+  }
+
+  .semester-pill-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+  }
+
+  .semester-pill-footer__btn {
+    text-transform: none;
+    font-weight: 600;
+    font-size: 12px;
+    color: #2563eb;
+  }
 </style>

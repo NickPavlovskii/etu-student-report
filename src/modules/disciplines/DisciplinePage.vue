@@ -14,11 +14,15 @@
       border="start"
     >
       <template #prepend>
-        <v-icon icon="mdi-shield-account-outline" size="24" />
+        <v-icon
+          icon="mdi-shield-account-outline"
+          size="24"
+        />
       </template>
       <strong>Просмотр от имени администратора.</strong>
-      Вы просматриваете дисциплину преподавателя: {{ viewingAsAdminTeacherFio }}.
-      Это не ваша дисциплина — действия выполняются в режиме администрирования.
+      Вы просматриваете дисциплину преподавателя:
+      {{ viewingAsAdminTeacherFio }}. Это не ваша дисциплина — действия
+      выполняются в режиме администрирования.
     </v-alert>
     <v-card
       class="block"
@@ -32,7 +36,7 @@
             prepend-icon="mdi-chevron-left"
             @click="goBack"
           >
-            Вернуться к дисциплинам
+            {{ backNavLabel }}
           </v-btn>
           <div class="actions">
             <etu-button
@@ -60,7 +64,10 @@
           </div>
         </div>
         <h2 class="title">{{ cleanTitle(uiDiscipline.Discipline) }}</h2>
-        <p v-if="viewingAsAdmin && viewingAsAdminTeacherFio" class="discipline-teacher-line">
+        <p
+          v-if="viewingAsAdmin && viewingAsAdminTeacherFio"
+          class="discipline-teacher-line"
+        >
           <v-icon size="18">mdi-account-outline</v-icon>
           Преподаватель: {{ viewingAsAdminTeacherFio }}
         </p>
@@ -85,14 +92,14 @@
           icon="mdi-flask-outline"
           title="Практика"
           color="green"
-          :value="Number(uiDiscipline.PracticeHours ?? 0)"
           unit="ч."
+          :value="Number(uiDiscipline.PracticeHours ?? 0)"
         />
         <etu-info-card
           title="Загружено отчётов"
-          :value="`${disciplineWorksStats.uploaded} / ${disciplineWorksStats.total}`"
           icon="mdi-file-upload-outline"
           color="green"
+          :value="`${disciplineWorksStats.uploaded} / ${disciplineWorksStats.total}`"
         />
       </div>
     </v-card>
@@ -137,7 +144,7 @@
   import StudentsReportsTable from './components/StudentsReportsTable.vue';
   import DisciplineMeta from './components/DisciplineMeta.vue';
   import ValidationReportModal from './components/ValidationReportModal.vue';
-  import type { ReportDto } from '@/types/reports';
+  import type { ReportDto } from './modal/reports';
   import {
     getDisciplineCard,
     getDisciplineStudents,
@@ -150,8 +157,12 @@
   import { useAcademicYear } from '@/composables/useAcademicYear';
   import { useUser } from '@/composables/useUser';
   import { useDownload } from '@/composables/useDownload';
-  import { getVisibleControlTitles, getDisplayedTopicsByControlType } from '@/modules/settings/composables/useDisciplineControlTypes';
-  import { useDisciplines } from './composables/useDisciplines';
+  import {
+    getVisibleControlTitles,
+    getDisplayedTopicsByControlType,
+  } from '@/modules/settings/composables/useDisciplineControlTypes';
+  import { useDisciplineWorksStats } from './composables/useDisciplineWorksStats';
+  import type { StudentDto } from './modal/student';
 
   const route = useRoute();
   const router = useRouter();
@@ -170,14 +181,29 @@
   const reports = ref<ReportDto[]>([]);
 
   const planRowId = computed(() => Number(route.params.id));
-
-  const viewingAsAdmin = computed(() => route.query.fromAdmin === '1' || route.query.fromAdmin === 'true');
-  const viewingAsAdminTeacherFio = computed(() => (route.query.teacherFio as string) || '—');
-  /** Для API: при просмотре от имени админа — фамилия преподавателя из teacherFio, иначе текущий пользователь */
+  const viewingAsAdmin = computed(
+    () => route.query.fromAdmin === '1' || route.query.fromAdmin === 'true'
+  );
+  const backNavLabel = computed(() =>
+    viewingAsAdmin.value
+      ? 'Вернуться в администрирование'
+      : 'Вернуться к дисциплинам'
+  );
+  const viewingAsAdminTeacherFio = computed(
+    () => (route.query.teacherFio as string) || '—'
+  );
   const effectiveLastName = computed(() => {
-    if (viewingAsAdmin.value && viewingAsAdminTeacherFio.value && viewingAsAdminTeacherFio.value !== '—') {
-      const firstWord = String(viewingAsAdminTeacherFio.value).trim().split(/\s+/)[0];
-      if (firstWord) return firstWord;
+    if (
+      viewingAsAdmin.value &&
+      viewingAsAdminTeacherFio.value &&
+      viewingAsAdminTeacherFio.value !== '—'
+    ) {
+      const firstWord = String(viewingAsAdminTeacherFio.value)
+        .trim()
+        .split(/\s+/)[0];
+      if (firstWord) {
+        return firstWord;
+      }
     }
     return lastName.value ?? '';
   });
@@ -233,18 +259,18 @@
     return [...new Set(all.map((s) => String(s).trim()).filter(Boolean))];
   });
 
-  const studentsByGroup = computed<Record<string, any[]>>(() => {
-    const res: Record<string, any[]> = {};
+  const studentsByGroup = computed((): Record<string, StudentDto[]> => {
+    const res: Record<string, StudentDto[]> = {};
     for (const s of students.value ?? []) {
       const group = String(s.groupName ?? s.group ?? '').trim();
       if (group) {
-        (res[group] ??= []).push(s);
+        (res[group] ??= []).push(s as StudentDto);
       }
     }
     return res;
   });
 
-  const { disciplineWorksStats } = useDisciplines(
+  const { disciplineWorksStats } = useDisciplineWorksStats(
     studentsByGroup,
     reports,
     controls,
@@ -306,24 +332,34 @@
   );
 
   const uploadWork = () => (uploadDialog.value = true);
-  const goBack = () => router.push('/disciplines');
+  const goBack = () => {
+    if (viewingAsAdmin.value) {
+      router.push({ name: 'admin', query: { tab: 'disciplines' } });
+    } else {
+      router.push('/disciplines');
+    }
+  };
   const goToArchive = () => router.push('/archive');
 
   async function onUpload(payload: any) {
-    const dto = await uploadDisciplineReport(effectiveLastName.value, planRowId.value, {
-      studentId: payload.studentId,
-      groupName: payload.groupName,
-      topic: payload.topic ?? '',
-      controlType: payload.controlType ?? '',
-      workType: payload.workType,
-      workTitle: payload.workTitle,
-      academicYear: payload.academicYear,
-      autoCheck: !!payload.autoCheck,
-      check: payload.check ?? null,
-      status: payload.status ?? 'Загружен',
-      uploadedBy: uploadedBy.value,
-      file: payload.file as File,
-    });
+    const dto = await uploadDisciplineReport(
+      effectiveLastName.value,
+      planRowId.value,
+      {
+        studentId: payload.studentId,
+        groupName: payload.groupName,
+        topic: payload.topic ?? '',
+        controlType: payload.controlType ?? '',
+        workType: payload.workType,
+        workTitle: payload.workTitle,
+        academicYear: payload.academicYear,
+        autoCheck: !!payload.autoCheck,
+        check: payload.check ?? null,
+        status: payload.status ?? 'Загружен',
+        uploadedBy: uploadedBy.value,
+        file: payload.file as File,
+      }
+    );
     reports.value = [dto, ...reports.value];
     uploadDialog.value = false;
   }
@@ -337,10 +373,16 @@
     try {
       const blob = await apiDownloadReport(report.id);
       const fileName = report.fileName || 'report.docx';
-      const file = new File([blob], fileName, { type: blob.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const file = new File([blob], fileName, {
+        type:
+          blob.type ||
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
       const result = await validateDocument(file, { annotate: true });
       validationReportResult.value = result;
-      const workTitle = (report.workTitle || report.topic || '').toString().slice(0, 60);
+      const workTitle = (report.workTitle || report.topic || '')
+        .toString()
+        .slice(0, 60);
       validationReportBreadcrumb.value = `${report.workType || 'Работа'} > ${workTitle}${workTitle.length >= 60 ? '...' : ''}`;
       validationReportVisible.value = true;
     } catch (e) {
@@ -348,7 +390,13 @@
       validationReportResult.value = {
         valid: false,
         percent: report.check ?? 0,
-        errors: [{ code: 'ERROR', message: 'Не удалось выполнить проверку', passed: false }],
+        errors: [
+          {
+            code: 'ERROR',
+            message: 'Не удалось выполнить проверку',
+            passed: false,
+          },
+        ],
         warnings: [],
       };
       validationReportBreadcrumb.value = `${report.workType || ''} > ${(report.workTitle || report.topic || '').toString().slice(0, 50)}`;

@@ -46,8 +46,7 @@
         <div
           v-for="(item, idx) in errorItems"
           :key="item.code + '-' + idx"
-          class="error-card"
-          :class="cardClass(item)"
+          :class="['error-card', cardClass(item)]"
         >
           <v-icon
             size="24"
@@ -97,8 +96,7 @@
             </div>
           </div>
           <span
-            class="level-chip"
-            :class="levelChipClass(item)"
+            :class="['level-chip', levelChipClass(item)]"
           >
             {{ levelLabel(item) }}
           </span>

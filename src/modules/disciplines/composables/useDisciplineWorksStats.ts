@@ -1,8 +1,8 @@
 import type { Ref } from 'vue';
 import { computed } from 'vue';
-import type { ControlScheduleDto, ReportDto } from '@/types/reports';
+import type { ControlScheduleDto, ReportDto } from '../modal/reports';
+import type { StudentInGroupRow } from '../modal/uploadWorkModal';
 
-/** Преобразует topics из API (массив/JSON-строка) в массив строк */
 function normalizeTopics(topics: unknown): string[] {
   if (Array.isArray(topics)) {
     return topics.map(String);
@@ -20,7 +20,6 @@ function normalizeTopics(topics: unknown): string[] {
   return [];
 }
 
-/** Разбивает строку тем по шаблону "Тема N." на отдельные темы */
 function splitTopics(text: string): string[] {
   const s = (text ?? '').trim();
   if (s) {
@@ -35,12 +34,8 @@ function splitTopics(text: string): string[] {
 
 export type DisciplineWorksStats = { uploaded: number; total: number };
 
-/**
- * Composable для статистики по загруженным работам по дисциплине.
- * Считает общее число слотов (студент × тема) и число загруженных отчётов.
- */
-export function useDisciplines(
-  studentsByGroup: Ref<Record<string, unknown[]>>,
+export function useDisciplineWorksStats(
+  studentsByGroup: Ref<Record<string, StudentInGroupRow[]>>,
   reports: Ref<ReportDto[]>,
   controls: Ref<ControlScheduleDto[]>,
   visibleControlTypes?: Ref<string[] | undefined>,
@@ -53,17 +48,25 @@ export function useDisciplines(
       visibleControlTypes?.value == null
         ? null
         : new Set(
-            (visibleControlTypes.value ?? []).map((s) => String(s).trim().toLowerCase())
+            (visibleControlTypes.value ?? []).map((s) =>
+              String(s).trim().toLowerCase()
+            )
           );
 
     for (const c of ctrls) {
       const group = String(c.groupName ?? '').trim();
-      if (group.length === 0) continue;
+      if (group.length === 0) {
+        continue;
+      }
 
       const ct = String(c.controlText ?? '').trim();
-      if (visibleSet !== null && !visibleSet.has(ct.toLowerCase())) continue;
+      if (visibleSet !== null && !visibleSet.has(ct.toLowerCase())) {
+        continue;
+      }
 
-      let topics = normalizeTopics(c.topics).flatMap((t) => splitTopics(String(t)));
+      let topics = normalizeTopics(c.topics).flatMap((t) =>
+        splitTopics(String(t))
+      );
       const allowedTopics = displayedTopicsByControlType?.value?.[ct];
       if (allowedTopics !== undefined) {
         if (allowedTopics.length > 0) {
@@ -82,11 +85,9 @@ export function useDisciplines(
   });
 
   const disciplineWorksStats = computed<DisciplineWorksStats>(() => {
-    const byGroup = studentsByGroup.value;
-    const topicCounts = topicRowCountByGroup.value;
     let total = 0;
-    for (const [group, students] of Object.entries(byGroup)) {
-      const count = topicCounts[group] ?? 0;
+    for (const [group, students] of Object.entries(studentsByGroup.value)) {
+      const count = topicRowCountByGroup.value[group] ?? 0;
       total += (students?.length ?? 0) * count;
     }
     const uploadedSet = new Set<string>();

@@ -21,8 +21,7 @@
 
       <v-card-text>
         <div
-          class="file-dropzone"
-          :class="{ 'is-dragover': isDragOver }"
+          :class="['file-dropzone', { 'is-dragover': isDragOver }]"
           @click="openFileDialog"
           @dragover.prevent="isDragOver = true"
           @dragleave.prevent="isDragOver = false"
@@ -30,14 +29,14 @@
         >
           <v-icon size="36">mdi-upload</v-icon>
           <div class="drop-title">
-            {{ file ? file.name : 'Нажмите для выбора файла' }}
+            {{ dropzoneFileLabel }}
           </div>
           <div class="drop-sub">PDF, DOC, DOCX до 50 МБ</div>
           <div class="drop-hint">💡 ФамилияИО_Дисциплина_ТипРаботы</div>
           <input
             ref="fileInput"
             type="file"
-            :accept="UPLOAD_MODAL_ACCEPT"
+            accept=".pdf,.doc,.docx"
             hidden
             @change="onFileChange"
           />
@@ -51,10 +50,10 @@
             <v-select
               v-model="selectedGroup"
               label="Учебная группа *"
-              :items="groups"
               outlined
               dense
               hide-details
+              :items="groups"
             />
           </v-col>
 
@@ -62,20 +61,20 @@
             <v-select
               v-model="selectedStudentId"
               label="Студент *"
-              :items="studentsForSelect"
               item-title="name"
               item-value="id"
               outlined
               dense
               hide-details
               :disabled="!selectedGroup"
+              :items="studentsForSelect"
             />
           </v-col>
 
           <v-col cols="6">
             <v-text-field
-              label="Дисциплина"
               :model-value="disciplineTitle"
+              label="Дисциплина"
               disabled
               outlined
               dense
@@ -87,10 +86,10 @@
             <v-select
               v-model="workType"
               label="Вид контроля *"
-              :items="workTypes"
               outlined
               dense
               hide-details
+              :items="controlTypesOptions"
             />
           </v-col>
 
@@ -111,10 +110,10 @@
             <v-select
               v-model="topic"
               label="Тема"
-              :items="topicsList"
               outlined
               dense
               hide-details
+              :items="topicsList"
             />
           </v-col>
 
@@ -154,7 +153,6 @@
         </v-btn>
       </v-card-actions>
 
-      <!-- Результаты проверки -->
       <v-dialog
         v-model="showValidationResult"
         max-width="520"
@@ -162,12 +160,15 @@
       >
         <v-card class="validation-result-card">
           <div class="validation-header">
-            <v-icon :color="validationResult?.valid ? 'success' : 'warning'" size="28">
-              {{ validationResult?.valid ? 'mdi-check-circle' : 'mdi-alert-circle' }}
+            <v-icon
+              :color="validationHeaderIconColor"
+              size="28"
+            >
+              {{ validationHeaderIconName }}
             </v-icon>
             <div>
               <h3 class="validation-title">
-                {{ validationResult?.valid ? 'Проверка пройдена' : 'Найдены замечания' }}
+                {{ validationResultTitleText }}
               </h3>
               <div
                 v-if="validationResult?.percent != null"
@@ -182,24 +183,36 @@
               <div
                 v-for="(c, idx) in allCriteria"
                 :key="c.code + '-' + idx"
-                class="validation-item"
-                :class="{ error: !c.passed && c.level === 'error', warning: !c.passed && c.level !== 'error', passed: c.passed }"
+                :class="[
+                  'validation-item',
+                  {
+                    error: !c.passed && c.level === 'error',
+                    warning: !c.passed && c.level !== 'error',
+                    passed: c.passed,
+                  },
+                ]"
               >
                 <v-icon
                   v-if="c.passed"
                   size="18"
                   color="success"
-                >mdi-check-circle</v-icon>
+                >
+                  mdi-check-circle
+                </v-icon>
                 <v-icon
                   v-else-if="c.level === 'error'"
                   size="18"
                   color="error"
-                >mdi-close-circle</v-icon>
+                >
+                  mdi-close-circle
+                </v-icon>
                 <v-icon
                   v-else
                   size="18"
                   color="warning"
-                >mdi-alert</v-icon>
+                >
+                  mdi-alert
+                </v-icon>
                 <div class="criteria-content">
                   <span class="criteria-title">{{ c.title || c.code }}:</span>
                   <span class="criteria-message">{{ c.message }}</span>
@@ -215,6 +228,14 @@
             </div>
           </v-card-text>
           <v-card-actions>
+            <v-btn
+              v-if="showAnnotatedFileButton"
+              variant="tonal"
+              prepend-icon="mdi-file-eye-outline"
+              @click="openAnnotatedFile"
+            >
+              {{ annotatedFileButtonLabel }}
+            </v-btn>
             <v-spacer />
             <v-btn
               variant="text"
@@ -226,7 +247,7 @@
               color="primary"
               @click="confirmUploadDespiteValidation"
             >
-              {{ validationResult?.valid ? 'Загрузить' : 'Загрузить несмотря на замечания' }}
+              {{ confirmUploadAfterValidationLabel }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -236,28 +257,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { useAcademicYear } from '@/composables/useAcademicYear';
-import type { DisciplineUi, UploadWorkPayload } from '@/types/uploadWorkModal';
-import { UPLOAD_MODAL_ACCEPT } from '@/types/uploadWorkModal';
-import { validateDocument } from '@/api/validation';
-import type { ValidationResult } from '@/api/validation';
+  import { ref, computed, watch } from 'vue';
+  import { useAcademicYear } from '@/composables/useAcademicYear';
+  import { useDownload } from '@/composables/useDownload';
+  import { validateDocument } from '@/api/validation';
+  import type { ValidationResult } from '@/api/validation';
+  import type {
+    StudentInGroupRow,
+    UploadDisciplineModalProps,
+    UploadWorkPayload,
+  } from '../modal/uploadWorkModal';
 
-const { academicYear } = useAcademicYear();
+  const { academicYear } = useAcademicYear();
+  const { downloadAnnotatedFile } = useDownload();
 
-const props = defineProps<{
-  discipline: DisciplineUi | null;
-  groups: string[];
-  studentsByGroup: Record<string, unknown[]>;
-  topics: string[];
-  controls: unknown[];
-  assessment: string;
-}>();
+  const props = defineProps<UploadDisciplineModalProps>();
 
-const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'submit', payload: UploadWorkPayload): void;
-}>();
+  const emit = defineEmits<{
+    (e: 'close'): void;
+    (e: 'submit', payload: UploadWorkPayload): void;
+  }>();
 
   const dialog = ref(true);
 
@@ -277,6 +296,49 @@ const emit = defineEmits<{
   const validationResult = ref<ValidationResult | null>(null);
   const pendingSubmitPayload = ref<UploadWorkPayload | null>(null);
 
+  const dropzoneFileLabel = computed(() =>
+    file.value ? file.value.name : 'Нажмите для выбора файла'
+  );
+
+  const submitButtonLabel = computed(() =>
+    validating.value ? 'Проверка...' : 'Загрузить'
+  );
+
+  const validationHeaderIconColor = computed(() =>
+    validationResult.value?.valid ? 'success' : 'warning'
+  );
+
+  const validationHeaderIconName = computed(() =>
+    validationResult.value?.valid ? 'mdi-check-circle' : 'mdi-alert-circle'
+  );
+
+  const validationResultTitleText = computed(() =>
+    validationResult.value?.valid ? 'Проверка пройдена' : 'Найдены замечания'
+  );
+
+  const confirmUploadAfterValidationLabel = computed(() =>
+    validationResult.value?.valid
+      ? 'Загрузить'
+      : 'Загрузить несмотря на замечания'
+  );
+
+  const showAnnotatedFileButton = computed(() => {
+    const r = validationResult.value;
+    return !!(r?.annotatedFileBase64 && r?.annotatedFileName);
+  });
+
+  const isAnnotatedPdf = computed(() =>
+    (validationResult.value?.annotatedFileName ?? '')
+      .toLowerCase()
+      .endsWith('.pdf')
+  );
+
+  const annotatedFileButtonLabel = computed(() =>
+    isAnnotatedPdf.value
+      ? 'Просмотреть файл с замечаниями'
+      : 'Скачать файл с замечаниями'
+  );
+
   const allCriteria = computed(() => {
     const r = validationResult.value;
     if (!r) return [];
@@ -285,45 +347,51 @@ const emit = defineEmits<{
   });
 
   const disciplineTitle = computed(() => {
-    const d: any = props.discipline;
-    return d?.Discipline ?? d?.Name ?? '';
+    const d = props.discipline;
+    if (!d) return '';
+    return d.Discipline ?? d.Name ?? '';
   });
 
   const topicsList = computed(() => props.topics ?? []);
-  const workTypes = ref<string[]>([]);
+
+  const controlTypesOptions = computed(() => {
+    const group = String(selectedGroup.value ?? '').trim();
+    const list: string[] = [];
+    const seen = new Set<string>();
+    for (const c of props.controls ?? []) {
+      const controlGroup = String(c?.groupName ?? '').trim();
+      const controlText = String(c?.controlText ?? '').trim();
+      if (controlText && (group === '' || controlGroup === group)) {
+        if (!seen.has(controlText)) {
+          seen.add(controlText);
+          list.push(controlText);
+        }
+      }
+    }
+    return list.sort();
+  });
+
+  watch(selectedGroup, () => {
+    selectedStudentId.value = null;
+    const opts = controlTypesOptions.value;
+    const current = workType.value;
+    if (opts.length > 0 && !opts.includes(current)) {
+      workType.value = opts[0] ?? '';
+    }
+  });
 
   watch(
-    () => props.assessment,
-    (val) => {
-      const raw = (val ?? '').trim();
-      if (raw) {
-        workTypes.value = raw
-          .split('/')
-          .map((s) => s.trim())
-          .filter(Boolean);
-
-        const hasWorkType = workType.value;
-        if (hasWorkType) {
-          // keep current
-        } else {
-          workType.value = workTypes.value[0] ?? '';
-        }
-      } else {
-        workTypes.value = [];
-        workType.value = '';
+    controlTypesOptions,
+    (opts) => {
+      if (opts.length > 0 && !opts.includes(workType.value)) {
+        workType.value = opts[0] ?? '';
       }
     },
     { immediate: true }
   );
 
-  watch(selectedGroup, () => {
-    selectedStudentId.value = null;
-  });
-
   watch(topicsList, (val) => {
-    if (val?.length) {
-      // keep topic
-    } else {
+    if (!val?.length) {
       topic.value = '';
     }
   });
@@ -333,27 +401,34 @@ const emit = defineEmits<{
   const onFileChange = (e: Event) => {
     const input = e.target as HTMLInputElement;
     const f = input.files?.[0];
-    if (f) file.value = f;
+    if (f) {
+      file.value = f;
+    }
   };
 
   const onDrop = (e: DragEvent) => {
     isDragOver.value = false;
     const f = e.dataTransfer?.files?.[0];
-    if (f) file.value = f;
+    if (f) {
+      file.value = f;
+    }
   };
 
-  function getStudentIdRaw(s: any): number {
-    const v = s?.studentId ?? s?.lkId ?? s?.lk_id ?? s?.['ID ИОТ'];
+  function getStudentIdRaw(s: StudentInGroupRow): number {
+    const v = s.studentId ?? s.lkId ?? s.lk_id ?? s['ID ИОТ'];
     const n = Number(v);
     return Number.isFinite(n) ? n : 0;
   }
 
   const studentsForSelect = computed(() => {
     const group = selectedGroup.value;
-    if (group) {
-      const seen = new Set<number>();
+    if (!group) {
+      return [];
+    }
 
-      return (props.studentsByGroup[group] ?? [])
+    const seen = new Set<number>();
+
+    return (props.studentsByGroup[group] ?? [])
       .map((s) => {
         const id = getStudentIdRaw(s);
         return {
@@ -362,17 +437,11 @@ const emit = defineEmits<{
         };
       })
       .filter((x) => {
-        if (x.id === 0) {
-          return false;
-        }
-        if (seen.has(x.id)) {
-          return false;
-        }
+        if (x.id === 0) return false;
+        if (seen.has(x.id)) return false;
         seen.add(x.id);
         return true;
       });
-    }
-    return [];
   });
 
   const isValid = computed(() => {
@@ -385,12 +454,14 @@ const emit = defineEmits<{
     return hasFile && hasGroup && hasStudent && hasTitle && hasWorkType;
   });
 
+  type StoredUserLite = { fioShort?: string; lastName?: string };
+
   function getUploadedBy(): string {
     const raw = localStorage.getItem('user');
     if (raw) {
       try {
-        const u = JSON.parse(raw);
-        return u?.fioShort ?? u?.lastName ?? 'unknown';
+        const u = JSON.parse(raw) as StoredUserLite;
+        return u.fioShort ?? u.lastName ?? 'unknown';
       } catch {
         return 'unknown';
       }
@@ -398,7 +469,7 @@ const emit = defineEmits<{
     return 'unknown';
   }
 
-  function normalizeTopics(t: any): string[] {
+  function normalizeTopics(t: unknown): string[] {
     if (Array.isArray(t)) {
       return t.map((x) => String(x).trim());
     }
@@ -424,8 +495,7 @@ const emit = defineEmits<{
     const group = String(selectedGroup.value ?? '').trim();
     const chosenTopic = String(topic.value ?? '').trim();
 
-    const hasGroupAndTopic = group && chosenTopic;
-    if (hasGroupAndTopic) {
+    if (group && chosenTopic) {
       for (const c of props.controls ?? []) {
         const controlGroup = String(c?.groupName ?? '').trim();
         const controlText = String(c?.controlText ?? '').trim();
@@ -463,32 +533,50 @@ const emit = defineEmits<{
       file: f,
     };
 
-    if (autoCheck.value) {
-      validating.value = true;
-      try {
-        const result = await validateDocument(f);
-        validationResult.value = result;
-        pendingSubmitPayload.value = payload;
-        showValidationResult.value = true;
-      } catch (err) {
-        console.warn('Сервис проверки недоступен, загрузка без проверки:', err);
-        emit('submit', payload);
-        close();
-      } finally {
-        validating.value = false;
-      }
-    } else {
+    validating.value = true;
+    try {
+      const resolved = resolvedControlType.value;
+      const tid =
+        props.templateId ??
+        (resolved ? props.templateIdByWorkType?.[resolved] : undefined);
+      const result = await validateDocument(
+        f,
+        tid != null ? { templateId: tid, annotate: true } : { annotate: true }
+      );
+      validationResult.value = result;
+      pendingSubmitPayload.value = payload;
+      showValidationResult.value = true;
+    } catch (err) {
+      console.warn('Сервис проверки недоступен, загрузка без проверки:', err);
       emit('submit', payload);
       close();
+    } finally {
+      validating.value = false;
+    }
+  }
+
+  function openAnnotatedFile() {
+    const r = validationResult.value;
+    const b64 = r?.annotatedFileBase64;
+    const name = r?.annotatedFileName ?? 'document_замечания.docx';
+    if (!b64) return;
+    try {
+      downloadAnnotatedFile(b64, name);
+    } catch (e) {
+      console.error('Ошибка открытия файла:', e);
     }
   }
 
   function confirmUploadDespiteValidation() {
     const p = pendingSubmitPayload.value;
+    const result = validationResult.value;
     showValidationResult.value = false;
     validationResult.value = null;
     pendingSubmitPayload.value = null;
     if (p) {
+      if (result?.percent != null && p.autoCheck) {
+        p.check = result.percent;
+      }
       emit('submit', p);
       close();
     }
@@ -591,16 +679,18 @@ const emit = defineEmits<{
     padding: 16px 24px;
 
     .form-row {
-      margin-bottom: 8px; /* уменьшено с 16px до 8px */
+      margin-bottom: 8px;
     }
 
     .v-file-input,
     .v-select,
     .v-text-field {
-      margin-bottom: 8px; /* уменьшено с 16px до 8px */
+      margin-bottom: 8px;
 
       input {
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease;
       }
 
       &:focus-within input {
@@ -631,7 +721,9 @@ const emit = defineEmits<{
       min-width: 160px;
       border-radius: 8px;
       color: white;
-      transition: background-color 0.3s ease, transform 0.2s ease;
+      transition:
+        background-color 0.3s ease,
+        transform 0.2s ease;
 
       &:first-child {
         color: #111827;
@@ -653,107 +745,82 @@ const emit = defineEmits<{
     border-radius: 16px;
     padding: 8px 0;
   }
-  .validation-header {
+  .validation-result-card .validation-header {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 16px 24px 8px;
   }
-  .validation-title {
+  .validation-result-card .validation-title {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
     color: #111827;
   }
-  .validation-errors {
+  .validation-result-card .validation-percent {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+  .validation-result-card .validation-errors {
     padding: 0 24px 16px;
     max-height: 280px;
     overflow-y: auto;
   }
-  .validation-item {
+  .validation-result-card .validation-item {
     display: flex;
     align-items: flex-start;
     gap: 10px;
     padding: 8px 0;
     font-size: 14px;
     color: #374151;
-    &.error {
-      color: #dc2626;
-    }
-    &.warning {
-      color: #d97706;
-    }
   }
-</style>
-
-<style lang="scss">
-/* Стили для диалога проверки (контент рендерится через teleport) */
-.validation-result-card {
-  border-radius: 16px;
-  padding: 8px 0;
-}
-.validation-result-card .validation-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 24px 8px;
-}
-.validation-result-card .validation-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
-}
-.validation-percent {
-  font-size: 13px;
-  color: #6b7280;
-  margin-top: 4px;
-}
-.validation-result-card .validation-errors {
-  padding: 0 24px 16px;
-  max-height: 280px;
-  overflow-y: auto;
-}
-.validation-result-card .validation-criteria-list {
-  padding: 0 24px 16px;
-  max-height: 360px;
-  overflow-y: auto;
-}
-.validation-result-card .validation-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 0;
-  font-size: 14px;
-  border-bottom: 1px solid #f3f4f6;
-}
-.validation-result-card .validation-item:last-child {
-  border-bottom: none;
-}
-.validation-result-card .validation-item.passed {
-  color: #15803d;
-}
-.validation-result-card .validation-item.error {
-  color: #dc2626;
-}
-.validation-result-card .validation-item.warning {
-  color: #d97706;
-}
-.validation-result-card .criteria-content {
-  flex: 1;
-  min-width: 0;
-}
-.validation-result-card .criteria-title {
-  font-weight: 600;
-  display: block;
-  margin-bottom: 2px;
-}
-.validation-result-card .criteria-message {
-  display: block;
-}
-.validation-result-card .criteria-details {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 4px;
-}
+  .validation-result-card .validation-item.error {
+    color: #dc2626;
+  }
+  .validation-result-card .validation-item.warning {
+    color: #d97706;
+  }
+  .validation-result-card .validation-criteria-list {
+    padding: 0 24px 16px;
+    max-height: 360px;
+    overflow-y: auto;
+  }
+  .validation-result-card .validation-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .validation-result-card .validation-item:last-child {
+    border-bottom: none;
+  }
+  .validation-result-card .validation-item.passed {
+    color: #15803d;
+  }
+  .validation-result-card .validation-item.error {
+    color: #dc2626;
+  }
+  .validation-result-card .validation-item.warning {
+    color: #d97706;
+  }
+  .validation-result-card .criteria-content {
+    flex: 1;
+    min-width: 0;
+  }
+  .validation-result-card .criteria-title {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .validation-result-card .criteria-message {
+    display: block;
+  }
+  .validation-result-card .criteria-details {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+  }
 </style>

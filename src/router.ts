@@ -43,7 +43,7 @@ const routes = [
     path: '/discipline/:id',
     name: 'discipline',
     meta: { requiresAuth: true, layout: 'main' },
-    component: () => import('@/modules/discipline/DisciplineDetailPage.vue'),
+    component: () => import('@/modules/disciplines/DisciplinePage.vue'),
   },
   {
     path: '/archive',
