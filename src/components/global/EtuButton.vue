@@ -1,6 +1,6 @@
 <template>
   <v-btn
-    class="nic-btn"
+    class="etu-btn"
     :variant="border ? 'outlined' : 'flat'"
     @click="$emit('click', $event)"
   >
@@ -60,7 +60,7 @@
 </script>
 
 <style scoped lang="scss">
-  .nic-btn {
+  .etu-btn {
     text-transform: none;
     border-radius: 10px;
     font-weight: 500;

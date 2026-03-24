@@ -1,0 +1,6 @@
+services:
+  app:
+    build: .
+    image: student-works-pwa
+    ports:
+      - "8080:80"

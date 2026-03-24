@@ -1,17 +1,34 @@
 import { computed } from 'vue';
 import type { User } from '@/types/user';
 
+function hasAdminRole(role: string | undefined): boolean {
+  if (!role) return false;
+  return role.toUpperCase().split(',').map((r) => r.trim()).includes('ADMIN');
+}
+
 export function useAuth() {
   const user = computed<User | null>(() => {
     const raw = localStorage.getItem('user');
-    return raw ? JSON.parse(raw) : null;
+    if (raw) {
+      try {
+        return JSON.parse(raw) as User;
+      } catch {
+        return null;
+      }
+    }
+    return null;
   });
 
-  const isTeacher = computed(() => user.value?.role === 'teacher');
-  const isHead = computed(() => user.value?.role === 'head');
+  const isTeacher = computed(() => {
+    const r = user.value?.role ?? '';
+    return r.toUpperCase().split(',').map((x: string) => x.trim()).includes('TEACHER');
+  });
+  const isHead = computed(() => hasAdminRole(user.value?.role));
+  const isAuth = computed(() => !!user.value);
 
   return {
     user,
+    isAuth,
     isTeacher,
     isHead,
   };

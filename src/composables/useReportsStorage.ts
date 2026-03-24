@@ -1,10 +1,12 @@
 import { ref, watch } from 'vue';
-import type { Report } from '../types/report';
+import type { ReportDto } from '@/modules/disciplines/modal/reports';
 
 const STORAGE_KEY = 'reports_storage';
 
 const savedReports = localStorage.getItem(STORAGE_KEY);
-export const reports = ref<Report[]>(savedReports ? JSON.parse(savedReports) : []);
+export const reports = ref<ReportDto[]>(
+  savedReports ? JSON.parse(savedReports) : []
+);
 
 watch(
   reports,
@@ -22,7 +24,7 @@ export function useReportsStorage() {
     }
   };
 
-  const addReport = (report: Report) => {
+  const addReport = (report: ReportDto) => {
     const index = reports.value.findIndex(
       (r) => r.studentId === report.studentId && r.topic === report.topic
     );

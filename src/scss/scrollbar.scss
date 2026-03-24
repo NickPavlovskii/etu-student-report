@@ -1,0 +1,31 @@
+::-webkit-scrollbar {
+    width: 6px;
+    border-radius: 20px;
+    padding-bottom: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: var(--light-platinum);
+    border-radius: 20px;
+}
+
+::-webkit-scrollbar-track:hover {
+    background-color: var(--light-platinum);
+}
+
+::-webkit-scrollbar-track:active {
+    background-color: var(--light-platinum);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--light-gray);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #454545;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: var(--black-color);
+}
