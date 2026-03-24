@@ -22,6 +22,7 @@ export type TeacherDto = {
   rank?: string;
   degree?: string;
   disciplinesCount?: number;
+  disciplines?: string[];
 };
 
 export type AuditLogEntryDto = {
@@ -31,10 +32,10 @@ export type AuditLogEntryDto = {
   entityType?: string;
   entityId?: string;
   actor?: string;
+  actorFio?: string;
+  entityFioResolved?: string;
   details?: string;
-  /** Когда действие было отменено (откат) */
   rolledBackAt?: string;
-  /** Кто отменил действие */
   rolledBackBy?: string;
 };
 
@@ -97,7 +98,7 @@ export async function getAdminDisciplines(): Promise<string[]> {
 /**
  * GET /api/admin/audit-log
  * Журнал событий. Query: dateFrom (YYYY-MM-DD), dateTo, action, actor.
- * action: REPORT_UPLOADED | TEMPLATE_CREATED | TEMPLATE_UPDATED | TEMPLATE_DELETED | ROLE_CHANGED
+ * action: REPORT_UPLOADED | … | ROLE_CHANGED | ACTION_ROLLED_BACK (отмена действия) и др.
  */
 export async function getAuditLog(params?: {
   dateFrom?: string;
