@@ -1,7 +1,8 @@
-.v-overlay__content.analytics-tt-wrap {
-  padding: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
+/* Прямой потомок .v-tooltip — как в разметке VTooltip (Vuetify 3) */
+.v-tooltip > .v-overlay__content.analytics-tt-wrap {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .analytics-tt {

@@ -14,8 +14,8 @@
       <v-tooltip
         location="top"
         transition="fade-transition"
-        :close-delay="80"
         content-class="analytics-tt-wrap"
+        :close-delay="80"
       >
         <template #activator="{ props: tipProps }">
           <div
@@ -71,8 +71,8 @@
 
 <script setup lang="ts">
   import { computed } from 'vue';
-  import type { HBarRow } from '../model';
-  import '../analyticsTooltipShared.css';
+  import type { HBarRow } from '../../model';
+  import '../../styles/analytics-tooltip-shared.css';
 
   const props = defineProps<{
     rows: HBarRow[];

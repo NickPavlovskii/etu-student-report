@@ -8,7 +8,9 @@ import type {
 import type {
   AnalyticsDisciplineTableRow,
   TeacherPlanCardNormalized,
+  TeacherTreeBlock,
 } from '../model';
+import { formatGroupsForDisplay } from './format';
 
 export function parsePlanSemester(semester: unknown): number | null {
   if (semester == null || semester === '') return null;
@@ -296,4 +298,47 @@ export function aggregateTeachersSummaryFromPlan(
       disciplinesCount: v.disciplines.size,
     }))
     .sort((a, b) => b.expectedCount - a.expectedCount);
+}
+
+export function buildTeacherDetailBlocks(
+  rows: DisciplineWithTeacherRowDto[]
+): TeacherTreeBlock[] {
+  const map = new Map<
+    string,
+    {
+      plan: number;
+      uploaded: number;
+      children: TeacherTreeBlock['children'];
+    }
+  >();
+  for (const row of rows) {
+    const t = row.teacherFio?.trim() || row.teacherLastName?.trim() || '';
+    if (!t) continue;
+    if (!map.has(t)) {
+      map.set(t, { plan: 0, uploaded: 0, children: [] });
+    }
+    const b = map.get(t)!;
+    b.plan += Number(row.expectedCount) || 0;
+    b.uploaded += Number(row.uploadedCount) || 0;
+    b.children.push({
+      disciplineName: row.disciplineName?.trim() || '—',
+      planRowId: row.planRowId,
+      plan: Number(row.expectedCount) || 0,
+      uploaded: Number(row.uploadedCount) || 0,
+      groupTags: formatGroupsForDisplay(row.groups),
+    });
+  }
+  return [...map.entries()]
+    .map(([teacher, v]) => ({
+      teacher,
+      plan: v.plan,
+      uploaded: v.uploaded,
+      pct: v.plan
+        ? Math.min(100, Math.round((v.uploaded / v.plan) * 100))
+        : 0,
+      children: v.children.sort((a, b) =>
+        a.disciplineName.localeCompare(b.disciplineName, 'ru')
+      ),
+    }))
+    .sort((a, b) => b.plan - a.plan);
 }

@@ -1,5 +1,5 @@
 import type { Ref } from 'vue';
-import { ref, computed, watch } from 'vue';
+import { ref, shallowRef, computed, watch } from 'vue';
 import { useUser } from '@/composables/useUser';
 import {
   getTeacherStats,
@@ -20,7 +20,7 @@ import {
   type AnalyticsQueryParams,
   type StudyPeriod,
 } from '@/api/info';
-import { teacherCardsResponseToArray } from '@/modules/analytics/utils/analyticsScope';
+import { teacherCardsResponseToArray } from '../utils/analyticsScope';
 import type { ScopeMode } from '../model';
 
 function normalizeAcademicYear(raw: string): string {
@@ -52,10 +52,10 @@ export function useAnalytics(filters: {
 
   const teacherKpi = ref<TeacherStatsKpi | null>(null);
   const adminKpi = ref<AdminAnalyticsKpi | null>(null);
-  const disciplinesTable = ref<DisciplinesTableItem[]>([]);
-  const bySemester = ref<BySemesterRow[]>([]);
-  const teachersSummary = ref<TeachersSummaryItem[]>([]);
-  const disciplinesWithTeachers = ref<DisciplineWithTeacherRowDto[]>([]);
+  const disciplinesTable = shallowRef<DisciplinesTableItem[]>([]);
+  const bySemester = shallowRef<BySemesterRow[]>([]);
+  const teachersSummary = shallowRef<TeachersSummaryItem[]>([]);
+  const disciplinesWithTeachers = shallowRef<DisciplineWithTeacherRowDto[]>([]);
   /** Сырые карточки дисциплин преподавателя (личная аналитика, названия + семестр). */
   const teacherDisciplineCards = ref<unknown[]>([]);
 

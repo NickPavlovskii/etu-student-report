@@ -25,13 +25,13 @@ export const groupsTableColumns: TableColumn[] = [
   {
     key: 'label',
     header: 'Группа',
-    headerClass: 'th-filled th-sep'
+    headerClass: 'th-filled th-sep',
   },
   {
     key: 'upload',
     header: 'Загрузка',
-    headerClass: 'th-filled'
-   },
+    headerClass: 'th-filled',
+  },
 ];
 
 export const teachersTableColumns: TableColumn[] = [
@@ -46,9 +46,10 @@ export const teachersTableColumns: TableColumn[] = [
     headerClass: 'th-filled th-sep',
     width: '10%',
   },
-  { key: 'upload',
+  {
+    key: 'upload',
     header: 'Загрузка',
-    headerClass: 'th-filled'
+    headerClass: 'th-filled',
   },
 ];
 

@@ -104,8 +104,8 @@
 
 <script setup lang="ts">
   import { computed } from 'vue';
-  import type { VBarItem } from '../model';
-  import '../analyticsTooltipShared.css';
+  import type { VBarItem } from '../../model';
+  import '../../styles/analytics-tooltip-shared.css';
 
   const props = withDefaults(
     defineProps<{
