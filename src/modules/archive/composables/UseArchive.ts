@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue';
 import {
   fetchArchiveReportsForTeacher,
   fetchArchiveReportsAll,
-} from '@/api/archive';
+} from '@/api/info';
 import { useAcademicYear } from '@/composables/useAcademicYear';
 import { useUser } from '@/composables/useUser';
 import type { ArchiveReportRow } from '@/modules/archive/model/reports';

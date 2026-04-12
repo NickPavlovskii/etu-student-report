@@ -1,5 +1,4 @@
 <template>
-  <!-- Режим оверлея (вкладки админки и т.п.) -->
   <Transition
     v-if="overlay"
     name="etu-tea-overlay-fade"
@@ -24,8 +23,6 @@
       </div>
     </div>
   </Transition>
-
-  <!-- Обычный режим: только анимация чашки (страницы загрузки и т.д.) -->
   <div
     v-else
     class="etu-tea-loader"
@@ -38,11 +35,8 @@
 
   withDefaults(
     defineProps<{
-      /** Полупрозрачный слой на весь контейнер (нужен `position: relative` у родителя) */
-      overlay?: boolean;
-      /** Для `overlay`: показать оверлей */
+       overlay?: boolean;
       loading?: boolean;
-      /** Для `overlay`: подпись под чашкой */
       label?: string;
     }>(),
     {
@@ -53,7 +47,6 @@
 </script>
 
 <style scoped>
-  /* ── Общая анимация SVG ── */
   .etu-tea-loader {
     --etu-tea-color: #334155;
     display: flex;
@@ -86,7 +79,6 @@
     animation-delay: 0.4s;
   }
 
-  /* Компактный вид внутри оверлея */
   .etu-tea-loader--compact {
     padding: 0;
   }
@@ -127,7 +119,6 @@
     }
   }
 
-  /* ── Оверлей ── */
   .etu-tea-loader-overlay {
     position: absolute;
     inset: 0;

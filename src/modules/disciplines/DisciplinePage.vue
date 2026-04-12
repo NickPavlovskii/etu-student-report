@@ -152,8 +152,8 @@
     uploadDisciplineReport,
     downloadReport as apiDownloadReport,
     getDisciplineControls,
-  } from '@/api/disciplines';
-  import { validateDocument } from '@/api/validation';
+    validateDocument,
+  } from '@/api/info';
   import { useAcademicYear } from '@/composables/useAcademicYear';
   import { useUser } from '@/composables/useUser';
   import { useDownload } from '@/composables/useDownload';

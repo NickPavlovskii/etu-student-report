@@ -82,7 +82,7 @@
     formatAuditDetails,
     formatAuditEntityLabel,
   } from '@/modules/admin/utils/audit';
-  import type { AuditLogEntryDto } from '@/api/admin';
+  import type { AuditLogEntryDto } from '@/api/info';
   import type { TableColumn } from '@/components/global/etu-data-table/types';
 
   defineProps<{
@@ -192,16 +192,33 @@
     font-size: 11px;
   }
 
-  .rollback-btn {
-    color: #6b7280 !important;
+  /* Vuetify text/icon-кнопка: без !important — цепочка классов + :deep */
+  .col-actions :deep(.rollback-btn.v-btn.v-btn--variant-text.v-btn--icon) {
+    color: #6b7280;
     transition:
-      color 0.15s,
-      background 0.15s;
+      color 0.2s ease,
+      background-color 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
-  .rollback-btn:hover {
-    color: #dc2626 !important;
-    background: #fef2f2 !important;
+  .col-actions :deep(.rollback-btn.v-btn.v-btn--variant-text.v-btn--icon .v-icon) {
+    color: inherit;
+    transition: color 0.2s ease;
+  }
+
+  .col-actions :deep(.rollback-btn.v-btn.v-btn--variant-text.v-btn--icon:hover) {
+    color: #dc2626;
+    background-color: #fef2f2;
+  }
+
+  .col-actions :deep(.rollback-btn.v-btn.v-btn--variant-text.v-btn--icon:focus-visible) {
+    outline: none;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #fca5a5;
+  }
+
+  .col-actions :deep(.rollback-btn.v-btn.v-btn--variant-text.v-btn--icon:active) {
+    color: #b91c1c;
+    background-color: #fee2e2;
   }
 
   .rolled-back-label {

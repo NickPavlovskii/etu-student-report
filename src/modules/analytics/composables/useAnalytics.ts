@@ -3,75 +3,35 @@ import { ref, computed, watch } from 'vue';
 import { useUser } from '@/composables/useUser';
 import {
   getTeacherStats,
-  getTeacherStatsGroupsTable,
-  getTeacherStatsByControlType,
-  getTeacherStatsUploadDynamics,
-  getTeacherStatsComplianceBuckets,
-  getTeacherStatsFrequentErrors,
-  getTeacherStatsProblematicGroups,
+  getTeacherStatsDisciplinesTable,
+  getTeacherStatsBySemester,
   getAdminAnalytics,
-  getAdminAnalyticsByControlType,
-  getAdminAnalyticsUploadDynamics,
-  getAdminAnalyticsComplianceBuckets,
-  getAdminAnalyticsFrequentErrors,
-  getAdminAnalyticsProblematicGroups,
-  getAdminAnalyticsByDisciplines,
   getAdminAnalyticsTeachersSummary,
-  getFiltersTeachers,
-} from '@/api/analytics';
-import type {
-  TeacherStatsKpi,
-  AdminAnalyticsKpi,
-  GroupsTableItem,
-  ByControlTypeItem,
-  UploadDynamicsItem,
-  ComplianceBucket,
-  FrequentErrorItem,
-  ProblematicGroupItem,
-  TeachersSummaryItem,
-} from '@/api/analytics';
+  getAdminAnalyticsDisciplinesTable,
+  getAdminAnalyticsBySemester,
+  getDepartmentDisciplinesWithTeachers,
+  getDisciplineCards,
+  type TeacherStatsKpi,
+  type AdminAnalyticsKpi,
+  type DisciplinesTableItem,
+  type BySemesterRow,
+  type TeachersSummaryItem,
+  type DisciplineWithTeacherRowDto,
+  type AnalyticsQueryParams,
+  type StudyPeriod,
+} from '@/api/info';
+import { teacherCardsResponseToArray } from '@/modules/analytics/utils/analyticsScope';
+import type { ScopeMode } from '../model';
 
-export type ViewMode = 'chart' | 'table';
-
-function toDateRange(
-  range: 'week' | 'month' | 'all',
-  month: number | null,
-  year: number | null
-): { dateFrom: string; dateTo: string } {
-  const now = new Date();
-  const y = year ?? now.getFullYear();
-  const m = month ?? now.getMonth();
-
-  if (range === 'all') {
-    return {
-      dateFrom: `${y - 1}-09-01`,
-      dateTo: `${y}-08-31`,
-    };
-  }
-  if (range === 'week') {
-    const to = new Date(now);
-    const from = new Date(now);
-    from.setDate(from.getDate() - 7);
-    return {
-      dateFrom: from.toISOString().slice(0, 10),
-      dateTo: to.toISOString().slice(0, 10),
-    };
-  }
-  const lastDay = new Date(y, m + 1, 0);
-  const firstDay = new Date(y, m, 1);
-  return {
-    dateFrom: firstDay.toISOString().slice(0, 10),
-    dateTo: lastDay.toISOString().slice(0, 10),
-  };
+function normalizeAcademicYear(raw: string): string {
+  return raw.replace(/\//g, '-').trim();
 }
 
-export type ScopeMode = 'department' | 'personal';
+export type { ScopeMode } from '../model';
 
 export function useAnalytics(filters: {
-  dateRange: Ref<'week' | 'month' | 'all'>;
-  month: Ref<number | null>;
-  year: Ref<number | null>;
-  teacherLastName: Ref<string>;
+  academicYear: Ref<string>;
+  studyPeriod: Ref<StudyPeriod>;
   scopeMode?: Ref<ScopeMode>;
 }) {
   const { lastName, canSeeAll } = useUser();
@@ -79,29 +39,25 @@ export function useAnalytics(filters: {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
-  const params = computed(() => {
-    const range = filters.dateRange.value ?? 'month';
-    const month = filters.month.value ?? new Date().getMonth();
-    const year = filters.year.value ?? new Date().getFullYear();
-    const { dateFrom, dateTo } = toDateRange(range, month, year);
-    const useDept = canSeeAll.value && scope.value === 'department';
-    const teacherLastName = useDept && filters.teacherLastName.value
-      ? filters.teacherLastName.value
-      : undefined;
-    return { dateFrom, dateTo, teacherLastName };
+  const params = computed((): AnalyticsQueryParams | null => {
+    const academicYear = normalizeAcademicYear(filters.academicYear.value);
+    if (!academicYear) return null;
+    const sp = filters.studyPeriod.value;
+    const base: AnalyticsQueryParams = { academicYear };
+    if (sp && sp !== 'academic_year') {
+      base.studyPeriod = sp;
+    }
+    return base;
   });
 
   const teacherKpi = ref<TeacherStatsKpi | null>(null);
   const adminKpi = ref<AdminAnalyticsKpi | null>(null);
-  const groupsTable = ref<GroupsTableItem[]>([]);
-  const byControlType = ref<ByControlTypeItem[]>([]);
-  const byDisciplines = ref<ByControlTypeItem[]>([]);
-  const uploadDynamics = ref<UploadDynamicsItem[]>([]);
-  const complianceBuckets = ref<ComplianceBucket[]>([]);
-  const frequentErrors = ref<FrequentErrorItem[]>([]);
-  const problematicGroups = ref<ProblematicGroupItem[]>([]);
-  const teachersList = ref<string[]>([]);
+  const disciplinesTable = ref<DisciplinesTableItem[]>([]);
+  const bySemester = ref<BySemesterRow[]>([]);
   const teachersSummary = ref<TeachersSummaryItem[]>([]);
+  const disciplinesWithTeachers = ref<DisciplineWithTeacherRowDto[]>([]);
+  /** Сырые карточки дисциплин преподавателя (личная аналитика, названия + семестр). */
+  const teacherDisciplineCards = ref<unknown[]>([]);
 
   const scope = computed(() => filters.scopeMode?.value ?? 'department');
   const showDepartmentStats = computed(
@@ -110,143 +66,129 @@ export function useAnalytics(filters: {
 
   async function loadAll() {
     if (!lastName.value && !canSeeAll.value) return;
+    const q = params.value;
+    if (!q) {
+      teacherKpi.value = null;
+      adminKpi.value = null;
+      disciplinesTable.value = [];
+      bySemester.value = [];
+      teachersSummary.value = [];
+      disciplinesWithTeachers.value = [];
+      teacherDisciplineCards.value = [];
+      return;
+    }
+
     loading.value = true;
     error.value = null;
     try {
-      const { dateFrom, dateTo, teacherLastName } = params.value;
       const useAdminApi = canSeeAll.value && scope.value === 'department';
 
       if (useAdminApi) {
-        const [kpi, byCtrl, dynamics, buckets, freqErr, problematic, byDisc, teachers, tSummary] =
-          await Promise.all([
-            getAdminAnalytics({ dateFrom, dateTo }),
-            getAdminAnalyticsByControlType({
-              dateFrom,
-              dateTo,
-              teacherLastName: teacherLastName || undefined,
-            }),
-            getAdminAnalyticsUploadDynamics({
-              dateFrom,
-              dateTo,
-              teacherLastName: teacherLastName || undefined,
-            }),
-            getAdminAnalyticsComplianceBuckets({
-              dateFrom,
-              dateTo,
-              teacherLastName: teacherLastName || undefined,
-            }),
-            getAdminAnalyticsFrequentErrors({
-              dateFrom,
-              dateTo,
-              teacherLastName: teacherLastName || undefined,
-              useWarnings: false,
-            }),
-            getAdminAnalyticsProblematicGroups({
-              dateFrom,
-              dateTo,
-              teacherLastName: teacherLastName || undefined,
-            }),
-            getAdminAnalyticsByDisciplines({
-              dateFrom,
-              dateTo,
-              teacherLastName: teacherLastName || undefined,
-            }),
-            getFiltersTeachers(),
-            getAdminAnalyticsTeachersSummary({ dateFrom, dateTo }),
-          ]);
+        const [kpi, tSummary, disc, sem, det] = await Promise.all([
+          getAdminAnalytics(q),
+          getAdminAnalyticsTeachersSummary(q),
+          getAdminAnalyticsDisciplinesTable(q),
+          getAdminAnalyticsBySemester(q),
+          getDepartmentDisciplinesWithTeachers(q),
+        ]);
         adminKpi.value = kpi;
-        byControlType.value = byCtrl;
-        uploadDynamics.value = dynamics;
-        complianceBuckets.value = buckets;
-        frequentErrors.value = freqErr;
-        problematicGroups.value = problematic;
-        byDisciplines.value = byDisc as any;
-        teachersList.value = teachers;
         teachersSummary.value = tSummary;
+        disciplinesTable.value = disc;
+        bySemester.value = sem;
+        disciplinesWithTeachers.value = det;
         teacherKpi.value = null;
-        groupsTable.value = [];
+        teacherDisciplineCards.value = [];
       } else {
-        const [kpi, groupsTbl, byCtrl, dynamics, buckets, freqErr, problematic] =
-          await Promise.all([
-            getTeacherStats(lastName.value, { dateFrom, dateTo }),
-            getTeacherStatsGroupsTable(lastName.value, { dateFrom, dateTo }),
-            getTeacherStatsByControlType(lastName.value, { dateFrom, dateTo }),
-            getTeacherStatsUploadDynamics(lastName.value, { dateFrom, dateTo }),
-            getTeacherStatsComplianceBuckets(lastName.value, { dateFrom, dateTo }),
-            getTeacherStatsFrequentErrors(lastName.value, { dateFrom, dateTo, useWarnings: false }),
-            getTeacherStatsProblematicGroups(lastName.value, { dateFrom, dateTo }),
-          ]);
+        const ln = lastName.value;
+        if (!ln) {
+          throw new Error('Не удалось определить преподавателя');
+        }
+        const [kpi, disc, sem, cardsRes] = await Promise.all([
+          getTeacherStats(ln, q),
+          getTeacherStatsDisciplinesTable(ln, q),
+          getTeacherStatsBySemester(ln, q),
+          getDisciplineCards(ln, q.academicYear).catch(() => null),
+        ]);
         teacherKpi.value = kpi;
-        groupsTable.value = groupsTbl;
-        byControlType.value = byCtrl;
-        uploadDynamics.value = dynamics;
-        complianceBuckets.value = buckets;
-        frequentErrors.value = freqErr;
-        problematicGroups.value = problematic;
+        disciplinesTable.value = disc;
+        bySemester.value = sem;
         adminKpi.value = null;
-        byDisciplines.value = [];
-        teachersList.value = [];
         teachersSummary.value = [];
+        disciplinesWithTeachers.value = [];
+        teacherDisciplineCards.value = teacherCardsResponseToArray(cardsRes);
       }
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
       teacherKpi.value = null;
       adminKpi.value = null;
-      groupsTable.value = [];
-      byControlType.value = [];
-      uploadDynamics.value = [];
-      complianceBuckets.value = [];
-      frequentErrors.value = [];
-      problematicGroups.value = [];
+      disciplinesTable.value = [];
+      bySemester.value = [];
+      teachersSummary.value = [];
+      disciplinesWithTeachers.value = [];
+      teacherDisciplineCards.value = [];
     } finally {
       loading.value = false;
     }
   }
 
+  /**
+   * Блок «Загружено работ»: сумма по таблице дисциплин за выбранный учебный год
+   * (те же строки, что в виджете — после loadAll).
+   */
   const kpi = computed(() => {
-    if (canSeeAll.value && adminKpi.value) {
-      const a = adminKpi.value;
-      const withRes = a.withTemplateResult ?? a.totalWorks;
-      const pending = a.pendingTemplateCheck ?? 0;
+    const rows = disciplinesTable.value;
+    if (rows.length > 0) {
+      let expectedCount = 0;
+      let totalWorks = 0;
+      for (const r of rows) {
+        expectedCount += Number(r.expectedCount) || 0;
+        totalWorks += Number(r.uploadedCount) || 0;
+      }
       return {
-        totalWorks: a.totalWorks,
-        withTemplateResult: withRes,
-        pendingTemplateCheck: pending,
-        avgPercent: a.avgPercent,
+        expectedCount,
+        totalWorks,
+        totalTeachers: adminKpi.value?.totalTeachers,
+      };
+    }
+    if (adminKpi.value) {
+      const a = adminKpi.value;
+      return {
+        expectedCount: a.expectedCount ?? 0,
+        totalWorks: a.totalWorks ?? 0,
+        totalTeachers: a.totalTeachers,
       };
     }
     if (teacherKpi.value) {
       const t = teacherKpi.value;
-      const withRes =
-        t.withTemplateResult ?? t.checkedByTemplate ?? t.withValidation ?? t.totalWorks;
-      const pending =
-        t.pendingTemplateCheck ?? t.notChecked ?? Math.max(0, t.totalWorks - (withRes ?? 0));
       return {
-        totalWorks: t.totalWorks,
-        withTemplateResult: withRes,
-        pendingTemplateCheck: pending,
-        avgPercent: t.avgPercent,
+        expectedCount: t.expectedCount ?? 0,
+        totalWorks: t.totalWorks ?? 0,
       };
     }
     return null;
   });
 
-  watch([params, scope], loadAll);
+  watch(
+    [
+      () => normalizeAcademicYear(filters.academicYear.value),
+      () => filters.studyPeriod.value,
+      () => (filters.scopeMode?.value ?? 'department'),
+    ],
+    () => {
+      void loadAll();
+    }
+  );
 
   return {
     loading,
     error,
     loadAll,
     kpi,
-    groupsTable,
+    disciplinesTable,
+    bySemester,
     teachersSummary,
-    byControlType,
-    byDisciplines,
-    uploadDynamics,
-    complianceBuckets,
-    frequentErrors,
-    problematicGroups,
-    teachersList,
+    disciplinesWithTeachers,
+    teacherDisciplineCards,
     canSeeAll,
     showDepartmentStats,
   };

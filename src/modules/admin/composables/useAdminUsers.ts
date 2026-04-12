@@ -2,11 +2,11 @@ import { ref, shallowRef } from 'vue';
 import {
   getAdminTeachers,
   updateAdminTeacher,
+  getTeacherDisciplines,
   type TeacherDto,
-} from '@/api/admin';
+} from '@/api/info';
 import { useUser } from '@/composables/useUser';
 import { initials as getInitials } from '@/utils/initials';
-import { getTeacherDisciplines } from '@/api/teachers';
 import { ROLE_ITEMS } from '../constants';
 
 export const roleItems = ROLE_ITEMS;

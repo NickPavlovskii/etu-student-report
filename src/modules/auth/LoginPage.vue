@@ -34,7 +34,7 @@
 <script setup>
   import { ref } from 'vue';
   import { useRouter } from 'vue-router';
-  import { loginByLastName } from '@/api/auth';
+  import { loginByLastName } from '@/api/info';
 
   const router = useRouter();
   const lastName = ref('');

@@ -4,18 +4,16 @@ import {
   getDisciplineGroups,
   getDisciplineReports,
   getDisciplineStudents,
-} from '@/api/disciplinesCard';
-import {
   getDepartmentDisciplinesWithTeachers,
   type DisciplineWithTeacherRowDto,
-} from '@/api/analytics';
+  type TeacherDto,
+} from '@/api/info';
 import { useAcademicYear } from '@/composables/useAcademicYear';
 import {
   pickLatestReports,
   type DisciplineReportRow,
 } from '@/modules/disciplines/composables/useDisciplinesList';
 import { getStudentRecordId } from '@/utils/studentRecordId';
-import type { TeacherDto } from '@/api/admin';
 import type { AdminDisciplineCardItem } from '../model';
 
 const GROUPS_BATCH = 6;

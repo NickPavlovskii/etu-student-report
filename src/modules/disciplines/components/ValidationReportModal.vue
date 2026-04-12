@@ -126,7 +126,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { ValidationResult, ValidationErrorItem } from '@/api/validation';
+import type { ValidationResult, ValidationErrorItem } from '@/api/info';
 import { useDownload } from '@/composables/useDownload';
 
 const props = defineProps<{

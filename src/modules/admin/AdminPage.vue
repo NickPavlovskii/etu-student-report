@@ -45,7 +45,7 @@
   import { useRoute, useRouter } from 'vue-router';
   import { useUser } from '@/composables/useUser';
   import { useAcademicYear } from '@/composables/useAcademicYear';
-  import { getDisciplineCards } from '@/api/disciplinesCard';
+  import { getDisciplineCards } from '@/api/info';
   import UserTab from './components/user/UserTab.vue';
   import DisciplinesTab from './components/disciplines/DisciplinesTab.vue';
   import AuditTab from './components/audit/AuditTab.vue';

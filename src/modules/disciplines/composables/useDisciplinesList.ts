@@ -5,7 +5,7 @@ import {
   getDisciplineReports,
   getDisciplineStudents,
   getTeacherGroups,
-} from '@/api/disciplinesCard';
+} from '@/api/info';
 import { useAcademicYear } from '@/composables/useAcademicYear';
 import type { ReportDto } from '../modal/reports';
 import { sanitizeTitle } from '@/utils/sanitizeTitle';

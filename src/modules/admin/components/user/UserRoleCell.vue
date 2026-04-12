@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-  import type { TeacherDto } from '@/api/admin';
+  import type { TeacherDto } from '@/api/info';
   import { roleIco, roleName } from '../../utils/userTableHelpers';
 
   const props = defineProps<{

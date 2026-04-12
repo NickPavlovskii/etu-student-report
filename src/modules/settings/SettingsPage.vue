@@ -76,17 +76,15 @@
     createTemplate,
     updateTemplate,
     deleteTemplate,
-  } from '@/api/templates';
-  import {
     getDisciplineCards,
     getControlTypesFromApi,
     getDisciplineControls,
-  } from '@/api/disciplines';
+    type TemplateDto,
+  } from '@/api/info';
   import {
     mergeControlTypesWithSettings,
     saveControlTypesForDiscipline,
   } from './composables/useDisciplineControlTypes';
-  import type { TemplateDto } from '@/api/templates';
   import type { TemplateItem, ControlTypeItem, AddTemplateForm } from './modal';
 
   const router = useRouter();

@@ -20,6 +20,10 @@ import '@mdi/font/css/materialdesignicons.css'
 import GlobalComponents from './components/global/index'
 import { ru } from 'vuetify/locale'
 
+import infoApiPlugin from './api/info'
+import { loadServerConfig } from './api/utils'
+import buildConfig from './plugins/buildConfig'
+
 const vuetify = createVuetify({
   components,
   directives,
@@ -33,9 +37,19 @@ const vuetify = createVuetify({
   },
 })
 
-createApp(App)
-  .use(router)
-  .use(vuetify)
-  .use(ElementPlus)
-  .use(GlobalComponents)
-  .mount('#app')
+const app = createApp(App)
+
+app.use(router)
+app.use(vuetify)
+app.use(ElementPlus)
+app.use(GlobalComponents)
+app.use(infoApiPlugin)
+
+loadServerConfig()
+  .then((server) => {
+    app.use(buildConfig, server)
+    app.mount('#app')
+  })
+  .catch((e: unknown) => {
+    console.error(e instanceof Error ? e.message : e)
+  })
