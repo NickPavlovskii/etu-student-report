@@ -1138,6 +1138,14 @@
     planRowsToDisciplineWidgetRows,
     disciplineTableItemsToWidgetRows,
   } from './utils/analyticsScope';
+  import {
+    clip,
+    initials,
+    avatarColor,
+    formatGroupsForDisplay,
+    normalizeGroupDigits,
+    planRowGroupChipLabel,
+  } from './utils/format';
   import AnalyticsStudyPeriodSwitcher from './components/AnalyticsStudyPeriodSwitcher.vue';
   import AnalyticsVBarChart from './components/AnalyticsVBarChart.vue';
   import AnalyticsHorizontalBarChart from './components/AnalyticsHorizontalBarChart.vue';
@@ -1320,60 +1328,6 @@
       )
     );
   });
-
-  function clip(s: string, max = 22) {
-    const t = (s ?? '').trim();
-    if (t.length <= max) return t;
-    return `${t.slice(0, max - 1)}…`;
-  }
-
-  function splitGroups(raw: unknown): string[] {
-    if (raw == null) return [];
-    if (Array.isArray(raw)) {
-      return raw.flatMap((item) => splitGroups(item));
-    }
-    const s = String(raw).trim();
-    if (!s) return [];
-    return s
-      .split(/[,;]/)
-      .map((x) => x.trim())
-      .filter(Boolean);
-  }
-
-  function formatGroupsForDisplay(raw: unknown): string[] {
-    if (raw == null) return [];
-    if (Array.isArray(raw)) {
-      return raw.flatMap((item) => formatGroupsForDisplay(item));
-    }
-    if (typeof raw === 'number') return [String(raw)];
-    const s = String(raw).trim();
-    if (!s) return [];
-    if (s.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(s) as unknown;
-        if (Array.isArray(parsed)) {
-          return parsed
-            .map((x) => (x == null ? '' : String(x).trim()))
-            .filter(Boolean);
-        }
-      } catch {
-        /* как обычная строка */
-      }
-    }
-    return splitGroups(s);
-  }
-
-  function normalizeGroupDigits(raw: string): string {
-    const t = raw.trim();
-    if (!/^\d+$/.test(t)) return t;
-    return t.padStart(4, '0');
-  }
-
-  function planRowGroupChipLabel(g: string): string {
-    const t = g.trim();
-    if (!/^\d+$/.test(t)) return t;
-    return `Гр. ${normalizeGroupDigits(t)}`;
-  }
 
   function aggregateGroupsFromDetail(
     rows: DisciplineWithTeacherRowDto[]
@@ -1659,27 +1613,6 @@
       row.course,
       row.semester,
     ].join('-');
-  }
-
-  function initials(name: string) {
-    if (!name) return '—';
-    const parts = name.trim().split(/\s+/);
-    const a = parts[0];
-    const b = parts[1];
-    if (parts.length >= 2 && a && b) {
-      const c0 = a[0];
-      const c1 = b[0];
-      if (c0 && c1) return (c0 + c1).toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase() || '—';
-  }
-
-  const avatarColors = ['#6366f1', '#8b5cf6', '#ec4899', '#0ea5e9'];
-  function avatarColor(name: string) {
-    let h = 0;
-    for (let i = 0; i < (name ?? '').length; i++)
-      h += (name ?? '').charCodeAt(i);
-    return avatarColors[Math.abs(h) % avatarColors.length];
   }
 
   onMounted(async () => {
