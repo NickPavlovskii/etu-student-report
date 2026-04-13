@@ -260,8 +260,7 @@
   import { ref, computed, watch } from 'vue';
   import { useAcademicYear } from '@/composables/useAcademicYear';
   import { useDownload } from '@/composables/useDownload';
-  import { validateDocument } from '@/api/validation';
-  import type { ValidationResult } from '@/api/validation';
+  import { validateDocument, type ValidationResult } from '@/api/info';
   import type {
     StudentInGroupRow,
     UploadDisciplineModalProps,

@@ -56,7 +56,7 @@
 <script setup lang="ts">
   import { ref, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
-  import { downloadArchiveReport } from '@/api/archive';
+  import { downloadArchiveReport } from '@/api/info';
   import { useUser } from '@/composables/useUser';
   import { useDownload } from '@/composables/useDownload';
   import { useExportExcel } from './composables/useExportExcel';

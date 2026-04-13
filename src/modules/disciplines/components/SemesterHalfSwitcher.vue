@@ -12,7 +12,7 @@
       ]"
       @click="$emit('update:modelValue', 'autumn')"
     >
-      Осень (нечётные)
+      Осенний семестр
     </button>
     <button
       type="button"
@@ -22,7 +22,7 @@
       ]"
       @click="$emit('update:modelValue', 'spring')"
     >
-      Весна (чётные)
+      Весенний семестр
     </button>
   </div>
 </template>

@@ -1,0 +1,77 @@
+/* Прямой потомок .v-tooltip — как в разметке VTooltip (Vuetify 3) */
+.v-tooltip > .v-overlay__content.analytics-tt-wrap {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.analytics-tt {
+  min-width: 200px;
+  max-width: 320px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(165deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.12),
+    0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.analytics-tt__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+  word-break: break-word;
+}
+
+.analytics-tt__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.analytics-tt__row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.analytics-tt__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+}
+.analytics-tt__dot--plan {
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+}
+.analytics-tt__dot--up {
+  background: linear-gradient(135deg, #818cf8, #6366f1);
+}
+
+.analytics-tt__k {
+  color: #64748b;
+}
+.analytics-tt__v {
+  font-weight: 700;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+.analytics-tt__v--emph {
+  color: #4f46e5;
+}
+
+.analytics-tt__foot {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6366f1;
+  font-variant-numeric: tabular-nums;
+}

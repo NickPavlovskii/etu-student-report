@@ -1,11 +1,16 @@
 <template>
-  <nav-menu v-model="drawer" />
-  <app-header @toggle-drawer="drawer = !drawer" />
-  <v-main class="main-fill">
-    <div class="content-wrap">
-      <router-view />
-    </div>
-  </v-main>
+  <div
+    class="the-main-layout"
+    v-bind="$attrs"
+  >
+    <nav-menu v-model="drawer" />
+    <app-header @toggle-drawer="drawer = !drawer" />
+    <v-main class="main-fill">
+      <div class="content-wrap">
+        <router-view />
+      </div>
+    </v-main>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -13,10 +18,20 @@ import { ref } from 'vue';
 import NavMenu from '@/views/NavMenu.vue';
 import AppHeader from '@/components/sideBar/AppHeader.vue';
 
+defineOptions({ inheritAttrs: false });
+
 const drawer = ref(false);
 </script>
 
 <style scoped>
+.the-main-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
 .main-fill {
   overflow: hidden;
   height: calc(100vh - 64px);

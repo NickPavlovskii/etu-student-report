@@ -1,0 +1,8 @@
+{
+  "api": {
+    "services": {
+      "baseUrl": "http://localhost:8081/api",
+      "infoUrl": "http://localhost:8081/api"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import type { TeacherDto } from '@/api/admin';
+import type { TeacherDto } from '@/api/info';
 
 export function displayName(t: TeacherDto): string {
   return (

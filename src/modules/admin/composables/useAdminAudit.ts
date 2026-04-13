@@ -2,10 +2,10 @@ import { ref } from 'vue';
 import {
   getAuditLog,
   rollbackAuditEntry,
+  getTeacherRows,
   type AuditLogEntryDto,
-} from '@/api/admin';
+} from '@/api/info';
 import { useUser } from '@/composables/useUser';
-import { getTeacherRows } from '@/api/teachers';
 import { datePresetToRange } from '@/utils/datePreset';
 import {
   formatAuditDate as formatDate,

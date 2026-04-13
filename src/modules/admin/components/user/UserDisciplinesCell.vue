@@ -43,7 +43,7 @@
 
 <script setup lang="ts">
   import { computed } from 'vue';
-  import type { TeacherDto } from '@/api/admin';
+  import type { TeacherDto } from '@/api/info';
   import { firstDiscs } from '../../utils/userTableHelpers';
 
   const props = defineProps<{

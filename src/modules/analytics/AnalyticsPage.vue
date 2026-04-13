@@ -6,112 +6,21 @@
     class="page"
   >
     <etu-page-header
-      icon="mdi-chart-line"
-      title="Статистика и аналитика"
-      :subtitle="pageSubtitle"
-      icon-color="#6366f1"
-      icon-bg-color="#eef2ff"
-    />
+      icon="mdi-chart-box-outline"
+      title="Аналитика по работам"
+      icon-color="#2563eb"
+      icon-bg-color="#eff6ff"
+      :subtitle="headerSubtitle"
+    >
+      <template #right>
+        <analytics-study-period-switcher v-model="studyPeriod" />
+      </template>
+    </etu-page-header>
 
-    <div class="filters-row">
-      <div class="range-btns">
-        <button
-          type="button"
-          :class="['range-btn', { active: dateRange === 'week' }]"
-          @click="dateRange = 'week'"
-        >
-          Неделя
-        </button>
-        <button
-          type="button"
-          :class="['range-btn', { active: dateRange === 'month' }]"
-          @click="dateRange = 'month'"
-        >
-          Месяц
-        </button>
-        <button
-          type="button"
-          :class="['range-btn', { active: dateRange === 'all' }]"
-          @click="dateRange = 'all'"
-        >
-          Всё время
-        </button>
-      </div>
-      <div
-        v-if="dateRange === 'month'"
-        class="month-year-row"
-      >
-        <v-select
-          v-model="selectedMonth"
-          :items="monthOptions"
-          item-title="label"
-          item-value="value"
-          density="compact"
-          variant="outlined"
-          hide-details
-          class="filter-select"
-          placeholder="Месяц"
-        />
-        <v-select
-          v-model="selectedYear"
-          :items="yearOptions"
-          density="compact"
-          variant="outlined"
-          hide-details
-          class="filter-select"
-          placeholder="Год"
-        />
-      </div>
-      <div
-        v-if="canSeeAll"
-        class="scope-toggle"
-      >
-        <button
-          type="button"
-          :class="['scope-btn', { active: scopeMode === 'department' }]"
-          @click="scopeMode = 'department'"
-        >
-          По кафедре
-        </button>
-        <button
-          type="button"
-          :class="['scope-btn', { active: scopeMode === 'personal' }]"
-          @click="scopeMode = 'personal'"
-        >
-          Моя статистика
-        </button>
-      </div>
-      <v-select
-        v-if="showDepartmentStats"
-        v-model="filterTeacher"
-        :items="teacherOptions"
-        item-title="title"
-        item-value="value"
-        density="compact"
-        variant="outlined"
-        hide-details
-        class="filter-select"
-        placeholder="Преподаватель"
-      />
-      <div class="view-toggle">
-        <button
-          type="button"
-          :class="['view-btn', { active: viewMode === 'chart' }]"
-          @click="viewMode = 'chart'"
-        >
-          <v-icon size="18">mdi-chart-bar</v-icon>
-          Графики
-        </button>
-        <button
-          type="button"
-          :class="['view-btn', { active: viewMode === 'table' }]"
-          @click="viewMode = 'table'"
-        >
-          <v-icon size="18">mdi-table</v-icon>
-          Таблица
-        </button>
-      </div>
-    </div>
+    <analytics-scope-switcher
+      v-if="canSeeAll"
+      v-model="scopeMode"
+    />
 
     <v-alert
       v-if="error"
@@ -123,494 +32,209 @@
       {{ error }}
     </v-alert>
 
-    <template v-if="kpi">
+    <template v-if="displayKpi">
+      <kpi-hero-card
+        :total-works="displayKpi.totalWorks"
+        :expected-count="displayKpi.expectedCount"
+      />
+
       <v-row
         dense
-        class="stats-row"
+        class="widgets-row"
+        align="stretch"
       >
-        <v-col
-          cols="12"
-          sm="6"
-          md="3"
-        >
-          <div class="stat-card stat-total">
-            <div class="stat-icon">
-              <v-icon size="28">mdi-file-document-multiple-outline</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-title">Всего работ</div>
-              <div class="stat-value">{{ kpi.totalWorks }}</div>
-            </div>
-          </div>
-        </v-col>
-        <v-col
-          cols="12"
-          sm="6"
-          md="3"
-        >
-          <div class="stat-card stat-secondary">
-            <div class="stat-icon">
-              <v-icon size="28">mdi-book-open-page-variant-outline</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-title">
-                {{ showDepartmentStats ? 'Преподавателей' : 'Дисциплин' }}
-              </div>
-              <div class="stat-value">{{ cardSecondaryCount }}</div>
-            </div>
-          </div>
-        </v-col>
-        <v-col
-          cols="12"
-          sm="6"
-          md="3"
-        >
-          <div class="stat-card stat-tertiary">
-            <div class="stat-icon">
-              <v-icon size="28">mdi-account-group-outline</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-title">
-                {{ showDepartmentStats ? 'Дисциплин' : 'Групп' }}
-              </div>
-              <div class="stat-value">{{ cardTertiaryCount }}</div>
-            </div>
-          </div>
-        </v-col>
-        <v-col
-          cols="12"
-          sm="6"
-          md="3"
-        >
-          <div class="stat-card stat-avg">
-            <div class="stat-icon">
-              <v-icon size="28">mdi-percent-outline</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-title">Средний %</div>
-              <div class="stat-value">{{ kpi.avgPercent }}%</div>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-
-      <v-row dense>
         <v-col cols="12">
-          <v-card
-            class="chart-card"
-            elevation="0"
-          >
-            <h3 class="chart-title">Частые ошибки оформления</h3>
-            <p class="chart-subtitle">Количество ошибок по категориям</p>
-            <div
-              v-if="frequentErrors.length"
-              class="horizontal-bars"
-            >
-              <div
-                v-for="item in frequentErrors.slice(0, 8)"
-                :key="item.category"
-                class="hbar-row"
-              >
-                <span class="hbar-label">{{ item.category }}</span>
-                <div class="hbar-track">
-                  <div
-                    class="hbar-fill"
-                    :style="{ width: freqErrPct(item.count) + '%' }"
-                  />
-                </div>
-                <span class="hbar-value">{{ item.count }}</span>
-              </div>
-            </div>
-            <p
-              v-else
-              class="chart-empty"
-            >
-              Нет данных
-            </p>
-          </v-card>
+          <disciplines-widget
+            :rows="disciplinesTableForScope"
+            :use-plan-detail="disciplinesUsePlanDetailTable"
+            :subtitle="disciplinesWidgetHint"
+          />
         </v-col>
       </v-row>
 
+      <template v-if="showDepartmentStats">
+        <v-row
+          dense
+          class="widgets-row widgets-row--dept-pair"
+          align="stretch"
+        >
+          <v-col
+            cols="12"
+            lg="6"
+          >
+            <groups-widget :rows="groupRows" />
+          </v-col>
+
+          <v-col
+            cols="12"
+            lg="6"
+          >
+            <teachers-widget :rows="teachersSummaryForScope" />
+          </v-col>
+        </v-row>
+      </template>
+
       <v-row
-        v-if="viewMode === 'chart'"
         dense
+        class="widgets-row"
+        align="stretch"
       >
+        <v-col cols="12">
+          <semesters-widget :rows="bySemesterForScope" />
+        </v-col>
+
         <v-col
+          v-if="showDepartmentStats && teacherDetailBlocks.length"
           cols="12"
-          lg="6"
         >
           <v-card
-            class="chart-card"
+            class="widget-card"
             elevation="0"
           >
-            <h3 class="chart-title">Динамика загрузок</h3>
-            <p class="chart-subtitle">Работы по месяцам</p>
-            <div
-              v-if="uploadDynamics.length"
-              class="line-chart-wrap"
-            >
-              <svg
-                class="line-chart"
-                viewBox="0 0 400 220"
-                preserveAspectRatio="xMidYMid meet"
+            <div class="widget-head widget-head--simple">
+              <div class="widget-head__left">
+                <v-icon
+                  size="22"
+                  class="widget-head__ico"
+                >
+                  mdi-file-tree-outline
+                </v-icon>
+                <div>
+                  <h3 class="widget-title">Детализация по преподавателям</h3>
+                  <p class="widget-sub">
+                    {{ teacherTreeWidgetHint }}
+                  </p>
+                </div>
+              </div>
+              <v-btn-toggle
+                v-model="viewTeacherTree"
+                class="view-toggle view-toggle--pill"
+                data-analytics-view-toggle
+                density="comfortable"
+                variant="flat"
+                mandatory
               >
-                <defs>
-                  <line
-                    id="grid-y"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="180"
-                    stroke="#e5e7eb"
-                    stroke-width="1"
-                  />
-                  <line
-                    id="grid-x"
-                    x1="0"
-                    y1="180"
-                    x2="400"
-                    y2="180"
-                    stroke="#e5e7eb"
-                    stroke-width="1"
-                  />
-                </defs>
-                <g
-                  v-for="i in 5"
-                  :key="'gy-' + i"
+                <v-btn
+                  value="table"
+                  size="small"
                 >
-                  <line
-                    :x1="40"
-                    :y1="20 + (i - 1) * 40"
-                    :x2="380"
-                    :y2="20 + (i - 1) * 40"
-                    stroke="#e5e7eb"
-                    stroke-width="1"
-                  />
-                </g>
-                <g
-                  v-for="(_, i) in uploadDynamics"
-                  :key="'gx-' + i"
+                  <v-icon start>mdi-table-large</v-icon>
+                  Таблица
+                </v-btn>
+                <v-btn
+                  value="chart"
+                  size="small"
                 >
-                  <line
-                    :x1="
-                      40 + (i / Math.max(1, uploadDynamics.length - 1)) * 340
-                    "
-                    :y1="20"
-                    :x2="
-                      40 + (i / Math.max(1, uploadDynamics.length - 1)) * 340
-                    "
-                    :y2="200"
-                    stroke="#e5e7eb"
-                    stroke-width="1"
-                  />
-                </g>
-                <polyline
-                  v-if="lineUploadedPath"
-                  :points="lineUploadedPath"
-                  fill="none"
-                  stroke="#2563eb"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  <v-icon start>mdi-chart-bar</v-icon>
+                  График
+                </v-btn>
+              </v-btn-toggle>
+            </div>
+            <div class="widget-body widget-body--toggle-view">
+              <template
+                v-if="viewTeacherTree === 'chart' && teacherDetailBlocks.length"
+              >
+                <div class="widget-body__scroll">
+                  <analytics-horizontal-bar-chart :rows="teacherTreeBarRows" />
+                </div>
+                <analytics-table-pagination
+                  v-model:page="teacherTreePagination.page"
+                  :page-count="teacherTreePagination.pageCount"
+                  :total="teacherTreePagination.total"
+                  :range-label="teacherTreePagination.rangeLabel"
                 />
-                <g
-                  v-for="(p, i) in lineUploadedPoints"
-                  :key="'up-' + i"
-                >
-                  <rect
-                    :x="p.x - 4"
-                    :y="p.y - 4"
-                    width="8"
-                    height="8"
-                    fill="#2563eb"
-                    stroke="white"
-                    stroke-width="1.5"
-                  />
-                </g>
-              </svg>
-              <div class="line-chart-x-labels">
-                <span
-                  v-for="item in uploadDynamics"
-                  :key="item.month"
-                  class="x-label"
-                >
-                  {{ formatMonthShort(item.month) }}
-                </span>
-              </div>
-            </div>
-            <p
-              v-else
-              class="chart-empty"
-            >
-              Нет данных
-            </p>
-          </v-card>
-        </v-col>
-        <v-col
-          cols="12"
-          lg="6"
-        >
-          <v-card
-            class="chart-card gauge-card"
-            elevation="0"
-          >
-            <h3 class="chart-title">Распределение соответствия</h3>
-            <p class="chart-subtitle">По уровню соответствия</p>
-            <div
-              v-if="complianceBuckets.length"
-              class="donut-wrap"
-            >
-              <div class="donut-svg-wrap">
-                <svg
-                  class="donut-chart"
-                  viewBox="0 0 120 120"
-                >
-                  <g transform="translate(60, 60)">
-                    <path
-                      v-for="(seg, i) in donutSegments"
-                      :key="seg.bucket"
-                      :d="seg.path"
-                      :fill="seg.color"
-                      class="donut-segment"
-                    />
-                  </g>
-                </svg>
-              </div>
-              <div class="donut-legend">
-                <div
-                  v-for="b in sortedBuckets"
-                  :key="b.bucket"
-                  class="donut-legend-item"
-                >
-                  <span
-                    class="donut-dot"
-                    :style="bucketColor(b.bucket)"
-                  />
-                  <span>{{ b.bucket }}: {{ b.count }}</span>
+              </template>
+              <template
+                v-else-if="
+                  teacherDetailBlocks.length && viewTeacherTree !== 'chart'
+                "
+              >
+                <div class="widget-body__scroll">
+                  <etu-data-table
+                    scrollable
+                    wrap-class="analytics-etu-dt"
+                    table-class="tree-table tree-table--fixed analytics-table--detail"
+                    :columns="teacherTreeTableColumns"
+                    :rows="[]"
+                    :show-skeleton="false"
+                  >
+                    <template #tbody>
+                      <template
+                        v-for="block in teacherTreePagination.pagedItems"
+                        :key="block.teacher"
+                      >
+                        <tr
+                          class="tree-row tree-row--parent"
+                          @click="toggleTeacherExpand(block.teacher)"
+                        >
+                          <td class="tree-col-chev">
+                            <v-icon size="20">
+                              {{ teacherTreeChevronIcon(block.teacher) }}
+                            </v-icon>
+                          </td>
+                          <td class="tree-col-name">
+                            <strong>{{ block.teacher }}</strong>
+                            <span class="tree-meta">
+                              · {{ block.children.length }} дисц.
+                            </span>
+                          </td>
+                          <td class="tree-col-groups tree-col-groups--parent" />
+                          <td class="tree-col-upload cell-upload-prog-wrap">
+                            <progress-bar
+                              compact
+                              :uploaded="block.uploaded"
+                              :plan="block.plan"
+                            />
+                          </td>
+                        </tr>
+                        <tr
+                          v-for="ch in visibleTeacherChildRows(block)"
+                          :key="
+                            block.teacher +
+                            ch.disciplineName +
+                            String(ch.planRowId)
+                          "
+                          class="tree-row tree-row--child"
+                        >
+                          <td class="tree-col-chev" />
+                          <td class="tree-col-name tree-child-name">
+                            {{ ch.disciplineName }}
+                          </td>
+                          <td class="tree-col-groups">
+                            <span
+                              v-for="g in ch.groupTags"
+                              :key="g"
+                              class="grp-tag grp-tag--plan"
+                            >
+                              {{ planRowGroupChipLabel(g) }}
+                            </span>
+                          </td>
+                          <td class="tree-col-upload cell-upload-prog-wrap">
+                            <progress-bar
+                              compact
+                              :uploaded="ch.uploaded"
+                              :plan="ch.plan"
+                            />
+                          </td>
+                        </tr>
+                      </template>
+                    </template>
+                  </etu-data-table>
                 </div>
-              </div>
+                <analytics-table-pagination
+                  v-model:page="teacherTreePagination.page"
+                  :page-count="teacherTreePagination.pageCount"
+                  :total="teacherTreePagination.total"
+                  :range-label="teacherTreePagination.rangeLabel"
+                />
+              </template>
+              <p
+                v-else
+                class="widget-empty"
+              >
+                Нет данных для графика
+              </p>
             </div>
-            <p
-              v-else
-              class="chart-empty"
-            >
-              Нет данных
-            </p>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <v-row
-        v-if="
-          viewMode === 'chart' && showDepartmentStats && teachersSummary.length
-        "
-        dense
-      >
-        <v-col cols="12">
-          <v-card
-            class="chart-card"
-            elevation="0"
-          >
-            <h3 class="chart-title">Статистика по преподавателям</h3>
-            <p class="chart-subtitle">Нагрузка и % по шаблону</p>
-            <v-table class="analytics-table teachers-table">
-              <thead>
-                <tr>
-                  <th>ПРЕПОДАВАТЕЛЬ</th>
-                  <th>ДИСЦИПЛИНЫ</th>
-                  <th>ЗАГРУЖЕНО</th>
-                  <th>ОЖИДАЛОСЬ</th>
-                  <th>СРЕД. СООТВЕТСТВИЕ</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="row in teachersSummary"
-                  :key="teacherName(row)"
-                >
-                  <td>
-                    <div class="teacher-cell">
-                      <div
-                        class="teacher-avatar"
-                        :style="{ background: avatarColor(teacherName(row)) }"
-                      >
-                        {{ initials(teacherName(row)) }}
-                      </div>
-                      <span>{{ teacherName(row) }}</span>
-                    </div>
-                  </td>
-                  <td>{{ row.disciplinesCount ?? '—' }}</td>
-                  <td>{{ row.uploadedCount ?? row.totalWorks ?? '—' }}</td>
-                  <td>{{ row.expectedCount ?? '—' }}</td>
-                  <td>
-                    <div class="avg-compliance">
-                      <div class="avg-bar-wrap">
-                        <div
-                          :class="[
-                            'avg-bar-fill',
-                            {
-                              'avg-bar--green': row.avgPercent >= 80,
-                              'avg-bar--orange': row.avgPercent < 80,
-                            },
-                          ]"
-                          :style="{ width: row.avgPercent + '%' }"
-                        />
-                      </div>
-                      <span class="avg-pct">{{ row.avgPercent }}%</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <v-row
-        v-if="viewMode === 'table'"
-        dense
-      >
-        <v-col cols="12">
-          <v-card
-            class="table-card"
-            elevation="0"
-          >
-            <h3 class="chart-title">
-              {{
-                showDepartmentStats
-                  ? 'Статистика по преподавателям'
-                  : 'Статистика по группам'
-              }}
-            </h3>
-            <p
-              v-if="showDepartmentStats"
-              class="chart-subtitle"
-            >
-              Нагрузка и % по шаблону
-            </p>
-            <v-table
-              v-if="showDepartmentStats && teachersSummary.length"
-              class="analytics-table teachers-table"
-            >
-              <thead>
-                <tr>
-                  <th>ПРЕПОДАВАТЕЛЬ</th>
-                  <th>ДИСЦИПЛИНЫ</th>
-                  <th>ЗАГРУЖЕНО</th>
-                  <th>ОЖИДАЛОСЬ</th>
-                  <th>СРЕД. СООТВЕТСТВИЕ</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="row in teachersSummary"
-                  :key="teacherName(row)"
-                >
-                  <td>
-                    <div class="teacher-cell">
-                      <div
-                        class="teacher-avatar"
-                        :style="{ background: avatarColor(teacherName(row)) }"
-                      >
-                        {{ initials(teacherName(row)) }}
-                      </div>
-                      <span>{{ teacherName(row) }}</span>
-                    </div>
-                  </td>
-                  <td>{{ row.disciplinesCount ?? '—' }}</td>
-                  <td>{{ row.uploadedCount ?? row.totalWorks ?? '—' }}</td>
-                  <td>{{ row.expectedCount ?? '—' }}</td>
-                  <td>
-                    <div class="avg-compliance">
-                      <div class="avg-bar-wrap">
-                        <div
-                          :class="[
-                            'avg-bar-fill',
-                            {
-                              'avg-bar--green': row.avgPercent >= 80,
-                              'avg-bar--orange': row.avgPercent < 80,
-                            },
-                          ]"
-                          :style="{ width: row.avgPercent + '%' }"
-                        />
-                      </div>
-                      <span class="avg-pct">{{ row.avgPercent }}%</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
-            <v-table
-              v-else-if="
-                (!canSeeAll || !showDepartmentStats) && groupsTable.length
-              "
-              class="analytics-table"
-            >
-              <thead>
-                <tr>
-                  <th>Группа</th>
-                  <th>Дисциплина</th>
-                  <th>Студентов</th>
-                  <th>Загружено</th>
-                  <th>Ожидалось</th>
-                  <th>Ср. %</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="row in groupsTable"
-                  :key="row.groupName + row.disciplineName"
-                >
-                  <td>{{ row.groupName }}</td>
-                  <td>{{ row.disciplineName }}</td>
-                  <td>{{ row.studentsCount }}</td>
-                  <td>{{ row.uploaded }}</td>
-                  <td>{{ row.expected }}</td>
-                  <td>{{ row.avgPercent }}%</td>
-                </tr>
-              </tbody>
-            </v-table>
-            <p
-              v-else
-              class="chart-empty"
-            >
-              Нет данных за выбранный период
-            </p>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <v-row
-        v-if="viewMode === 'table' && problematicGroups.length"
-        dense
-      >
-        <v-col cols="12">
-          <v-card
-            class="table-card"
-            elevation="0"
-          >
-            <h3 class="chart-title">Проблемные группы</h3>
-            <v-table class="analytics-table">
-              <thead>
-                <tr>
-                  <th>Группа</th>
-                  <th>Отчётов</th>
-                  <th>Ср. %</th>
-                  <th>Не прошли</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="row in problematicGroups"
-                  :key="row.groupName"
-                >
-                  <td>{{ row.groupName }}</td>
-                  <td>{{ row.reports }}</td>
-                  <td>{{ row.avgPercent }}%</td>
-                  <td>{{ row.invalidCount }}</td>
-                </tr>
-              </tbody>
-            </v-table>
           </v-card>
         </v-col>
       </v-row>
@@ -619,264 +243,234 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, computed, onMounted, watch, toValue } from 'vue';
   import { useRouter } from 'vue-router';
   import { useUser } from '@/composables/useUser';
+  import { useAcademicYear } from '@/composables/useAcademicYear';
+  import type { TeachersSummaryItem, StudyPeriod } from '@/api/info';
+  import { useTablePagination } from '@/composables/useTablePagination';
+  import { useAnalytics } from './composables/useAnalytics';
+  import type {
+    ScopeMode,
+    AnalyticsDisciplineTableRow,
+    AnalyticsViewMode,
+  } from './model';
+  import { teacherTreeTableColumns } from './constants/columns';
   import {
-    useAnalytics,
-    type ViewMode,
-    type ScopeMode,
-  } from './composables/useAnalytics';
+    filterByStudyPeriod,
+    aggregateDisciplinesTableFromPlan,
+    aggregateTeachersSummaryFromPlan,
+    buildPersonalDisciplinesTableFromCards,
+    planRowsToDisciplineWidgetRows,
+    disciplineTableItemsToWidgetRows,
+    buildTeacherDetailBlocks,
+  } from './utils/analyticsScope';
+  import { planRowGroupChipLabel } from './utils/format';
+  import { aggregateGroupsFromDetail } from './utils/aggregateGroupsFromDetail';
+  import ProgressBar from '@/components/shared/ProgressBar.vue';
+  import AnalyticsScopeSwitcher from './components/AnalyticsScopeSwitcher.vue';
+  import KpiHeroCard from './components/widgets/KpiHeroCard.vue';
+  import DisciplinesWidget from './components/widgets/DisciplinesWidget.vue';
+  import GroupsWidget from './components/widgets/GroupsWidget.vue';
+  import TeachersWidget from './components/widgets/TeachersWidget.vue';
+  import SemestersWidget from './components/widgets/SemestersWidget.vue';
+  import AnalyticsStudyPeriodSwitcher from './components/AnalyticsStudyPeriodSwitcher.vue';
+  import AnalyticsHorizontalBarChart from './components/charts/AnalyticsHorizontalBarChart.vue';
+  import AnalyticsTablePagination from './components/AnalyticsTablePagination.vue';
 
   const router = useRouter();
   const { user, canSeeAll } = useUser();
+  const { academicYear } = useAcademicYear();
 
-  const dateRange = ref<'week' | 'month' | 'all'>('month');
-  const selectedMonth = ref<number | null>(new Date().getMonth());
-  const selectedYear = ref<number | null>(new Date().getFullYear());
-  const filterTeacher = ref('');
-  const viewMode = ref<ViewMode>('chart');
-  const scopeMode = ref<ScopeMode>('department');
+  const academicYearForDisplay = computed(() =>
+    academicYear.value.replace(/\//g, '-').replace(/-/g, '–').trim()
+  );
+
+  const scopeMode = ref<ScopeMode>('personal');
+  const viewTeacherTree = ref<AnalyticsViewMode>('table');
+
+  const expandedTeachers = ref<Set<string>>(new Set());
+
+  const studyPeriod = ref<StudyPeriod>('academic_year');
+
+  function studyPeriodShortLabel(p: StudyPeriod): string {
+    switch (p) {
+      case 'autumn_semester':
+        return 'осенний семестр';
+      case 'spring_semester':
+        return 'весенний семестр';
+      default:
+        return 'весь учебный год';
+    }
+  }
+
+  const headerSubtitle = computed(
+    () =>
+      `План и факт: ${studyPeriodShortLabel(studyPeriod.value)}, год ${academicYearForDisplay.value}.`
+  );
+
+  const disciplinesWidgetHint = computed(() => {
+    if (studyPeriod.value === 'academic_year') {
+      return 'Сколько работ загружено из плана за учебный год.';
+    }
+    return `Сколько работ загружено из плана за ${studyPeriodShortLabel(studyPeriod.value)}.`;
+  });
+
+  const teacherTreeWidgetHint = computed(() => {
+    if (studyPeriod.value === 'academic_year') {
+      return 'План и факт по преподавателю за выбранный учебный год.';
+    }
+    return `План и факт по преподавателю за ${studyPeriodShortLabel(studyPeriod.value)}.`;
+  });
 
   const {
     loading,
     error,
     loadAll,
     kpi,
-    groupsTable,
-    uploadDynamics,
-    complianceBuckets,
-    frequentErrors,
-    problematicGroups,
-    teachersList,
+    disciplinesTable,
+    bySemester,
     teachersSummary,
+    disciplinesWithTeachers,
+    teacherDisciplineCards,
     showDepartmentStats,
   } = useAnalytics({
-    dateRange,
-    month: selectedMonth,
-    year: selectedYear,
-    teacherLastName: filterTeacher,
+    academicYear,
     scopeMode,
+    studyPeriod,
   });
 
-  const monthOptions = [
-    { value: 0, label: 'Январь' },
-    { value: 1, label: 'Февраль' },
-    { value: 2, label: 'Март' },
-    { value: 3, label: 'Апрель' },
-    { value: 4, label: 'Май' },
-    { value: 5, label: 'Июнь' },
-    { value: 6, label: 'Июль' },
-    { value: 7, label: 'Август' },
-    { value: 8, label: 'Сентябрь' },
-    { value: 9, label: 'Октябрь' },
-    { value: 10, label: 'Ноябрь' },
-    { value: 11, label: 'Декабрь' },
-  ];
-
-  const yearOptions = computed(() => {
-    const y = new Date().getFullYear();
-    return [y, y - 1, y - 2];
-  });
-
-  const pageSubtitle = computed(() => {
-    if (showDepartmentStats.value) return 'Аналитика по кафедре';
-    if (canSeeAll.value) return 'Ваша личная статистика';
-    return 'Ваша статистика по загруженным отчётам';
-  });
-
-  const teacherOptions = computed(() => [
-    { title: 'Все преподаватели', value: '' },
-    ...teachersList.value.map((t) => ({ title: t, value: t })),
-  ]);
-
-  const cardSecondaryCount = computed(() => {
-    if (showDepartmentStats.value && teachersSummary.value.length)
-      return teachersSummary.value.length;
-    const groups = groupsTable.value;
-    if (groups.length) return new Set(groups.map((r) => r.disciplineName)).size;
-    return 0;
-  });
-
-  const cardTertiaryCount = computed(() => {
-    if (showDepartmentStats.value && teachersSummary.value.length) {
-      const sum = teachersSummary.value.reduce(
-        (s, t) => s + (t.disciplinesCount ?? 0),
-        0
-      );
-      return sum || teachersSummary.value.length;
-    }
-    const groups = groupsTable.value;
-    if (groups.length) return new Set(groups.map((r) => r.groupName)).size;
-    return 0;
-  });
-
-  function formatMonthShort(monthStr: string) {
-    const parts = monthStr.split('-');
-    const m = parts[1];
-    if (!m) return '';
-    const months = [
-      'Янв',
-      'Фев',
-      'Мар',
-      'Апр',
-      'Май',
-      'Июн',
-      'Июл',
-      'Авг',
-      'Сен',
-      'Окт',
-      'Ноя',
-      'Дек',
-    ];
-    return months[parseInt(m, 10) - 1] ?? '';
-  }
-
-  const chartPadding = { left: 40, right: 20, top: 20, bottom: 40 };
-  const chartW = 360;
-  const chartH = 180;
-
-  const lineUploadedPoints = computed(() => {
-    const data = uploadDynamics.value;
-    if (!data.length) return [] as { x: number; y: number }[];
-    const maxVal = Math.max(
-      1,
-      ...data.map((d: { uploaded: number }) => d.uploaded)
-    );
-    return data.map((d: { uploaded: number; checked: number }, i: number) => {
-      const x = chartPadding.left + (i / Math.max(1, data.length - 1)) * chartW;
-      const y = chartPadding.top + chartH - (d.uploaded / maxVal) * chartH;
-      return { x, y };
-    });
-  });
-
-  const lineUploadedPath = computed(() =>
-    lineUploadedPoints.value
-      .map((p: { x: number; y: number }) => `${p.x},${p.y}`)
-      .join(' ')
+  const disciplinesWithTeachersFiltered = computed(() =>
+    filterByStudyPeriod(disciplinesWithTeachers.value, studyPeriod.value)
   );
 
-  const sortedBuckets = computed(() => {
-    const order = ['90-100', '70-89', '50-69', '<50'];
-    const idx = (b: string) => {
-      const norm = (b ?? '').replace('%', '');
-      const i = order.indexOf(norm);
-      return i >= 0 ? i : 99;
-    };
-    return [...complianceBuckets.value].sort(
-      (
-        a: { bucket: string; count: number },
-        b: { bucket: string; count: number }
-      ) => idx(a.bucket) - idx(b.bucket)
-    );
-  });
-
-  function polarToCart(cx: number, cy: number, r: number, deg: number) {
-    const rad = ((deg - 90) * Math.PI) / 180;
-    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-  }
-
-  function describeArc(
-    cx: number,
-    cy: number,
-    r: number,
-    startDeg: number,
-    endDeg: number,
-    sweep = 1
-  ) {
-    const start = polarToCart(cx, cy, r, startDeg);
-    const end = polarToCart(cx, cy, r, endDeg);
-    const diff = sweep > 0 ? endDeg - startDeg : startDeg - endDeg;
-    const large = diff > 180 ? 1 : 0;
-    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${large} ${sweep} ${end.x} ${end.y}`;
-  }
-
-  const donutSegments = computed(() => {
-    const buckets = sortedBuckets.value;
-    if (!buckets.length || totalBucketCount.value === 0) return [];
-    const cx = 0;
-    const cy = 0;
-    const ri = 35;
-    const ro = 50;
-    let startDeg = 0;
-    const segments: { bucket: string; path: string; color: string }[] = [];
-    for (const b of buckets) {
-      const pct = bucketPct(b);
-      const sweep = (pct / 100) * 360;
-      const endDeg = startDeg + sweep;
-      if (sweep < 0.1) {
-        startDeg = endDeg;
-        continue;
+  const disciplinesPlanDetailRows = computed(
+    (): AnalyticsDisciplineTableRow[] => {
+      if (
+        !showDepartmentStats.value ||
+        disciplinesWithTeachers.value.length === 0
+      ) {
+        return [];
       }
-      const path =
-        describeArc(cx, cy, ro, startDeg, endDeg) +
-        ' L ' +
-        polarToCart(cx, cy, ri, endDeg).x +
-        ' ' +
-        polarToCart(cx, cy, ri, endDeg).y +
-        ' ' +
-        describeArc(cx, cy, ri, endDeg, startDeg, 0) +
-        ' Z';
-      segments.push({
-        bucket: b.bucket,
-        path,
-        color: bucketColorHex(b.bucket ?? ''),
-      });
-      startDeg = endDeg;
+      return planRowsToDisciplineWidgetRows(
+        disciplinesWithTeachersFiltered.value
+      );
     }
-    return segments;
-  });
-
-  function bucketColorHex(bucket: string): string {
-    const b = bucket ?? '';
-    if (b.includes('90') || b.includes('100')) return '#16a34a';
-    if (b.includes('70') || b.includes('89')) return '#f97316';
-    if (b.includes('50') || b.includes('69')) return '#ef4444';
-    return '#991b1b';
-  }
-
-  function initials(name: string) {
-    if (!name) return '—';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2 && parts[0] && parts[1])
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    return name.slice(0, 2).toUpperCase() || '—';
-  }
-
-  const avatarColors = ['#6366f1', '#8b5cf6', '#ec4899', '#0ea5e9'];
-  function avatarColor(name: string) {
-    let h = 0;
-    for (let i = 0; i < (name ?? '').length; i++)
-      h += (name ?? '').charCodeAt(i);
-    return avatarColors[Math.abs(h) % avatarColors.length];
-  }
-
-  function teacherName(row: { teacherFio?: string; teacherLastName?: string }) {
-    return row.teacherFio ?? row.teacherLastName ?? '—';
-  }
-
-  const totalBucketCount = computed(() =>
-    complianceBuckets.value.reduce((s, b) => s + b.count, 0)
   );
 
-  function bucketPct(b: { bucket: string; count: number }) {
-    if (totalBucketCount.value === 0) return 0;
-    return (b.count / totalBucketCount.value) * 100;
-  }
+  const disciplinesUsePlanDetailTable = computed(
+    () => disciplinesPlanDetailRows.value.length > 0
+  );
 
-  function bucketColor(bucket: string): Record<string, string> {
-    return { backgroundColor: bucketColorHex(bucket) };
-  }
+  const disciplinesSimpleTableForScope = computed(() => {
+    const period = studyPeriod.value;
+    if (showDepartmentStats.value && disciplinesWithTeachers.value.length > 0) {
+      if (disciplinesUsePlanDetailTable.value) return [];
+      return aggregateDisciplinesTableFromPlan(
+        disciplinesWithTeachersFiltered.value
+      );
+    }
+    if (!showDepartmentStats.value && period !== 'academic_year') {
+      return buildPersonalDisciplinesTableFromCards(
+        teacherDisciplineCards.value,
+        period,
+        disciplinesTable.value,
+        filterByStudyPeriod(bySemester.value, period)
+      );
+    }
+    return disciplinesTable.value;
+  });
 
-  const maxFreqErr = computed(() =>
-    Math.max(
-      1,
-      ...frequentErrors.value.map((item: { count: number }) => item.count)
+  const disciplinesTableForScope = computed(
+    (): AnalyticsDisciplineTableRow[] => {
+      if (disciplinesUsePlanDetailTable.value) {
+        return disciplinesPlanDetailRows.value;
+      }
+      return disciplineTableItemsToWidgetRows(
+        disciplinesSimpleTableForScope.value
+      );
+    }
+  );
+
+  const bySemesterForScope = computed(() =>
+    filterByStudyPeriod(bySemester.value, studyPeriod.value)
+  );
+
+  const teachersSummaryForScope = computed((): TeachersSummaryItem[] => {
+    if (showDepartmentStats.value && disciplinesWithTeachers.value.length > 0) {
+      return aggregateTeachersSummaryFromPlan(
+        filterByStudyPeriod(disciplinesWithTeachers.value, studyPeriod.value)
+      );
+    }
+    return teachersSummary.value;
+  });
+
+  const displayKpi = computed(() => {
+    const rows = disciplinesTableForScope.value;
+    const period = studyPeriod.value;
+    if (rows.length > 0) {
+      let expectedCount = 0;
+      let totalWorks = 0;
+      for (const r of rows) {
+        expectedCount += Number(r.expectedCount) || 0;
+        totalWorks += Number(r.uploadedCount) || 0;
+      }
+      return {
+        expectedCount,
+        totalWorks,
+        totalTeachers: kpi.value?.totalTeachers,
+      };
+    }
+    if (!showDepartmentStats.value && period !== 'academic_year') {
+      return {
+        expectedCount: 0,
+        totalWorks: 0,
+        totalTeachers: undefined,
+      };
+    }
+    return kpi.value;
+  });
+
+  const groupRows = computed(() =>
+    aggregateGroupsFromDetail(
+      filterByStudyPeriod(disciplinesWithTeachers.value, studyPeriod.value)
     )
   );
 
-  function freqErrPct(count: number) {
-    return Math.min(100, (count / maxFreqErr.value) * 100);
+  const teacherDetailBlocks = computed(() =>
+    buildTeacherDetailBlocks(
+      filterByStudyPeriod(disciplinesWithTeachers.value, studyPeriod.value)
+    )
+  );
+
+  const teacherTreePagination = useTablePagination(teacherDetailBlocks);
+
+  const teacherTreeBarRows = computed(() =>
+    toValue(teacherTreePagination.pagedItems).map((block) => ({
+      key: block.teacher,
+      title: block.teacher,
+      plan: block.plan,
+      uploaded: block.uploaded,
+    }))
+  );
+
+  function toggleTeacherExpand(teacher: string) {
+    const next = new Set(expandedTeachers.value);
+    if (next.has(teacher)) next.delete(teacher);
+    else next.add(teacher);
+    expandedTeachers.value = next;
+  }
+
+  function teacherTreeChevronIcon(teacherKey: string) {
+    return expandedTeachers.value.has(teacherKey)
+      ? 'mdi-chevron-down'
+      : 'mdi-chevron-right';
+  }
+
+  function visibleTeacherChildRows<
+    T extends { teacher: string; children: readonly unknown[] },
+  >(block: T) {
+    return expandedTeachers.value.has(block.teacher) ? [...block.children] : [];
   }
 
   onMounted(async () => {
@@ -884,6 +478,25 @@
       await loadAll();
     } else {
       router.push('/auth');
+    }
+  });
+
+  watch(showDepartmentStats, (dept) => {
+    if (dept) {
+      expandedTeachers.value = new Set(
+        teacherDetailBlocks.value.slice(0, 5).map((b) => b.teacher)
+      );
+    } else {
+      expandedTeachers.value = new Set();
+    }
+  });
+
+  watch(teacherDetailBlocks, (blocks) => {
+    if (!showDepartmentStats.value || !blocks.length) return;
+    if (expandedTeachers.value.size === 0) {
+      expandedTeachers.value = new Set(
+        blocks.slice(0, 5).map((b) => b.teacher)
+      );
     }
   });
 </script>
@@ -895,432 +508,419 @@
     min-height: 100%;
   }
 
-  .filters-row {
+  .widgets-row {
+    margin-top: 0;
+  }
+  .widgets-row :deep(.v-col) {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    flex-direction: column;
+    align-self: stretch;
+  }
+
+  .widgets-row :deep(.v-col > .widget-card) {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 100%;
+  }
+  .widgets-row :deep(.v-col > .semesters-widget),
+  .widgets-row :deep(.v-col > .disciplines-widget),
+  .widgets-row :deep(.v-col > .groups-widget),
+  .widgets-row :deep(.v-col > .teachers-widget) {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .widget-card {
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    padding: 20px 22px 22px;
+    flex: 1 1 auto;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .widget-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: 16px;
-    margin-bottom: 24px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    margin-bottom: 16px;
   }
-
-  .range-btns {
-    display: flex;
-    gap: 0;
-    background: #e5e7eb;
-    border-radius: 10px;
-    padding: 2px;
+  .widget-head--simple {
+    align-items: center;
   }
-
-  .range-btn {
-    padding: 8px 16px;
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    font-weight: 500;
-    color: #6b7280;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s;
-  }
-
-  .range-btn:hover {
-    color: #374151;
-  }
-  .range-btn.active {
-    background: #111827;
-    color: white;
-  }
-
-  .scope-toggle {
-    display: flex;
-    gap: 0;
-    background: #e5e7eb;
-    border-radius: 10px;
-    padding: 2px;
-  }
-  .scope-btn {
-    padding: 8px 16px;
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    font-weight: 500;
-    color: #6b7280;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s;
-  }
-  .scope-btn:hover {
-    color: #374151;
-  }
-  .scope-btn.active {
-    background: #111827;
-    color: white;
-  }
-
-  .month-year-row {
+  .widget-head__left {
     display: flex;
     gap: 12px;
+    align-items: flex-start;
+    min-width: 0;
   }
-
-  .filter-select {
-    max-width: 180px;
-  }
-  .filter-select :deep(.v-field) {
-    border-radius: 10px;
-    background: white;
-  }
-
-  .view-toggle {
-    display: flex;
-    gap: 0;
-    background: #e5e7eb;
-    border-radius: 10px;
-    padding: 2px;
-    margin-left: auto;
-  }
-
-  .view-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    font-weight: 500;
-    color: #6b7280;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s;
-  }
-
-  .view-btn:hover {
-    color: #374151;
-  }
-  .view-btn.active {
-    background: #111827;
-    color: white;
-  }
-
-  .stats-row {
-    margin-bottom: 24px;
-  }
-
-  .stat-card {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px;
-    border-radius: 16px;
-    background: white;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-    height: 100%;
-  }
-
-  .stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .stat-total .stat-icon {
-    background: #eef2ff;
+  .widget-head__ico {
     color: #6366f1;
+    margin-top: 2px;
   }
-  .stat-secondary .stat-icon {
-    background: #dbeafe;
-    color: #2563eb;
-  }
-  .stat-tertiary .stat-icon {
-    background: #e0e7ff;
-    color: #4f46e5;
-  }
-  .stat-avg .stat-icon {
-    background: #dcfce7;
-    color: #16a34a;
-  }
-
-  .stat-title {
-    font-size: 13px;
-    color: #6b7280;
-    margin-bottom: 4px;
-  }
-  .stat-value {
-    font-size: 22px;
-    font-weight: 700;
-    color: #111827;
-  }
-
-  .chart-card {
-    padding: 20px;
-    border-radius: 16px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-    margin-bottom: 20px;
-  }
-
-  .chart-title {
-    margin: 0 0 4px;
-    font-size: 16px;
+  .widget-title {
+    margin: 0;
+    font-size: 17px;
     font-weight: 600;
     color: #111827;
   }
-  .chart-subtitle {
-    margin: 0 0 16px;
+  .widget-sub {
+    margin: 4px 0 0;
     font-size: 13px;
     color: #6b7280;
   }
-  .chart-empty {
-    margin: 24px 0;
+  .view-toggle {
+    flex-shrink: 0;
+  }
+  .view-toggle:not(.view-toggle--pill) :deep(.v-btn) {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 500;
+  }
+
+  .v-btn-toggle.view-toggle--pill[data-analytics-view-toggle] {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 3px;
+    background: #f0f2f5;
+    border: none;
+    border-radius: 999px;
+    box-shadow: none;
+    overflow: visible;
+    overflow-x: visible;
+  }
+  .v-btn-toggle.view-toggle--pill[data-analytics-view-toggle] > :deep(.v-btn) {
+    flex: 1 1 0;
+    min-width: 0;
+    border-radius: 999px;
+    min-height: 34px;
+    padding-inline: 14px;
+    border: none;
+    box-shadow: none;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 500;
+    font-size: 11px;
+    background: transparent;
+    color: #595959;
+  }
+  .v-btn-toggle.view-toggle--pill[data-analytics-view-toggle]
+    > :deep(.v-btn .v-icon) {
+    color: currentColor;
+    opacity: 0.85;
+    font-size: 18px;
+  }
+  .v-btn-toggle.view-toggle--pill[data-analytics-view-toggle]
+    > :deep(.v-btn:hover:not(.v-btn--active):not(.v-btn--selected)) {
+    background: rgba(0, 0, 0, 0.04);
+    color: #434343;
+  }
+  .v-btn-toggle.view-toggle--pill[data-analytics-view-toggle]
+    > :deep(.v-btn.v-btn--active),
+  .v-btn-toggle.view-toggle--pill[data-analytics-view-toggle]
+    > :deep(.v-btn.v-btn--selected) {
+    background: #fff;
+    color: #1890ff;
+    box-shadow:
+      0 1px 4px rgba(15, 23, 42, 0.1),
+      0 1px 2px rgba(15, 23, 42, 0.06);
+  }
+  .v-btn-toggle.view-toggle--pill[data-analytics-view-toggle]
+    > :deep(.v-btn.v-btn--active .v-icon),
+  .v-btn-toggle.view-toggle--pill[data-analytics-view-toggle]
+    > :deep(.v-btn.v-btn--selected .v-icon) {
+    color: #1890ff;
+    opacity: 1;
+  }
+  .v-btn-toggle.view-toggle--pill[data-analytics-view-toggle]
+    > :deep(.v-btn.v-btn--active .v-btn__overlay),
+  .v-btn-toggle.view-toggle--pill[data-analytics-view-toggle]
+    > :deep(.v-btn.v-btn--selected .v-btn__overlay) {
+    opacity: 0;
+  }
+  .widget-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  .widget-body--toggle-view {
+    display: flex;
+    flex-direction: column;
+  }
+  .widget-body--paired-col {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .widget-body--paired-col > .analytics-pager {
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+  .widget-body--paired-col > .widget-empty {
+    margin-top: auto;
+  }
+
+  .widget-body__scroll {
+    box-sizing: border-box;
+    overflow-y: visible;
+    overflow-x: auto;
+    flex-shrink: 0;
+    width: 100%;
+  }
+  .widget-body--paired-col > .widget-body__scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-shrink: 1;
+  }
+  .widget-body :deep(.etu-dt-wrap) {
+    flex-shrink: 0;
+  }
+  .widget-body > .analytics-pager {
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+  .widget-body--toggle-view > .analytics-pager {
+    margin-top: 12px;
+  }
+  .widget-empty {
+    margin: 8px 0 0;
     color: #9ca3af;
     font-size: 14px;
   }
 
-  /* Line chart */
-  .line-chart-wrap {
-    position: relative;
+  .analytics-etu-dt :deep(.analytics-table) {
+    font-size: 14px;
   }
-  .line-chart {
-    width: 100%;
-    height: 220px;
-    display: block;
-  }
-  .line-chart-legend {
-    display: flex;
-    gap: 24px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #e5e7eb;
-  }
-  .legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: #374151;
-  }
-  .legend-mark {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-  }
-  .legend-mark--square {
-    background: #2563eb;
-  }
-  .legend-mark--circle {
-    background: #16a34a;
-    border-radius: 50%;
-  }
-  .line-chart-x-labels {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 4px;
-    padding-left: 40px;
-    padding-right: 20px;
-  }
-  .x-label {
-    font-size: 11px;
-    color: #6b7280;
-  }
-
-  /* Donut chart */
-  .gauge-card .donut-wrap {
-    display: flex;
-    gap: 24px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .donut-svg-wrap {
-    width: 180px;
-    height: 180px;
-    flex-shrink: 0;
-  }
-  .donut-chart {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-  .donut-segment {
-    transition: opacity 0.2s;
-  }
-  .donut-segment:hover {
-    opacity: 0.9;
-  }
-  .donut-legend {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .donut-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-  }
-  .donut-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 4px;
-    flex-shrink: 0;
-  }
-
-  /* Horizontal bar chart */
-  .horizontal-bars {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .hbar-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .hbar-label {
-    flex: 0 0 120px;
-    font-size: 13px;
-    color: #374151;
-  }
-  .hbar-track {
-    flex: 1;
-    height: 24px;
-    background: #f3f4f6;
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .hbar-fill {
-    height: 100%;
-    background: #2563eb;
-    border-radius: 6px;
-    transition: width 0.3s;
-  }
-  .hbar-value {
-    flex: 0 0 40px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-    text-align: right;
-  }
-
-  /* Teachers table */
-  .teachers-table .teacher-cell {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .teacher-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
+  .analytics-table--dense {
     font-size: 12px;
-    font-weight: 600;
-    flex-shrink: 0;
-  }
-  .avg-compliance {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .avg-bar-wrap {
-    flex: 1;
-    max-width: 120px;
-    height: 8px;
-    background: #f3f4f6;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .avg-bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.3s;
-  }
-  .avg-bar--green {
-    background: #16a34a;
-  }
-  .avg-bar--orange {
-    background: #f97316;
-  }
-  .avg-pct {
-    font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-    min-width: 36px;
-  }
-
-  .progress-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  .progress-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .progress-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .progress-label {
-    font-size: 13px;
-    color: #374151;
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .progress-pct {
-    font-size: 13px;
-    font-weight: 600;
-    color: #6366f1;
-  }
-  .progress-track {
-    height: 8px;
-    background: #f3f4f6;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6);
-    border-radius: 4px;
-    transition: width 0.3s;
-  }
-  .progress-fill--alt {
-    background: linear-gradient(90deg, #0ea5e9, #06b6d4);
-  }
-  .progress-meta {
-    font-size: 11px;
-    color: #9ca3af;
-  }
 
-  .table-card {
-    padding: 20px;
-    border-radius: 16px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-    margin-bottom: 20px;
-  }
-
-  .analytics-table {
-    font-size: 14px;
-  }
-  .analytics-table th {
+  .analytics-etu-dt :deep(.analytics-table:not(.analytics-table--detail)) th {
     font-weight: 600;
     color: #374151;
     background: #f9fafb;
   }
-  .analytics-table td,
-  .analytics-table th {
-    padding: 12px 16px;
+
+  .analytics-etu-dt
+    :deep(.etu-dt-table.analytics-table tbody tr:not(.row-total)) {
+    min-height: 64px;
+  }
+  .analytics-etu-dt
+    :deep(.etu-dt-table.analytics-table tbody tr:not(.row-total) td) {
+    vertical-align: middle;
+  }
+  .cell-wrap {
+    white-space: normal;
+    max-width: 220px;
+  }
+  .cell-num {
+    font-weight: 600;
+  }
+  .cell-num--up {
+    color: #2563eb;
+  }
+  .cell-uploaded-of {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .cell-upload-prog-wrap {
+    text-align: right;
+    vertical-align: middle;
+  }
+  .cell-upload-prog-wrap :deep(.upload-prog) {
+    display: inline-block;
+    min-width: 132px;
+    max-width: 240px;
+    width: 100%;
+    vertical-align: middle;
+  }
+  .tree-col-upload.cell-upload-prog-wrap :deep(.upload-prog) {
+    min-width: 108px;
+    max-width: 168px;
+  }
+  .row-total {
+    font-weight: 600;
+    background: #f9fafb;
+  }
+  .row-total td {
+    border-top: 2px solid #e5e7eb;
+  }
+
+  .analytics-etu-dt :deep(table.etu-dt-table.analytics-table--detail thead th) {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.055em;
+    padding: 13px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .analytics-etu-dt :deep(.analytics-table--detail) .cell-th-num {
+    text-align: center;
+    width: 1%;
+  }
+  .analytics-etu-dt :deep(.analytics-table--detail) tbody td {
+    padding: 14px 16px;
+    vertical-align: top;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.12s ease;
+  }
+  .analytics-etu-dt :deep(.analytics-table--detail) tbody tr:hover td {
+    background: #f8fafc;
+  }
+  .analytics-etu-dt :deep(.analytics-table--detail) tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .analytics-etu-dt :deep(.analytics-table--plan-detail) {
+    font-size: 14px;
+  }
+  .analytics-etu-dt :deep(.analytics-table--plan-detail) .cell-discipline {
+    font-weight: 600;
+    color: #0f172a;
+    max-width: min(320px, 36vw);
+    line-height: 1.5;
+  }
+  .analytics-etu-dt :deep(.analytics-table--plan-detail) .cell-person {
+    color: #475569;
+    max-width: 220px;
+    line-height: 1.45;
+  }
+  .analytics-etu-dt :deep(.analytics-table--plan-detail) .cell-muted {
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+  }
+  .analytics-etu-dt :deep(.analytics-table--plan-detail) .cell-groups {
+    min-width: 120px;
+    max-width: 360px;
+    line-height: 1.6;
+  }
+  .analytics-etu-dt :deep(.analytics-table--plan-detail) .cell-empty-dash {
+    color: #94a3b8;
+  }
+  .grp-tag--plan {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 11px;
+    margin: 2px 6px 2px 0;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    border: 1px solid #e0e7ff;
+  }
+
+  .analytics-etu-dt :deep(table.tree-table--fixed) {
+    table-layout: fixed;
+    width: 100%;
+  }
+  .analytics-etu-dt :deep(th.tree-col-chev),
+  .analytics-etu-dt :deep(td.tree-col-chev) {
+    width: 44px;
+    max-width: 44px;
+    padding-left: 10px;
+    padding-right: 6px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .analytics-etu-dt :deep(th.tree-col-name),
+  .analytics-etu-dt :deep(td.tree-col-name) {
+    min-width: 0;
+    text-align: left;
+    vertical-align: middle;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  .analytics-etu-dt :deep(th.tree-col-groups),
+  .analytics-etu-dt :deep(td.tree-col-groups) {
+    width: 26%;
+    min-width: 148px;
+    vertical-align: middle;
+    text-align: left;
+  }
+  .analytics-etu-dt :deep(td.tree-col-groups--parent) {
+    text-align: center;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+  .analytics-etu-dt :deep(th.tree-col-upload),
+  .analytics-etu-dt :deep(td.tree-col-upload) {
+    width: 172px;
+    min-width: 172px;
+    text-align: right;
+    vertical-align: middle;
+  }
+
+  .analytics-etu-dt
+    :deep(.tree-table.analytics-table--detail)
+    .tree-row--parent {
+    cursor: pointer;
+    background: #f8fafc;
+  }
+  .analytics-etu-dt
+    :deep(
+      table.tree-table.analytics-table--detail
+        tbody
+        tr.tree-row--parent:hover
+        > td
+    ) {
+    background: #f1f5f9;
+  }
+  .analytics-etu-dt
+    :deep(.tree-table.analytics-table--detail)
+    .tree-row--child
+    td {
+    background: #fff;
+  }
+  .analytics-etu-dt
+    :deep(.tree-table.analytics-table--detail)
+    .tree-row--parent
+    td {
+    font-weight: 500;
+    color: #0f172a;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .analytics-etu-dt
+    :deep(
+      table.tree-table.analytics-table--detail td.tree-col-name.tree-child-name
+    ) {
+    font-size: 13px;
+    color: #4b5563;
+    font-weight: 400;
+    padding-left: 6px;
+  }
+  .tree-meta {
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: 400;
+  }
+  .grp-tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    margin: 2px 4px 2px 0;
+    border-radius: 6px;
+    background: #f3f4f6;
+    color: #6b7280;
   }
 </style>

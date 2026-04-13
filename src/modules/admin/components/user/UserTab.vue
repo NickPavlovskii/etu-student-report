@@ -140,7 +140,7 @@
 
 <script setup lang="ts">
   import { computed, inject, reactive, ref, toRef } from 'vue';
-  import type { TeacherDto } from '@/api/admin';
+  import type { TeacherDto } from '@/api/info';
   import type { TableColumn } from '@/components/global/etu-data-table/types';
   import UserToolbar from './UserToolbar.vue';
   import UserDisciplinesTooltip from './UserDisciplinesTooltip.vue';
