@@ -33,6 +33,7 @@ export type AddTemplateForm = {
   figurePosition: string;
   figureCaption: string;
   tableTitle: string;
+  tableTitlePlacement: string;
   tablePosition?: string;
   submissionFormat: string;
   titlePageRequiredStrings?: string[];

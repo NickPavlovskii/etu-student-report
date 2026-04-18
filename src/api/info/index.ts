@@ -11,6 +11,11 @@ import templatesModule from './templates';
 import archiveModule from './archive';
 import validationModule from './validation';
 
+export {
+  JAVA_ILLUSTRATION_TABLE_CRITERIA_KEYS,
+  JAVA_TEMPLATE_CRITERIA_DEFAULTS,
+} from './javaTemplateCriteriaDefaults';
+
 export const infoApi: InfoApi = {
   axios: infoAxios,
   auth: authModule(infoAxios),
@@ -56,6 +61,7 @@ export type {
   AuditLogEntryDto,
   AuditLogQueryParams,
   TemplateDto,
+  TemplateCriteriaDto,
   DownloadFormat,
   ValidationErrorItem,
   ValidationResult,
@@ -121,4 +127,4 @@ export const {
   downloadArchiveReport,
 } = infoApi.archive;
 
-export const { validateDocument } = infoApi.validation;
+export const { validateDocument, validateBatch } = infoApi.validation;

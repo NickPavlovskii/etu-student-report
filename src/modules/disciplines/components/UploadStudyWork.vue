@@ -1,7 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
-    max-width="700"
+    max-width="760"
     persistent
   >
     <v-card
@@ -49,9 +49,10 @@
           <v-col cols="6">
             <v-select
               v-model="selectedGroup"
+              class="upload-form-field"
               label="Учебная группа *"
-              outlined
-              dense
+              variant="outlined"
+              density="compact"
               hide-details
               :items="groups"
             />
@@ -60,11 +61,12 @@
           <v-col cols="6">
             <v-select
               v-model="selectedStudentId"
+              class="upload-form-field"
               label="Студент *"
               item-title="name"
               item-value="id"
-              outlined
-              dense
+              variant="outlined"
+              density="compact"
               hide-details
               :disabled="!selectedGroup"
               :items="studentsForSelect"
@@ -74,20 +76,23 @@
           <v-col cols="6">
             <v-text-field
               :model-value="disciplineTitle"
+              class="upload-form-field upload-form-field--readonly"
               label="Дисциплина"
-              disabled
-              outlined
-              dense
+              readonly
+              variant="outlined"
+              density="compact"
               hide-details
+              tabindex="-1"
             />
           </v-col>
 
           <v-col cols="6">
             <v-select
               v-model="workType"
+              class="upload-form-field"
               label="Вид контроля *"
-              outlined
-              dense
+              variant="outlined"
+              density="compact"
               hide-details
               :items="controlTypesOptions"
             />
@@ -96,66 +101,82 @@
           <v-col cols="12">
             <v-text-field
               v-model="workTitle"
+              class="upload-form-field"
               label="Название работы *"
-              outlined
-              dense
+              variant="outlined"
+              density="compact"
               hide-details
             />
           </v-col>
 
           <v-col
             cols="12"
-            v-if="topicsList.length"
+            v-if="filteredTopicsList.length"
           >
             <v-select
               v-model="topic"
+              class="upload-form-field"
               label="Тема"
-              outlined
-              dense
+              variant="outlined"
+              density="compact"
               hide-details
-              :items="topicsList"
+              :items="filteredTopicsList"
             />
           </v-col>
 
           <v-col cols="12">
-            <v-text-field
+            <v-select
               v-model="academicYear"
+              class="upload-form-field"
               label="Учебный год"
-              outlined
-              dense
+              :items="ACADEMIC_YEAR_SELECT_ITEMS"
+              item-title="title"
+              item-value="value"
+              variant="outlined"
+              density="compact"
               hide-details
             />
           </v-col>
         </v-row>
 
-        <v-checkbox
-          v-model="autoCheck"
-          label="Автоматическая проверка оформления"
-          hide-details
-        />
+        <div class="auto-check-block">
+          <v-checkbox
+            v-model="autoCheck"
+            color="primary"
+            density="comfortable"
+            hide-details
+          >
+            <template #label>
+              <span class="auto-check-label">Проверить оформление по шаблону перед загрузкой</span>
+            </template>
+          </v-checkbox>
+        </div>
       </v-card-text>
 
       <v-card-actions class="actions">
         <v-btn
+          class="upload-actions-cancel"
           variant="text"
           @click="close"
         >
           Отмена
         </v-btn>
+        <v-spacer />
         <v-btn
+          class="upload-actions-submit"
           color="#111827"
           :disabled="!isValid || validating"
           :loading="validating"
           @click="submitWork"
         >
           <v-icon start>mdi-upload</v-icon>
-          {{ validating ? 'Проверка...' : 'Загрузить' }}
+          {{ primaryUploadLabel }}
         </v-btn>
       </v-card-actions>
 
       <v-dialog
         v-model="showValidationResult"
-        max-width="520"
+        max-width="820"
         persistent
       >
         <v-card class="validation-result-card">
@@ -171,53 +192,34 @@
                 {{ validationResultTitleText }}
               </h3>
               <div
-                v-if="validationResult?.percent != null"
+                v-if="displayCompliancePercent != null"
                 class="validation-percent"
               >
-                Соответствие: {{ validationResult.percent }}%
+                Соответствие: {{ displayCompliancePercent }}%
               </div>
             </div>
           </div>
           <v-card-text v-if="validationResult">
             <div class="validation-criteria-list">
               <div
-                v-for="(c, idx) in allCriteria"
+                v-for="(c, idx) in visibleCriteria"
                 :key="c.code + '-' + idx"
-                :class="[
-                  'validation-item',
-                  {
-                    error: !c.passed && c.level === 'error',
-                    warning: !c.passed && c.level !== 'error',
-                    passed: c.passed,
-                  },
-                ]"
+                :class="['validation-item', validationCriterionRowModifiers(c)]"
               >
                 <v-icon
-                  v-if="c.passed"
                   size="18"
-                  color="success"
+                  :color="validationCriterionIconColor(c)"
                 >
-                  mdi-check-circle
-                </v-icon>
-                <v-icon
-                  v-else-if="c.level === 'error'"
-                  size="18"
-                  color="error"
-                >
-                  mdi-close-circle
-                </v-icon>
-                <v-icon
-                  v-else
-                  size="18"
-                  color="warning"
-                >
-                  mdi-alert
+                  {{ validationCriterionIconName(c) }}
                 </v-icon>
                 <div class="criteria-content">
-                  <span class="criteria-title">{{ c.title || c.code }}:</span>
+                  <span class="criteria-title">{{ validationCriterionDisplayTitle(c) }}:</span>
                   <span class="criteria-message">{{ c.message }}</span>
                   <div
-                    v-if="(c.expected || c.actual) && !c.passed"
+                    v-if="
+                      (c.expected || c.actual) &&
+                      (!c.passed || validationCriterionShowExpectedActualWhenPassed(c))
+                    "
                     class="criteria-details"
                   >
                     <span v-if="c.expected">Ожидалось: {{ c.expected }}</span>
@@ -227,28 +229,31 @@
               </div>
             </div>
           </v-card-text>
-          <v-card-actions>
+          <v-card-actions class="validation-result-actions">
             <v-btn
               v-if="showAnnotatedFileButton"
+              class="validation-download-btn"
               variant="tonal"
               prepend-icon="mdi-file-eye-outline"
               @click="openAnnotatedFile"
             >
               {{ annotatedFileButtonLabel }}
             </v-btn>
-            <v-spacer />
-            <v-btn
-              variant="text"
-              @click="showValidationResult = false"
-            >
-              Отмена
-            </v-btn>
-            <v-btn
-              color="primary"
-              @click="confirmUploadDespiteValidation"
-            >
-              {{ confirmUploadAfterValidationLabel }}
-            </v-btn>
+            <v-spacer class="validation-actions-spacer" />
+            <div class="validation-actions-right">
+              <v-btn
+                variant="text"
+                @click="showValidationResult = false"
+              >
+                Отмена
+              </v-btn>
+              <v-btn
+                color="primary"
+                @click="confirmUploadDespiteValidation"
+              >
+                {{ confirmUploadAfterValidationLabel }}
+              </v-btn>
+            </div>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -261,6 +266,18 @@
   import { useAcademicYear } from '@/composables/useAcademicYear';
   import { useDownload } from '@/composables/useDownload';
   import { validateDocument, type ValidationResult } from '@/api/info';
+  import { ACADEMIC_YEAR_SELECT_ITEMS } from '@/constants/academicYearSelectItems';
+  import {
+    filterDisplayedValidationCriteria,
+    mergeValidationResultItems,
+    validationCriterionDisplayTitle,
+    validationCriterionShowExpectedActualWhenPassed,
+  } from '@/utils/validationCriteriaDisplay';
+  import {
+    validationCriterionIconColor,
+    validationCriterionIconName,
+    validationCriterionRowModifiers,
+  } from '@/utils/validationCriterionVisual';
   import type {
     StudentInGroupRow,
     UploadDisciplineModalProps,
@@ -284,7 +301,7 @@
   const isDragOver = ref(false);
   const selectedGroup = ref('');
 
-  const selectedStudentId = ref<number | null>(null);
+  const selectedStudentId = ref<number | string | null>(null);
 
   const workType = ref('');
   const topic = ref('');
@@ -299,7 +316,7 @@
     file.value ? file.value.name : 'Нажмите для выбора файла'
   );
 
-  const submitButtonLabel = computed(() =>
+  const primaryUploadLabel = computed(() =>
     validating.value ? 'Проверка...' : 'Загрузить'
   );
 
@@ -338,11 +355,23 @@
       : 'Скачать файл с замечаниями'
   );
 
-  const allCriteria = computed(() => {
+  const visibleCriteria = computed(() =>
+    filterDisplayedValidationCriteria(
+      mergeValidationResultItems(validationResult.value)
+    )
+  );
+
+  const displayCompliancePercent = computed<number | null>(() => {
     const r = validationResult.value;
-    if (!r) return [];
-    if (r.criteria?.length) return r.criteria;
-    return [...(r.errors ?? []), ...(r.warnings ?? [])];
+    if (!r) return null;
+    const merged = mergeValidationResultItems(r);
+    if (merged.length) {
+      const vis = filterDisplayedValidationCriteria(merged);
+      if (!vis.length) return r.percent ?? null;
+      const passed = vis.filter((c) => c.passed).length;
+      return Math.round((100 * passed) / vis.length);
+    }
+    return r.percent ?? null;
   });
 
   const disciplineTitle = computed(() => {
@@ -395,6 +424,30 @@
     }
   });
 
+  const filteredTopicsList = computed(() => {
+    const group = String(selectedGroup.value ?? '').trim();
+    const ct = String(workType.value ?? '').trim();
+    if (!ct) return topicsList.value;
+    const set = new Set<string>();
+    for (const c of props.controls ?? []) {
+      const controlGroup = String(c?.groupName ?? '').trim();
+      const controlText = String(c?.controlText ?? '').trim();
+      if (controlText !== ct) continue;
+      if (group && controlGroup && controlGroup !== group) continue;
+      normalizeTopics(c?.topics).forEach((t) => set.add(t));
+    }
+    const arr = [...set].filter(Boolean).sort((a, b) => a.localeCompare(b));
+    return arr.length ? arr : topicsList.value;
+  });
+
+  watch([filteredTopicsList, workType, selectedGroup], () => {
+    if (!topic.value) return;
+    const cur = String(topic.value).trim();
+    if (cur && filteredTopicsList.value.length && !filteredTopicsList.value.includes(cur)) {
+      topic.value = '';
+    }
+  });
+
   const openFileDialog = () => fileInput.value?.click();
 
   const onFileChange = (e: Event) => {
@@ -402,6 +455,7 @@
     const f = input.files?.[0];
     if (f) {
       file.value = f;
+      maybeAutofillFromFilename(f.name);
     }
   };
 
@@ -410,6 +464,7 @@
     const f = e.dataTransfer?.files?.[0];
     if (f) {
       file.value = f;
+      maybeAutofillFromFilename(f.name);
     }
   };
 
@@ -446,12 +501,60 @@
   const isValid = computed(() => {
     const hasFile = file.value instanceof File;
     const hasGroup = selectedGroup.value.trim().length > 0;
-    const hasStudent = typeof selectedStudentId.value === 'number';
+    const hasStudent = Number.isFinite(Number(selectedStudentId.value));
     const hasTitle = workTitle.value.trim().length > 0;
     const hasWorkType = workType.value.trim().length > 0;
 
     return hasFile && hasGroup && hasStudent && hasTitle && hasWorkType;
   });
+
+  function normalizeAcademicYearForStorage(raw: string): string {
+    return raw.replace(/\//g, '-').trim();
+  }
+
+  function bestMatchOption(input: string, options: string[]): string | null {
+    const q = (input ?? '').toLowerCase().trim();
+    if (!q) return null;
+    const exact = options.find((o) => o.toLowerCase() === q);
+    if (exact) return exact;
+    const contains = options.find((o) => o.toLowerCase().includes(q) || q.includes(o.toLowerCase()));
+    return contains ?? null;
+  }
+
+  function maybeAutofillFromFilename(fileName: string) {
+    const base = String(fileName ?? '')
+      .replace(/\.[^.]+$/, '')
+      .trim();
+    if (!base) return;
+
+    const yearMatch = base.match(/\b(20\d{2})\s*[-/]\s*(20\d{2})\b/);
+    if (yearMatch) {
+      const y = `${yearMatch[1]}-${yearMatch[2]}`;
+      academicYear.value = normalizeAcademicYearForStorage(y);
+    }
+
+    const parts = base.split('_').map((p) => p.trim()).filter(Boolean);
+    if (parts.length >= 3) {
+      const maybeWorkType = parts[2];
+      const opt = bestMatchOption(maybeWorkType, controlTypesOptions.value);
+      if (opt && !workType.value) {
+        workType.value = opt;
+      }
+      // если есть 4-я часть — пробуем как название
+      if (parts[3] && !workTitle.value.trim()) {
+        workTitle.value = parts[3];
+      }
+    }
+
+    const topicMatch = base.match(/тема\s*[:№#-]?\s*(.+)$/i);
+    if (topicMatch && topicMatch[1]) {
+      const t = topicMatch[1].trim();
+      const opt = bestMatchOption(t, filteredTopicsList.value);
+      if (opt && !topic.value) {
+        topic.value = opt;
+      }
+    }
+  }
 
   type StoredUserLite = { fioShort?: string; lastName?: string };
 
@@ -511,16 +614,14 @@
     return '';
   });
 
-  async function submitWork() {
-    const sid = selectedStudentId.value;
+  function buildUploadPayload(): UploadWorkPayload | null {
+    const sid = Number(selectedStudentId.value);
     const f = file.value;
-
-    if (!isValid.value || sid === null || !(f instanceof File)) return;
-
-    const payload: UploadWorkPayload = {
+    if (!isValid.value || !Number.isFinite(sid) || !(f instanceof File)) return null;
+    return {
       studentId: sid,
       groupName: selectedGroup.value,
-      topic: topicsList.value.length ? topic.value || '' : '',
+      topic: filteredTopicsList.value.length ? topic.value || '' : '',
       controlType: resolvedControlType.value,
       workType: workType.value,
       workTitle: workTitle.value,
@@ -531,16 +632,36 @@
       uploadedBy: getUploadedBy(),
       file: f,
     };
+  }
+
+  const resolvedTemplateId = computed(
+    () =>
+      props.templateId ??
+      (resolvedControlType.value
+        ? props.templateIdByWorkType?.[resolvedControlType.value]
+        : undefined) ??
+      null
+  );
+
+  async function submitWork() {
+    const payload = buildUploadPayload();
+    if (!payload) return;
+
+    if (!autoCheck.value) {
+      emit('submit', { ...payload, check: null });
+      close();
+      return;
+    }
 
     validating.value = true;
     try {
-      const resolved = resolvedControlType.value;
-      const tid =
-        props.templateId ??
-        (resolved ? props.templateIdByWorkType?.[resolved] : undefined);
+      const f = payload.file;
+      const tid = resolvedTemplateId.value;
       const result = await validateDocument(
         f,
-        tid != null ? { templateId: tid, annotate: true } : { annotate: true }
+        tid != null && tid !== ''
+          ? { templateId: tid, annotate: true }
+          : { annotate: true }
       );
       validationResult.value = result;
       pendingSubmitPayload.value = payload;
@@ -681,61 +802,82 @@
       margin-bottom: 8px;
     }
 
-    .v-file-input,
-    .v-select,
-    .v-text-field {
+    .upload-form-field {
       margin-bottom: 8px;
+    }
 
+    .upload-form-field :deep(.v-field) {
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+
+    .upload-form-field.upload-form-field--readonly :deep(.v-field) {
+      opacity: 1;
+    }
+
+    .upload-form-field.upload-form-field--readonly :deep(.v-field__input) {
+      cursor: default;
+    }
+
+    .v-file-input,
+    .upload-form-field {
       input {
         transition:
           border-color 0.2s ease,
           box-shadow 0.2s ease;
       }
 
-      &:focus-within input {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+      &:focus-within :deep(.v-field) {
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
       }
     }
 
-    .auto-check {
-      background-color: #f0f9ff;
-      border-radius: 8px;
-      padding: 8px;
-      font-weight: 500;
-      transition: background-color 0.3s ease;
+    .auto-check-block {
+      margin-top: 8px;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
 
-      &:hover {
-        background-color: #e0f2fe;
-      }
+    .auto-check-label {
+      font-size: 14px;
+      color: #0f172a;
+    }
+
+    .auto-check-hint {
+      margin: 8px 0 0;
+      padding-left: 32px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #64748b;
     }
   }
 
   .actions {
+    flex-wrap: wrap;
     justify-content: flex-end;
+    align-items: center;
     padding: 16px 24px;
-    gap: 12px;
+    gap: 10px 12px;
 
-    .v-btn {
+    .upload-actions-cancel {
+      min-width: auto;
+      color: #374151 !important;
+    }
+
+    .upload-actions-submit {
       min-width: 160px;
-      border-radius: 8px;
-      color: white;
+      border-radius: 10px;
+      font-weight: 600;
+      text-transform: none;
       transition:
-        background-color 0.3s ease,
-        transform 0.2s ease;
+        background-color 0.2s ease,
+        transform 0.15s ease;
 
-      &:first-child {
-        color: #111827;
-        background-color: #f9fafb;
-
-        &:hover {
-          background-color: #e5e7eb;
-        }
-      }
-
-      &:hover {
-        transform: translateY(-2px);
-        background-color: #1f2937;
+      &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        background-color: #1f2937 !important;
       }
     }
   }
@@ -821,5 +963,49 @@
     font-size: 12px;
     color: #6b7280;
     margin-top: 4px;
+  }
+
+  .validation-result-actions {
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 10px 12px;
+    padding: 12px 16px 20px !important;
+  }
+
+  .validation-download-btn {
+    flex: 1 1 auto;
+    min-width: min(100%, 280px);
+    white-space: normal;
+    height: auto !important;
+    padding-block: 10px !important;
+  }
+
+  .validation-actions-spacer {
+    flex: 1 1 40px;
+    min-width: 8px;
+  }
+
+  .validation-actions-right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  @media (max-width: 600px) {
+    .validation-actions-spacer {
+      display: none;
+    }
+
+    .validation-actions-right {
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    .validation-actions-right .v-btn {
+      flex: 1;
+    }
   }
 </style>

@@ -255,11 +255,7 @@ export interface DisciplinesModule {
   downloadReport(reportId: number): Promise<Blob>;
 }
 
-// ——— templates ———
-export type TemplateDto = {
-  id?: string | number;
-  name: string;
-  description?: string;
+export type TemplateCriteriaDto = {
   fileFormat?: string;
   font?: string;
   fontSize?: string;
@@ -270,6 +266,35 @@ export type TemplateDto = {
   figurePosition?: string;
   figureCaption?: string;
   tableTitle?: string;
+  tableTitlePlacement?: string;
+  tablePosition?: string;
+  submissionFormat?: string;
+  hasTitlePage?: boolean;
+  hasToc?: boolean;
+  hasIntroduction?: boolean;
+  hasMainPart?: boolean;
+  hasConclusion?: boolean;
+  hasBibliography?: boolean;
+  hasAppendices?: boolean;
+  titlePageRequiredStrings?: string[];
+};
+
+export type TemplateDto = {
+  id?: string | number;
+  name: string;
+  description?: string;
+  criteria?: TemplateCriteriaDto;
+  fileFormat?: string;
+  font?: string;
+  fontSize?: string;
+  lineSpacing?: string;
+  minPages?: string;
+  minSources?: string;
+  illNumbering?: string;
+  figurePosition?: string;
+  figureCaption?: string;
+  tableTitle?: string;
+  tableTitlePlacement?: string;
   tablePosition?: string;
   submissionFormat?: string;
   hasTitlePage?: boolean;
@@ -336,6 +361,15 @@ export type ValidationResult = {
   annotatedFileName?: string;
 };
 
+export type BatchValidationItem = {
+  filename: string;
+  result: ValidationResult;
+};
+
+export type BatchValidationResult = {
+  results: BatchValidationItem[];
+};
+
 export type ValidateOptions = {
   templateId?: string | number | null;
   template?: Partial<AddTemplateForm> | null;
@@ -353,6 +387,11 @@ export interface ValidationModule {
       | null,
     annotateFlag?: boolean
   ): Promise<ValidationResult>;
+
+  validateBatch(
+    files: File[],
+    options?: ValidateOptions | null
+  ): Promise<BatchValidationResult>;
 }
 
 export interface InfoApi {

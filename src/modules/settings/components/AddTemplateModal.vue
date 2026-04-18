@@ -28,14 +28,18 @@
       <v-card-text class="modal-body">
         <div class="form-block">
           <div class="field">
-            <label class="label required">Название шаблона</label>
+            <label
+              :class="['label', 'required', { 'label--error': nameIsInvalid }]"
+            >
+              Название шаблона
+            </label>
             <v-text-field
               v-model="form.name"
               placeholder="Например: Курсовая работа, Реферат"
               variant="outlined"
               density="comfortable"
-              hide-details
               class="field-input"
+              :error-messages="nameIsInvalid ? ['Укажите название шаблона'] : []"
             />
           </div>
           <div class="field">
@@ -79,31 +83,6 @@
               <v-select
                 v-model="form.fontSize"
                 :items="fontSizeOptions"
-                variant="outlined"
-                density="compact"
-                hide-details
-                class="criteria-control criteria-input-narrow"
-              />
-            </div>
-            <div class="criteria-row">
-              <span class="criteria-label">
-                Межстрочный интервал
-                <v-tooltip location="top">
-                  <template #activator="{ props }">
-                    <v-icon
-                      v-bind="props"
-                      size="14"
-                      class="ml-1"
-                    >
-                      mdi-information-outline
-                    </v-icon>
-                  </template>
-                  Не проверяется для PDF
-                </v-tooltip>
-              </span>
-              <v-text-field
-                v-model="form.lineSpacing"
-                placeholder="1.5"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -183,7 +162,25 @@
               />
             </div>
             <div class="criteria-row">
-              <span class="criteria-label">Позиция рисунка</span>
+              <span class="criteria-label">
+                Позиция рисунка
+                <v-tooltip location="top" max-width="300">
+                  <template #activator="{ props }">
+                    <v-icon
+                      v-bind="props"
+                      size="14"
+                      class="ml-1"
+                    >
+                      mdi-information-outline
+                    </v-icon>
+                  </template>
+                  Выравнивание строки подписи «Рис.…» в DOCX. В ответе /validate
+                  критерий про выравнивание подписей смотрит только это поле
+                  (figurePosition), не «Позицию таблицы» ниже. После смены значения
+                  нажмите «Сохранить» и при сомнениях проверьте GET шаблона:
+                  criteria.figurePosition.
+                </v-tooltip>
+              </span>
               <v-select
                 v-model="form.figurePosition"
                 :items="figurePositionOptions"
@@ -194,7 +191,22 @@
               />
             </div>
             <div class="criteria-row">
-              <span class="criteria-label">Подпись рисунка</span>
+              <span class="criteria-label">
+                Подпись рисунка
+                <v-tooltip location="top" max-width="300">
+                  <template #activator="{ props }">
+                    <v-icon
+                      v-bind="props"
+                      size="14"
+                      class="ml-1"
+                    >
+                      mdi-information-outline
+                    </v-icon>
+                  </template>
+                  Над или под рисунком (отдельно от выравнивания строки). Значения
+                  как в шаблоне — Java ищет подстроки «под рисунк…» / «над рисунк…».
+                </v-tooltip>
+              </span>
               <v-select
                 v-model="form.figureCaption"
                 :items="figureCaptionOptions"
@@ -216,7 +228,33 @@
               />
             </div>
             <div class="criteria-row">
-              <span class="criteria-label">Позиция таблицы</span>
+              <span class="criteria-label">Расположение названия таблицы</span>
+              <v-select
+                v-model="form.tableTitlePlacement"
+                :items="tableTitlePlacementOptions"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="criteria-control"
+              />
+            </div>
+            <div class="criteria-row">
+              <span class="criteria-label">
+                Позиция таблицы
+                <v-tooltip location="top">
+                  <template #activator="{ props }">
+                    <v-icon
+                      v-bind="props"
+                      size="14"
+                      class="ml-1"
+                    >
+                      mdi-information-outline
+                    </v-icon>
+                  </template>
+                  Выравнивание строки «Таблица …» (tablePosition). На подписи
+                  «Рис.…» не влияет — для них поле «Позиция рисунка» выше.
+                </v-tooltip>
+              </span>
               <v-select
                 v-model="form.tablePosition"
                 :items="tablePositionOptions"
@@ -240,14 +278,6 @@
             <span>Структура документа</span>
           </div>
           <div class="structure-grid">
-            <v-checkbox
-              v-model="form.hasTitlePage"
-              label="Титульный лист"
-              hide-details
-              density="compact"
-              color="primary"
-              class="structure-check"
-            />
             <v-checkbox
               v-model="form.hasToc"
               label="Оглавление"
@@ -297,52 +327,6 @@
               class="structure-check"
             />
           </div>
-
-          <div
-            v-if="form.hasTitlePage"
-            class="title-page-block"
-          >
-            <div class="title-page-inner">
-              <div class="title-page-head">
-                <v-icon
-                  size="22"
-                  class="title-page-icon"
-                >
-                  mdi-file-document-outline
-                </v-icon>
-                <span class="title-page-label">Макет титульного листа</span>
-                <span
-                  v-if="form.titlePageRequiredStrings?.length"
-                  class="title-page-badge"
-                >
-                  {{ form.titlePageRequiredStrings.length }} элементов
-                </span>
-              </div>
-              <input
-                ref="titlePageFileInput"
-                type="file"
-                accept=".doc,.docx,.pdf"
-                class="d-none"
-                @change="onTitlePageFileSelected"
-              />
-              <v-btn
-                size="small"
-                variant="outlined"
-                color="primary"
-                :disabled="!templateId"
-                :loading="isUploadingTitlePage"
-                prepend-icon="mdi-upload-outline"
-                class="title-page-btn"
-                @click="titlePageFileInput?.click()"
-              >
-                Загрузить макет
-              </v-btn>
-              <p class="title-page-hint">
-                Загрузите DOC, DOCX или PDF — система извлечёт обязательные
-                элементы для проверки титула
-              </p>
-            </div>
-          </div>
         </div>
       </v-card-text>
 
@@ -358,6 +342,7 @@
         <v-btn
           color="primary"
           class="btn-submit"
+          :disabled="!canSubmitTemplate"
           @click="submit"
         >
           {{ isEdit ? 'Сохранить' : 'Создать шаблон' }}
@@ -369,106 +354,49 @@
 
 <script setup lang="ts">
   import { ref, watch, computed } from 'vue';
+  import { JAVA_TEMPLATE_CRITERIA_DEFAULTS as J } from '@/api/info';
   import type { AddTemplateForm } from '../modal';
+  import {
+    ADD_TEMPLATE_FONT_OPTIONS as fontOptions,
+    ADD_TEMPLATE_FONT_SIZE_OPTIONS as fontSizeOptions,
+    ADD_TEMPLATE_ILL_NUMBERING_OPTIONS as illNumberingOptions,
+    ADD_TEMPLATE_FIGURE_POSITION_OPTIONS as figurePositionOptions,
+    ADD_TEMPLATE_FIGURE_CAPTION_OPTIONS as figureCaptionOptions,
+    ADD_TEMPLATE_TABLE_TITLE_OPTIONS as tableTitleOptions,
+    ADD_TEMPLATE_TABLE_TITLE_PLACEMENT_OPTIONS as tableTitlePlacementOptions,
+    ADD_TEMPLATE_TABLE_POSITION_OPTIONS as tablePositionOptions,
+  } from '../constants/addTemplateModalOptions';
 
   const props = defineProps<{
     modelValue: boolean;
     initialForm: AddTemplateForm | null;
-    templateId?: string | number | null;
-    apiBase?: string;
   }>();
 
   const emit = defineEmits<{
     'update:modelValue': [v: boolean];
     submit: [form: AddTemplateForm];
     close: [];
-    'title-page-uploaded': [form: AddTemplateForm];
   }>();
 
-  const titlePageFileInput = ref<HTMLInputElement | null>(null);
-  const isUploadingTitlePage = ref(false);
-
   const isEdit = computed(() => !!props.initialForm);
+
+  const canSubmitTemplate = computed(() =>
+    Boolean(form.value.name?.trim())
+  );
+
+  const nameIsInvalid = computed(
+    () => !form.value.name?.trim()
+  );
 
   const modalTitle = computed(() =>
     isEdit.value ? 'Редактировать шаблон' : 'Новый шаблон проверки'
   );
 
-  const fontOptions = [
-    'Times New Roman',
-    'Arial',
-    'Calibri',
-    'Georgia',
-    'Verdana',
-    'Garamond',
-    'Cambria',
-    'Palatino Linotype',
-  ];
-
-  const fontSizeOptions = [
-    '9 пт',
-    '10 пт',
-    '11 пт',
-    '12 пт',
-    '14 пт',
-    '16 пт',
-    '18 пт',
-    '20 пт',
-    '22 пт',
-    '24 пт',
-  ];
-
-  const illNumberingOptions = ['Сквозная', 'По разделам', 'В рамках раздела'];
-
-  const figurePositionOptions = [
-    'По центру страницы',
-    'Слева',
-    'Справа',
-    'По ширине страницы',
-  ];
-
-  const figureCaptionOptions = [
-    'Под рисунком',
-    'Над рисунком',
-    'Под рисунком по центру',
-  ];
-
-  const tableTitleOptions = [
-    'Слово «Таблица» + номер + наименование',
-    'Таблица N. — наименование',
-    'Таблица с номером над таблицей',
-    'Над таблицей по центру',
-  ];
-
-  const tablePositionOptions = [
-    'По центру страницы',
-    'Слева',
-    'Справа',
-    'По ширине страницы',
-  ];
-
   const defaultForm: AddTemplateForm = {
+    ...J,
     name: '',
     description: '',
-    fileFormat: '.doc или .docx',
-    font: 'Times New Roman',
-    fontSize: '14 пт',
-    lineSpacing: '1.5',
-    minPages: '10',
-    minSources: '7',
-    illNumbering: 'Сквозная',
-    figurePosition: 'По центру страницы',
-    figureCaption: 'Под рисунком',
-    tableTitle: 'Слово «Таблица» + номер + наименование',
-    tablePosition: 'По центру страницы',
     submissionFormat: 'Электронный вид',
-    hasTitlePage: true,
-    hasToc: true,
-    hasIntroduction: true,
-    hasMainPart: true,
-    hasConclusion: true,
-    hasBibliography: true,
-    hasAppendices: false,
   };
 
   const form = ref<AddTemplateForm>({ ...defaultForm });
@@ -477,7 +405,7 @@
     () => props.initialForm,
     (val) => {
       if (val) {
-        form.value = { ...val };
+        form.value = { ...defaultForm, ...val };
       } else {
         form.value = { ...defaultForm };
       }
@@ -489,7 +417,7 @@
     () => props.modelValue,
     (val) => {
       if (val && props.initialForm) {
-        form.value = { ...props.initialForm };
+        form.value = { ...defaultForm, ...props.initialForm };
       }
       if (val && !props.initialForm) {
         form.value = { ...defaultForm };
@@ -497,42 +425,10 @@
     }
   );
 
-  async function onTitlePageFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file || !props.templateId) return;
-
-    isUploadingTitlePage.value = true;
-    try {
-      const base = props.apiBase || import.meta.env.VITE_API_BASE || '';
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch(
-        `${base}/api/templates/${props.templateId}/title-page-template`,
-        {
-          method: 'POST',
-          body: fd,
-        }
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Ошибка загрузки');
-      }
-      const updated = await res.json();
-      if (updated.criteria) {
-        form.value = { ...form.value, ...updated.criteria };
-      }
-      emit('title-page-uploaded', form.value);
-    } catch (e) {
-      console.error(e);
-      alert(e instanceof Error ? e.message : 'Не удалось загрузить макет');
-    } finally {
-      isUploadingTitlePage.value = false;
-      input.value = '';
-    }
-  }
-
   function submit() {
+    if (!canSubmitTemplate.value) {
+      return;
+    }
     emit('submit', { ...form.value });
   }
 </script>
@@ -600,6 +496,10 @@
   .label.required::after {
     content: ' *';
     color: #dc2626;
+  }
+
+  .label--error {
+    color: #b91c1c;
   }
 
   .field-input :deep(.v-field) {
@@ -677,64 +577,6 @@
 
   .structure-check {
     margin: 0;
-  }
-
-  .title-page-block {
-    margin-top: 20px;
-    padding: 16px;
-    background: linear-gradient(135deg, #f0f4ff 0%, #eef2ff 100%);
-    border: 1px solid rgba(99, 102, 241, 0.25);
-    border-radius: 12px;
-  }
-
-  .title-page-inner {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .title-page-head {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .title-page-icon {
-    color: #6366f1;
-  }
-
-  .title-page-label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #334155;
-  }
-
-  .title-page-badge {
-    padding: 4px 10px;
-    background: #6366f1;
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 999px;
-  }
-
-  .title-page-btn {
-    text-transform: none;
-    font-weight: 600;
-    border-radius: 10px;
-    align-self: flex-start;
-  }
-
-  .title-page-btn :deep(.v-btn__content) {
-    gap: 8px;
-  }
-
-  .title-page-hint {
-    margin: 0;
-    font-size: 12px;
-    color: #64748b;
-    line-height: 1.45;
   }
 
   .modal-actions {

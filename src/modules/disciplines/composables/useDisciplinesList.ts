@@ -1,13 +1,22 @@
 import { ref, computed, unref, type Ref } from 'vue';
 import {
   getDisciplineCards,
+  getDisciplineControls,
   getDisciplineGroups,
   getDisciplineReports,
   getDisciplineStudents,
   getTeacherGroups,
 } from '@/api/info';
 import { useAcademicYear } from '@/composables/useAcademicYear';
-import type { ReportDto } from '../modal/reports';
+import type { DisciplineAggregate, DisciplineCardDto } from '../modal/disciplineCard';
+import type { ControlScheduleDto, ReportDto } from '../modal/reports';
+import {
+  buildTopicRowCountByGroup,
+  computeExpectedWorksTotal,
+  computeUploadedWorkSlots,
+  mergeControlSchedules,
+  mergeStudentsByGroupDedupe,
+} from '../utils/disciplineWorksPlan';
 import { sanitizeTitle } from '@/utils/sanitizeTitle';
 import { getStudentRecordId } from '@/utils/studentRecordId';
 
@@ -16,40 +25,7 @@ export type DisciplineReportRow = ReportDto & {
   controlType?: string | null;
 };
 
-export interface DisciplineCardDto {
-  planRowId?: number;
-  plan_row_id?: number;
-  disciplineName?: string;
-  discipline_name?: string;
-  course?: string | null;
-  semester?: string | null;
-  hasExam?: boolean;
-  has_exam?: boolean;
-  hasPassMark?: boolean;
-  has_pass_mark?: boolean;
-  hasPass?: boolean;
-  has_pass?: boolean;
-  groupsCount?: number;
-  groups_count?: number;
-  educationForm?: string | null;
-  education_form?: string | null;
-  educationLevel?: string | null;
-  education_level?: string | null;
-}
-
-interface DisciplineAggregate {
-  CodeRow: number;
-  planRowIds: number[];
-  Discipline: string;
-  Course: string | null;
-  Semester: string | null;
-  hasExam: boolean;
-  hasPassMark: boolean;
-  hasPass: boolean;
-  groupsCount: number;
-  educationForm: string | null;
-  educationLevel: string | null;
-}
+export type { DisciplineCardDto };
 
 function toArray(res: unknown): unknown[] {
   if (Array.isArray(res)) return res.filter(Boolean);
@@ -142,13 +118,15 @@ export function useDisciplines(
   const reportsByPlanRowId = ref<Record<number, DisciplineReportRow[]>>({});
   const groupsByPlanRowId = ref<Record<number, string[]>>({});
   const studentsByPlanRowId = ref<Record<number, unknown[]>>({});
+  const controlsByPlanRowId = ref<Record<number, ControlScheduleDto[]>>({});
 
   async function loadData(user: { lastName?: string }) {
-    if (user?.lastName) {
+    const ln = user?.lastName;
+    if (ln) {
       loading.value = true;
       try {
         const year = academicYear.value;
-        const cardsRes = await getDisciplineCards(user.lastName, year);
+        const cardsRes = await getDisciplineCards(ln, year);
         cards.value = toArray(cardsRes) as DisciplineCardDto[];
 
         const planIds = [
@@ -160,14 +138,16 @@ export function useDisciplines(
         ];
 
         const [groupsRes, pairs] = await Promise.all([
-          getTeacherGroups(user.lastName, year),
+          getTeacherGroups(ln, year),
           Promise.all(
             planIds.map(async (id) => {
-              const [reports, students, groupsLocal] = await Promise.all([
-                getDisciplineReports(user.lastName, id, year).catch(() => []),
-                getDisciplineStudents(user.lastName, id, year).catch(() => []),
-                getDisciplineGroups(user.lastName, id, year).catch(() => []),
-              ]);
+              const [reports, students, groupsLocal, controlsRaw] =
+                await Promise.all([
+                  getDisciplineReports(ln, id, year).catch(() => []),
+                  getDisciplineStudents(ln, id, year).catch(() => []),
+                  getDisciplineGroups(ln, id, year).catch(() => []),
+                  getDisciplineControls(ln, id, year).catch(() => []),
+                ]);
               const rawGroups = toArray(groupsLocal);
               const groupNames = rawGroups
                 .map((g) => normalizeGroupLabel(g))
@@ -178,6 +158,7 @@ export function useDisciplines(
                   reports: toArray(reports) as DisciplineReportRow[],
                   students: toArray(students),
                   groups: groupNames,
+                  controls: toArray(controlsRaw) as ControlScheduleDto[],
                 },
               ] as const;
             })
@@ -194,6 +175,9 @@ export function useDisciplines(
         );
         groupsByPlanRowId.value = Object.fromEntries(
           pairs.map(([id, v]) => [id, v.groups])
+        );
+        controlsByPlanRowId.value = Object.fromEntries(
+          pairs.map(([id, v]) => [id, v.controls])
         );
       } catch (e) {
         console.error('[useDisciplines] loadData error:', e);
@@ -215,15 +199,29 @@ export function useDisciplines(
     const map = new Map<string, DisciplineAggregate>();
 
     for (const c of cards.value) {
+      const card = c as DisciplineCardDto & {
+        Course?: string | number | null;
+        Semester?: string | number | null;
+        EducationForm?: string | null;
+        EducationLevel?: string | null;
+      };
       const discipline = String(
-        c?.disciplineName ?? c?.discipline_name ?? ''
+        card?.disciplineName ?? card?.discipline_name ?? ''
       ).trim();
       if (discipline) {
-        const course = c?.course ?? null;
-        const sem = c?.semester ?? null;
+        const courseRaw = card?.course ?? card?.Course ?? null;
+        const semesterRaw = card?.semester ?? card?.Semester ?? null;
+        const course =
+          courseRaw === null || courseRaw === undefined
+            ? null
+            : String(courseRaw).trim() || null;
+        const sem =
+          semesterRaw === null || semesterRaw === undefined
+            ? null
+            : String(semesterRaw).trim() || null;
         const key = `${discipline}__${course}__${sem}`;
 
-        const planId = Number(c.planRowId ?? c.plan_row_id ?? 0);
+        const planId = Number(card.planRowId ?? card.plan_row_id ?? 0);
 
         if (map.has(key)) {
           const item = map.get(key)!;
@@ -233,19 +231,33 @@ export function useDisciplines(
           }
           item.groupsCount = Math.max(
             item.groupsCount,
-            Number(c.groupsCount ?? c.groups_count ?? 0)
+            Number(card.groupsCount ?? card.groups_count ?? 0)
           );
           if (planId > 0 && !item.planRowIds.includes(planId)) {
             item.planRowIds.push(planId);
           }
-          item.hasExam = item.hasExam || !!c.hasExam;
-          item.hasPassMark = item.hasPassMark || !!c.hasPassMark;
-          item.hasPass = item.hasPass || !!c.hasPass;
-          if (c?.educationForm && item.educationForm === undefined) {
-            item.educationForm = c.educationForm;
+          item.hasExam = item.hasExam || !!(card.hasExam ?? card.has_exam);
+          item.hasPassMark =
+            item.hasPassMark || !!(card.hasPassMark ?? card.has_pass_mark);
+          item.hasPass = item.hasPass || !!(card.hasPass ?? card.has_pass);
+          if (
+            (card?.educationForm ?? card?.education_form ?? card?.EducationForm) &&
+            item.educationForm === undefined
+          ) {
+            item.educationForm =
+              card.educationForm ?? card.education_form ?? card.EducationForm ?? null;
           }
-          if (c?.educationLevel && item.educationLevel === undefined) {
-            item.educationLevel = c.educationLevel;
+          if (
+            (card?.educationLevel ??
+              card?.education_level ??
+              card?.EducationLevel) &&
+            item.educationLevel === undefined
+          ) {
+            item.educationLevel =
+              card.educationLevel ??
+              card.education_level ??
+              card.EducationLevel ??
+              null;
           }
         } else {
           map.set(key, {
@@ -257,9 +269,17 @@ export function useDisciplines(
             hasExam: !!(c.hasExam ?? c.has_exam),
             hasPassMark: !!(c.hasPassMark ?? c.has_pass_mark),
             hasPass: !!(c.hasPass ?? c.has_pass),
-            groupsCount: Number(c.groupsCount ?? c.groups_count ?? 0),
-            educationForm: c?.educationForm ?? c?.education_form ?? null,
-            educationLevel: c?.educationLevel ?? c?.education_level ?? null,
+            groupsCount: Number(card.groupsCount ?? card.groups_count ?? 0),
+            educationForm:
+              card?.educationForm ??
+              card?.education_form ??
+              card?.EducationForm ??
+              null,
+            educationLevel:
+              card?.educationLevel ??
+              card?.education_level ??
+              card?.EducationLevel ??
+              null,
           });
         }
       }
@@ -304,10 +324,38 @@ export function useDisciplines(
           )
           .filter((n) => Number.isFinite(n) && n > 0)
       );
+
+      const studentsByGroupMerged = mergeStudentsByGroupDedupe(studentsNested);
+      const controlLists = ids.map(
+        (id) => controlsByPlanRowId.value?.[id] ?? []
+      );
+      const controlsMerged = mergeControlSchedules(controlLists);
+      const topicByGroup = buildTopicRowCountByGroup(
+        controlsMerged,
+        undefined,
+        undefined
+      );
+      const expectedWorksTotal = computeExpectedWorksTotal(
+        studentsByGroupMerged,
+        topicByGroup
+      );
+      const uploadedWorks = computeUploadedWorkSlots(
+        latestReports as unknown as ReportDto[]
+      );
+
       const progress =
-        totalStudents === 0
-          ? 0
-          : Math.round((studentsWithReports.size / totalStudents) * 100);
+        expectedWorksTotal > 0
+          ? Math.round(
+              Math.min(100, (uploadedWorks / expectedWorksTotal) * 100)
+            )
+          : totalStudents === 0
+            ? 0
+            : Math.round((studentsWithReports.size / totalStudents) * 100);
+
+      const loadedDisplay =
+        expectedWorksTotal > 0
+          ? `${uploadedWorks} / ${expectedWorksTotal}`
+          : `${loadedCount} / ${totalStudents}`;
 
       const groupsMerged = [
         ...new Set(ids.flatMap((id) => groupsByPlanRowId.value?.[id] ?? [])),
@@ -330,7 +378,9 @@ export function useDisciplines(
         groups: groupsMerged,
         loadedCount,
         totalStudents,
-        loaded: `${loadedCount} / ${totalStudents}`,
+        uploadedWorks,
+        expectedWorksTotal,
+        loaded: loadedDisplay,
         progress,
         educationForm: x.educationForm ?? null,
         educationLevel: x.educationLevel ?? null,
@@ -352,9 +402,19 @@ export function useDisciplines(
     let uploaded = 0;
     let total = 0;
     for (const d of rows) {
-      const row = d as { loadedCount?: number; totalStudents?: number };
-      uploaded += row.loadedCount ?? 0;
-      total += row.totalStudents ?? 0;
+      const row = d as {
+        uploadedWorks?: number;
+        expectedWorksTotal?: number;
+        loadedCount?: number;
+        totalStudents?: number;
+      };
+      if ((row.expectedWorksTotal ?? 0) > 0) {
+        uploaded += row.uploadedWorks ?? 0;
+        total += row.expectedWorksTotal ?? 0;
+      } else {
+        uploaded += row.loadedCount ?? 0;
+        total += row.totalStudents ?? 0;
+      }
     }
     return { uploaded, total };
   });

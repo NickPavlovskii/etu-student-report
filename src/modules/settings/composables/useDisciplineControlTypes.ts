@@ -112,3 +112,22 @@ export function getDisplayedTopicsByControlType(
   }
   return out;
 }
+
+export function getTemplateIdByControlType(
+  disciplineId: string
+): Record<string, string | number> {
+  const config = loadFromStorage();
+  if (!config[disciplineId]) {
+    return {};
+  }
+  const types = config[disciplineId] as ControlTypeItem[];
+  const out: Record<string, string | number> = {};
+  for (const ct of types) {
+    const title = String(ct.title ?? '').trim();
+    const tid = ct.templateId;
+    if (title && tid != null && String(tid).trim() !== '') {
+      out[title] = tid;
+    }
+  }
+  return out;
+}

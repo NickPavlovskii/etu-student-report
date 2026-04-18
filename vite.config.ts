@@ -6,7 +6,6 @@ import type { Plugin } from 'vite'
 
 const OUT_DIR = 'dist/frontend/contents/panda/client'
 
-/** Как CopyPlugin: `products/server` → `server` в сборке; в dev отдаёт `/server/config.json`. */
 function serverProductsCopyPlugin(): Plugin {
   const root = path.resolve(__dirname)
   const productsServer = path.join(root, 'products', 'server')

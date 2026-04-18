@@ -4,8 +4,8 @@
     <td />
     <td
       v-if="row.showControl"
-      :rowspan="row.controlRowSpan"
       class="col-control control-cell"
+      :rowspan="row.controlRowSpan"
     >
       <div class="control-type-block">
         <span class="control-type-title">{{ row.controlText || '—' }}</span>
@@ -45,7 +45,7 @@
         v-else
         class="no-report"
       >
-        Отчёт не подгружен
+        Учебная работа не загружена
       </span>
     </td>
     <td class="col-check">
@@ -110,7 +110,7 @@
             variant="text"
             size="small"
             class="action-icon-btn"
-            title="Отчет о проверке оформления"
+            title="Проверка учебной работы"
             @click.stop="$emit('viewReport', report)"
           >
             <img
