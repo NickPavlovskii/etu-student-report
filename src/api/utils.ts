@@ -27,12 +27,18 @@ export function getFallbackServerConfig(): ServerConfig {
 export async function loadServerConfig(): Promise<ServerConfig> {
   let serverConfig: ServerConfig | null = null
   try {
-    const serverConfigResponse = await fetch('/server/config.json')
-    if (serverConfigResponse.ok) {
-      serverConfig = await serverConfigResponse.json()
+    const res = await fetch('/server/config.json')
+    if (!res.ok) {
+      return getFallbackServerConfig()
     }
+    const text = await res.text()
+    const start = text.trimStart()
+    if (!start.startsWith('{') && !start.startsWith('[')) {
+      return getFallbackServerConfig()
+    }
+    serverConfig = JSON.parse(text) as ServerConfig
   } catch (error) {
-    console.error(error)
+    console.warn('[loadServerConfig] не удалось прочитать /server/config.json:', error)
   }
   return serverConfig ?? getFallbackServerConfig()
 }

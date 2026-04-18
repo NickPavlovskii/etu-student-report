@@ -21,7 +21,9 @@
       variant="solo"
       hide-details
       v-model="selectedYear"
-      :items="yearItems"
+      :items="ACADEMIC_YEAR_SELECT_ITEMS"
+      item-title="title"
+      item-value="value"
     />
     <v-icon
       class="mr-5"
@@ -35,6 +37,7 @@
 <script setup lang="ts">
   import { computed } from 'vue';
   import { useRouter } from 'vue-router';
+  import { ACADEMIC_YEAR_SELECT_ITEMS } from '@/constants/academicYearSelectItems';
   import { useAcademicYear } from '@/composables/useAcademicYear';
 
   defineEmits(['toggle-drawer']);
@@ -50,8 +53,6 @@
       year: 'numeric',
     });
   });
-
-  const yearItems = ['2023-2024', '2024-2025', '2025-2026'];
 
   const logout = () => {
     localStorage.removeItem('user');

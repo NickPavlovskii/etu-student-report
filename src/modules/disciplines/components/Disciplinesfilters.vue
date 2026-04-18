@@ -17,28 +17,28 @@
       />
 
       <etu-pill-search-select
-        class="semester-pill"
-        :model-value="semesterStrings"
-        :items="semesterItems"
+        class="course-pill"
+        :model-value="courseStrings"
         multiple
-        placeholder="Все семестры"
-        prepend-icon="mdi-calendar-month-outline"
+        placeholder="Все курсы"
+        prepend-icon="mdi-school-outline"
         search-placeholder="Поиск…"
         empty-text="Не найдено"
         location="bottom start"
+        :items="courseItems"
         :clearable="true"
         :show-null-option="false"
         :close-on-content-click="false"
         :menu-width="300"
         :max-list-height="280"
-        @update:model-value="onSemesterUpdate"
+        @update:model-value="onCourseUpdate"
       >
         <template #footer>
-          <div class="semester-pill-footer">
+          <div class="course-pill-footer">
             <v-btn
               variant="text"
               size="small"
-              class="semester-pill-footer__btn"
+              class="course-pill-footer__btn"
               @click="$emit('check-all', true)"
             >
               Выбрать все
@@ -46,7 +46,7 @@
             <v-btn
               variant="text"
               size="small"
-              class="semester-pill-footer__btn"
+              class="course-pill-footer__btn"
               @click="$emit('clear-all')"
             >
               Сбросить
@@ -63,35 +63,35 @@
 
   const props = defineProps<{
     search: string;
-    semester: (number | string)[];
-    uniqueSemesters: (number | string)[];
+    course: (number | string)[];
+    uniqueCourses: (number | string)[];
   }>();
 
   const emit = defineEmits<{
     'update:search': [value: string];
-    'update:semester': [value: (number | string)[]];
+    'update:course': [value: (number | string)[]];
     'check-all': [value: boolean];
     'clear-all': [];
   }>();
 
-  const semesterItems = computed(() =>
-    (props.uniqueSemesters ?? []).map((s) => ({
-      title: `Семестр ${s}`,
-      value: String(s),
+  const courseItems = computed(() =>
+    (props.uniqueCourses ?? []).map((c) => ({
+      title: `Курс ${c}`,
+      value: String(c),
     }))
   );
 
-  const semesterStrings = computed(() =>
-    (props.semester ?? []).map((x) => String(x))
+  const courseStrings = computed(() =>
+    (props.course ?? []).map((x) => String(x))
   );
 
-  function onSemesterUpdate(v: string | null | string[]) {
+  function onCourseUpdate(v: string | null | string[]) {
     if (!Array.isArray(v)) {
-      emit('update:semester', []);
+      emit('update:course', []);
       return;
     }
     emit(
-      'update:semester',
+      'update:course',
       v.map((s) => {
         const n = Number(s);
         return Number.isFinite(n) ? n : s;
@@ -124,17 +124,17 @@
     min-width: 0;
   }
 
-  .semester-pill {
+  .course-pill {
     flex: 0 1 280px;
     min-width: 220px;
   }
 
-  .semester-pill :deep(.v-menu) {
+  .course-pill :deep(.v-menu) {
     display: block;
     width: 100%;
   }
 
-  .semester-pill :deep(.etu-pss-trigger) {
+  .course-pill :deep(.etu-pss-trigger) {
     width: 100%;
     min-width: 0;
     max-width: none;
@@ -171,7 +171,7 @@
     color: #9ca3af !important;
   }
 
-  .semester-pill-footer {
+  .course-pill-footer {
     display: flex;
     justify-content: space-between;
     gap: 8px;
@@ -180,7 +180,7 @@
     background: #fafafa;
   }
 
-  .semester-pill-footer__btn {
+  .course-pill-footer__btn {
     text-transform: none;
     font-weight: 600;
     font-size: 12px;

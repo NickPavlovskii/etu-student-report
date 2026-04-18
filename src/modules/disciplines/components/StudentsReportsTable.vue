@@ -730,7 +730,7 @@
 
   .expand-icon {
     cursor: pointer;
-    padding-left: 36px;
+    padding-left: 8px;
   }
 
   .header-icon {

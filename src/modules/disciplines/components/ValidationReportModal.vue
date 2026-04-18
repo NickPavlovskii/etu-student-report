@@ -1,7 +1,7 @@
 <template>
   <v-dialog
     :model-value="modelValue"
-    max-width="640"
+    max-width="820"
     persistent
     @update:model-value="$emit('update:modelValue', $event)"
   >
@@ -9,7 +9,7 @@
       <div class="modal-header">
         <div class="modal-title-row">
           <v-icon size="24">mdi-file-document-outline</v-icon>
-          <h3 class="modal-title">Отчет о проверке оформления</h3>
+          <h3 class="modal-title">Проверка учебной работы</h3>
         </div>
         <div
           v-if="breadcrumb"
@@ -44,6 +44,58 @@
         </div>
 
         <div
+          v-if="structureCriteriaFromBackend.length"
+          class="backend-structure-block"
+        >
+          <div class="backend-structure-title">
+            Ответ сервера: таблицы, рисунки, нумерация
+          </div>
+          <div
+            v-for="(item, idx) in structureCriteriaFromBackend"
+            :key="'struct-' + item.code + '-' + idx"
+            :class="[
+              'structure-criterion-card',
+              item.passed ? 'structure-passed' : 'structure-failed',
+            ]"
+          >
+            <v-icon
+              size="22"
+              :color="validationCriterionIconColor(item)"
+            >
+              {{ validationCriterionIconName(item) }}
+            </v-icon>
+            <div class="structure-criterion-body">
+              <div class="structure-criterion-title-row">
+                <span class="structure-criterion-title">{{
+                  validationCriterionDisplayTitle(item)
+                }}</span>
+                <span
+                  v-if="item.code"
+                  class="structure-code-chip"
+                >{{ item.code }}</span>
+              </div>
+              <div class="structure-criterion-message">{{ item.message }}</div>
+              <div
+                v-if="
+                  (item.expected || item.actual) &&
+                  (!item.passed || validationCriterionShowExpectedActualWhenPassed(item))
+                "
+                class="structure-criterion-details"
+              >
+                <span v-if="item.expected">Ожидалось: {{ item.expected }}</span>
+                <span v-if="item.actual"> · Фактически: {{ item.actual }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="errorItems.length"
+          class="other-errors-heading"
+        >
+          Другие замечания
+        </div>
+        <div
           v-for="(item, idx) in errorItems"
           :key="item.code + '-' + idx"
           :class="['error-card', cardClass(item)]"
@@ -61,7 +113,9 @@
           </v-icon>
           <div class="error-content">
             <div class="error-title-row">
-              <span class="error-title">{{ item.title || item.message }}</span>
+              <span class="error-title">{{
+                validationCriterionDisplayTitle(item) || item.message
+              }}</span>
               <span
                 v-if="categoryLabel(item)"
                 class="category-chip"
@@ -103,16 +157,17 @@
         </div>
       </v-card-text>
 
-      <v-card-actions class="modal-actions">
+      <v-card-actions class="modal-actions modal-actions--wrap">
         <v-btn
           v-if="hasAnnotatedFile"
+          class="modal-download-btn"
           variant="tonal"
           prepend-icon="mdi-file-eye-outline"
           @click="openAnnotatedFile"
         >
           {{ annotatedButtonLabel }}
         </v-btn>
-        <v-spacer />
+        <v-spacer class="modal-actions-spacer" />
         <v-btn
           variant="text"
           @click="$emit('update:modelValue', false)"
@@ -128,6 +183,17 @@
 import { computed } from 'vue';
 import type { ValidationResult, ValidationErrorItem } from '@/api/info';
 import { useDownload } from '@/composables/useDownload';
+import {
+  filterDisplayedValidationCriteria,
+  filterStructureIllustrationTableCriteria,
+  mergeValidationResultItems,
+  validationCriterionDisplayTitle,
+  validationCriterionShowExpectedActualWhenPassed,
+} from '@/utils/validationCriteriaDisplay';
+import {
+  validationCriterionIconColor,
+  validationCriterionIconName,
+} from '@/utils/validationCriterionVisual';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -141,7 +207,17 @@ defineEmits<{
 
 const { downloadAnnotatedFile } = useDownload();
 
-const percent = computed(() => props.result?.percent ?? 0);
+const percent = computed(() => {
+  const r = props.result;
+  if (!r) return 0;
+  if (r.criteria?.length) {
+    const vis = filterDisplayedValidationCriteria(r.criteria);
+    if (!vis.length) return r.percent ?? 0;
+    const passed = vis.filter((c) => c.passed).length;
+    return Math.round((100 * passed) / vis.length);
+  }
+  return r.percent ?? 0;
+});
 
 const hasAnnotatedFile = computed(
   () => Boolean(props.result?.annotatedFileBase64 && props.result?.annotatedFileName)
@@ -166,13 +242,28 @@ function openAnnotatedFile() {
   }
 }
 
+const structureCriteriaFromBackend = computed(() => {
+  const r = props.result;
+  if (!r) return [];
+  const merged = filterDisplayedValidationCriteria(mergeValidationResultItems(r));
+  return filterStructureIllustrationTableCriteria(merged);
+});
+
 const errorItems = computed<ValidationErrorItem[]>(() => {
   const r = props.result;
   if (!r) return [];
-  if (r.criteria?.length) {
-    return r.criteria.filter((c) => !c.passed);
-  }
-  return [...(r.errors ?? []), ...(r.warnings ?? [])];
+  const merged = filterDisplayedValidationCriteria(mergeValidationResultItems(r));
+  const structCodes = new Set(
+    filterStructureIllustrationTableCriteria(merged)
+      .map((c) => (c.code ?? '').trim())
+      .filter(Boolean)
+  );
+  return merged.filter((c) => {
+    if (c.passed) return false;
+    const code = (c.code ?? '').trim();
+    if (code && structCodes.has(code)) return false;
+    return true;
+  });
 });
 
 function categoryLabel(item: ValidationErrorItem): string {
@@ -264,6 +355,84 @@ function cardClass(item: ValidationErrorItem): string {
   font-weight: 600;
   color: #374151;
   white-space: nowrap;
+}
+
+.backend-structure-block {
+  margin-bottom: 20px;
+}
+
+.backend-structure-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.structure-criterion-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.structure-criterion-card.structure-passed {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.structure-criterion-card.structure-failed {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.structure-criterion-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.structure-criterion-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.structure-criterion-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #111827;
+}
+
+.structure-code-chip {
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.structure-criterion-message {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.45;
+}
+
+.structure-criterion-details {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+.other-errors-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 8px 0 12px;
 }
 
 .error-card {
@@ -370,5 +539,30 @@ function cardClass(item: ValidationErrorItem): string {
 
 .modal-actions {
   padding: 16px 24px 20px;
+}
+
+.modal-actions--wrap {
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  align-items: center;
+}
+
+.modal-download-btn {
+  flex: 1 1 auto;
+  min-width: min(100%, 280px);
+  white-space: normal;
+  height: auto !important;
+  padding-block: 10px !important;
+}
+
+.modal-actions-spacer {
+  flex: 1 1 32px;
+  min-width: 8px;
+}
+
+@media (max-width: 600px) {
+  .modal-actions-spacer {
+    display: none;
+  }
 }
 </style>

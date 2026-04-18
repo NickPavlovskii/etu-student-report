@@ -5,25 +5,30 @@
     fluid
     class="page"
   >
-    <v-alert
+    <div
       v-if="viewingAsAdmin"
-      type="warning"
-      variant="tonal"
-      class="admin-view-alert"
-      density="comfortable"
-      border="start"
+      class="admin-mode-banner"
+      role="status"
     >
-      <template #prepend>
+      <div class="admin-mode-banner__accent" aria-hidden="true" />
+      <div class="admin-mode-banner__icon-wrap">
         <v-icon
-          icon="mdi-shield-account-outline"
-          size="24"
+          class="admin-mode-banner__icon"
+          icon="mdi-shield-account"
+          size="22"
         />
-      </template>
-      <strong>Просмотр от имени администратора.</strong>
-      Вы просматриваете дисциплину преподавателя:
-      {{ viewingAsAdminTeacherFio }}. Это не ваша дисциплина — действия
-      выполняются в режиме администрирования.
-    </v-alert>
+      </div>
+      <div class="admin-mode-banner__content">
+        <div class="admin-mode-banner__title">
+          Просмотр от имени администратора
+        </div>
+        <p class="admin-mode-banner__text">
+          Вы просматриваете дисциплину преподавателя:
+          <span class="admin-mode-banner__fio">{{ viewingAsAdminTeacherFio }}</span>.
+          Это не ваша дисциплина — действия выполняются в режиме администрирования.
+        </p>
+      </div>
+    </div>
     <v-card
       class="block"
       elevation="0"
@@ -61,6 +66,18 @@
               :border="false"
               @click="uploadWork"
             />
+            <etu-button
+              v-if="hasStudents"
+              title="Мультизагрузка"
+              width="auto"
+              height="40"
+              color="#111827"
+              :prepend-icon="PLUS_ICON"
+              :border-color="'#E5E7EB'"
+              :bg-color="'white'"
+              :border="true"
+              @click="openBatchUpload"
+            />
           </div>
         </div>
         <h2 class="title">{{ cleanTitle(uiDiscipline.Discipline) }}</h2>
@@ -96,7 +113,7 @@
           :value="Number(uiDiscipline.PracticeHours ?? 0)"
         />
         <etu-info-card
-          title="Загружено отчётов"
+          title="Загружено учебных работ"
           icon="mdi-file-upload-outline"
           color="green"
           :value="`${disciplineWorksStats.uploaded} / ${disciplineWorksStats.total}`"
@@ -124,8 +141,23 @@
     :topics="topics"
     :assessment="uiDiscipline?.Assessment ?? ''"
     :controls="controls"
+    :template-id-by-work-type="templateIdByWorkType"
     @close="uploadDialog = false"
     @submit="onUpload"
+  />
+
+  <batch-upload-work-modal
+    v-model="batchUploadDialog"
+    :plan-row-id="planRowId"
+    :teacher-last-name="effectiveLastName"
+    :discipline="uiDiscipline"
+    :groups="Object.keys(studentsByGroup)"
+    :students-by-group="studentsByGroup"
+    :topics="topics"
+    :assessment="uiDiscipline?.Assessment ?? ''"
+    :controls="controls"
+    :template-id-by-work-type="templateIdByWorkType"
+    @uploaded="refreshAfterBatchUpload"
   />
 
   <validation-report-modal
@@ -141,6 +173,7 @@
   import ARCHIVE_ICON from '@/assets/icons/archive.svg';
   import PLUS_ICON from '@/assets/icons/plus.svg';
   import UploadWorkModal from './components/UploadStudyWork.vue';
+  import BatchUploadWorkModal from './components/BatchUploadWorkModal.vue';
   import StudentsReportsTable from './components/StudentsReportsTable.vue';
   import DisciplineMeta from './components/DisciplineMeta.vue';
   import ValidationReportModal from './components/ValidationReportModal.vue';
@@ -160,6 +193,7 @@
   import {
     getVisibleControlTitles,
     getDisplayedTopicsByControlType,
+    getTemplateIdByControlType,
   } from '@/modules/settings/composables/useDisciplineControlTypes';
   import { useDisciplineWorksStats } from './composables/useDisciplineWorksStats';
   import type { StudentDto } from './modal/student';
@@ -172,6 +206,7 @@
 
   const loading = ref(false);
   const uploadDialog = ref(false);
+  const batchUploadDialog = ref(false);
   const validationReportVisible = ref(false);
   const validationReportResult = ref<any>(null);
   const validationReportBreadcrumb = ref('');
@@ -214,6 +249,10 @@
 
   const displayedTopicsByControlType = computed(() =>
     getDisplayedTopicsByControlType(String(planRowId.value))
+  );
+
+  const templateIdByWorkType = computed<Record<string, string | number>>(() =>
+    getTemplateIdByControlType(String(planRowId.value))
   );
 
   const uiDiscipline = computed(() => {
@@ -332,6 +371,11 @@
   );
 
   const uploadWork = () => (uploadDialog.value = true);
+  const openBatchUpload = () => (batchUploadDialog.value = true);
+
+  async function refreshAfterBatchUpload() {
+    await loadAll();
+  }
   const goBack = () => {
     if (viewingAsAdmin.value) {
       router.push({ name: 'admin', query: { tab: 'disciplines' } });
@@ -411,8 +455,69 @@
     background: #f5f6f8;
     padding: 16px;
   }
-  .admin-view-alert {
+  .admin-mode-banner {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
     margin-bottom: 16px;
+    padding: 16px 18px 16px 20px;
+    border-radius: 14px;
+    background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 55%, #eef2ff 100%);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 8px 24px rgba(37, 99, 235, 0.07);
+    overflow: hidden;
+  }
+  .admin-mode-banner__accent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    border-radius: 14px 0 0 14px;
+  }
+  .admin-mode-banner__icon-wrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  }
+  .admin-mode-banner__icon {
+    color: #2563eb !important;
+    opacity: 0.95;
+  }
+  .admin-mode-banner__content {
+    min-width: 0;
+    padding-top: 1px;
+  }
+  .admin-mode-banner__title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+    line-height: 1.35;
+    margin-bottom: 6px;
+  }
+  .admin-mode-banner__text {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: #475569;
+    max-width: 72ch;
+  }
+  .admin-mode-banner__fio {
+    font-weight: 600;
+    color: #1e293b;
+    white-space: normal;
   }
   .discipline-teacher-line {
     display: flex;

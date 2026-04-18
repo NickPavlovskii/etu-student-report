@@ -12,7 +12,7 @@
       </v-icon>
     </div>
     <div class="kpi-hero__body">
-      <div class="kpi-hero__title">Загружено работ</div>
+      <div class="kpi-hero__title">Загружено учебных работ</div>
       <div class="kpi-hero__value">
         {{ totalWorks }} из {{ expectedCount }}
       </div>
@@ -22,7 +22,7 @@
           :style="{ width: pct + '%' }"
         />
       </div>
-      <div class="kpi-hero__foot">{{ pct }}% от общего плана</div>
+      <div class="kpi-hero__foot">{{ pct }}% от общего количества</div>
     </div>
   </v-card>
 </template>

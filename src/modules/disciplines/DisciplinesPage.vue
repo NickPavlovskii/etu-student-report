@@ -28,7 +28,7 @@
           title="Дисциплины"
           icon="mdi-book-outline"
           color="blue"
-          :value="uniqueDisciplines.length"
+          :value="visibleDisciplines.length"
         />
       </v-col>
       <v-col
@@ -49,7 +49,7 @@
         md="4"
       >
         <etu-info-card
-          title="Работ загружено"
+          title="Учебных работ загружено"
           icon="mdi-file-upload-outline"
           color="green"
           :value="`${totalWorksStats.uploaded} / ${totalWorksStats.total}`"
@@ -59,10 +59,10 @@
 
     <disciplines-filters
       v-model:search="search"
-      v-model:semester="semester"
-      :unique-semesters="semestersForHalf"
+      v-model:course="course"
+      :unique-courses="uniqueCourses"
       @check-all="handleCheckAll"
-      @clear-all="clearAllSemesters"
+      @clear-all="clearAllCourses"
     />
 
     <v-card
@@ -86,28 +86,34 @@
   </v-container>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import { ref, computed, onMounted, watch } from 'vue';
   import { useRouter } from 'vue-router';
   import DisciplinesFilters from './components/Disciplinesfilters.vue';
-  import SemesterHalfSwitcher from './components/SemesterHalfSwitcher.vue';
   import DisciplineCard from './components/DisciplineCard.vue';
+  import SemesterHalfSwitcher from './components/SemesterHalfSwitcher.vue';
   import { useDisciplines } from './composables/useDisciplinesList';
-  import { useSemesterFilter } from './composables/UseSemesterFilter';
+  import { useCourseFilter } from './composables/UseCourseFilter';
   import { useAcademicYear } from '@/composables/useAcademicYear';
   import { useUser } from '@/composables/useUser';
+  import {
+    matchesStudyPeriod,
+    parsePlanSemester,
+  } from '@/modules/analytics/utils/analyticsScope';
+  import type { StudyPeriod } from '@/api/types';
+  import type { DisciplineListRow } from './modal/disciplineCard';
 
   const router = useRouter();
   const { academicYear } = useAcademicYear();
   const { user } = useUser();
   const search = ref('');
+  const semesterHalf = ref<'autumn' | 'spring'>(currentCalendarSemesterHalf());
 
-  function defaultSemesterHalf() {
-    const month = new Date().getMonth();
-    return month >= 1 && month <= 6 ? 'spring' : 'autumn';
+  function currentCalendarSemesterHalf(): 'autumn' | 'spring' {
+    const m = new Date().getMonth() + 1;
+    if (m >= 9 || m <= 1) return 'autumn';
+    return 'spring';
   }
-  const semesterHalf = ref(defaultSemesterHalf());
-
   const filteredRef = ref([]);
   const {
     loading,
@@ -118,35 +124,52 @@
     totalWorksStats,
   } = useDisciplines(filteredRef);
 
-  const semestersForHalf = computed(() => {
-    const list = uniqueSemesters.value;
-    const odd = semesterHalf.value === 'autumn';
-    return list.filter((s) => {
-      const n = Number(s);
-      if (Number.isNaN(n)) return true;
-      return odd ? n % 2 === 1 : n % 2 === 0;
-    });
-  });
+  function disciplineInSemesterHalf(
+    d: DisciplineListRow,
+    half: 'autumn' | 'spring'
+  ): boolean {
+    const raw = d.Semester ?? d.semester;
+    const n = parsePlanSemester(raw);
+    if (n == null) return true;
+    const period: StudyPeriod =
+      half === 'autumn' ? 'autumn_semester' : 'spring_semester';
+    return matchesStudyPeriod(n, period);
+  }
 
-  const { semester, handleCheckAll, clearAllSemesters } = useSemesterFilter(
-    computed(() => semestersForHalf.value)
+  const disciplinesForHalf = computed(() =>
+    (uniqueDisciplines.value as DisciplineListRow[])
+      .filter((d) => d.educationForm && d.educationLevel)
+      .filter((d) => disciplineInSemesterHalf(d, semesterHalf.value))
   );
 
+  const uniqueCourses = computed(() => {
+    const set = new Set<number | string>();
+    for (const d of disciplinesForHalf.value) {
+      const v = d.Course ?? d.course;
+      if (v === null || v === undefined) continue;
+      const s = String(v).trim();
+      if (!s) continue;
+      const n = Number(s);
+      set.add(Number.isFinite(n) ? n : s);
+    }
+    return [...set].sort((a, b) => Number(a) - Number(b));
+  });
+
+  const { course, handleCheckAll, clearAllCourses } = useCourseFilter(uniqueCourses);
+
+  watch(semesterHalf, () => {
+    course.value = [...uniqueCourses.value];
+  });
+
   const filteredDisciplines = computed(() =>
-    uniqueDisciplines.value
-      .filter((d) => d.educationForm && d.educationLevel)
+    disciplinesForHalf.value
       .filter((d) => {
-        const s = Number(d.Semester);
-        if (!Number.isNaN(s)) {
-          const odd = semesterHalf.value === 'autumn';
-          if (odd && s % 2 !== 1) return false;
-          if (!odd && s % 2 !== 0) return false;
-        }
-        return true;
+        if (!course.value.length) return true;
+        const v = d.Course ?? d.course;
+        const n = Number(v);
+        const key = Number.isFinite(n) ? n : String(v).trim();
+        return course.value.includes(key);
       })
-      .filter(
-        (d) => !semester.value.length || semester.value.includes(d.Semester)
-      )
       .filter((d) => {
         const q = search.value.toLowerCase();
         return !q || d.Discipline.toLowerCase().includes(q);
@@ -160,10 +183,6 @@
     },
     { immediate: true }
   );
-
-  watch(semesterHalf, () => {
-    semester.value = [...semestersForHalf.value];
-  });
 
   const visibleDisciplines = computed(() =>
     filteredDisciplines.value.filter((d) => (d.groupsCount ?? 0) > 0)
