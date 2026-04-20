@@ -71,7 +71,7 @@
               <span class="criteria-label">Шрифт</span>
               <v-select
                 v-model="form.font"
-                :items="fontOptions"
+                :items="fontItems"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -82,7 +82,7 @@
               <span class="criteria-label">Размер шрифта</span>
               <v-select
                 v-model="form.fontSize"
-                :items="fontSizeOptions"
+                :items="fontSizeItems"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -154,7 +154,7 @@
               <span class="criteria-label">Нумерация иллюстраций</span>
               <v-select
                 v-model="form.illNumbering"
-                :items="illNumberingOptions"
+                :items="illNumberingItems"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -183,7 +183,7 @@
               </span>
               <v-select
                 v-model="form.figurePosition"
-                :items="figurePositionOptions"
+                :items="figurePositionItems"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -209,7 +209,7 @@
               </span>
               <v-select
                 v-model="form.figureCaption"
-                :items="figureCaptionOptions"
+                :items="figureCaptionItems"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -231,7 +231,7 @@
               <span class="criteria-label">Расположение названия таблицы</span>
               <v-select
                 v-model="form.tableTitlePlacement"
-                :items="tableTitlePlacementOptions"
+                :items="tableTitlePlacementItems"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -406,6 +406,25 @@
     name: '',
     description: '',
     submissionFormat: 'Электронный вид',
+    fileFormat: J.fileFormat ?? '.doc или .docx',
+    font: J.font ?? 'Times New Roman',
+    fontSize: J.fontSize ?? '14 пт',
+    lineSpacing: J.lineSpacing ?? '1.5',
+    minPages: J.minPages ?? '10',
+    minSources: J.minSources ?? '7',
+    illNumbering: J.illNumbering ?? 'Сквозная',
+    figurePosition: J.figurePosition ?? 'По центру страницы',
+    figureCaption: J.figureCaption ?? 'Под рисунком',
+    tableTitle: J.tableTitle ?? 'Слово «Таблица» + номер + наименование',
+    tableTitlePlacement: J.tableTitlePlacement ?? 'Над таблицей',
+    tablePosition: J.tablePosition ?? 'Справа',
+    hasTitlePage: J.hasTitlePage ?? false,
+    hasToc: J.hasToc ?? true,
+    hasIntroduction: J.hasIntroduction ?? true,
+    hasMainPart: J.hasMainPart ?? true,
+    hasConclusion: J.hasConclusion ?? true,
+    hasBibliography: J.hasBibliography ?? true,
+    hasAppendices: J.hasAppendices ?? false,
   };
 
   const form = ref<AddTemplateForm>({ ...defaultForm });

@@ -1,14 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { DefineComponent } from 'vue'
 import type { InfoApi, ServerConfig } from '@/api/types'
-
-declare module '*.vue' {
-  const component: DefineComponent<object, object, unknown>
-  export default component
-}
-
-declare module 'vuetify/styles'
 
 interface ImportMetaEnv {
   /** Версия приложения из `package.json` (подставляется в `vite.config.ts`). */

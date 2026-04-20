@@ -310,12 +310,14 @@ export function useAdminDisciplines(teachers: Ref<TeacherDto[]>) {
     disciplinesError.value = null;
 
     try {
-      const params = academicYearToDateRange(academicYear.value);
-      if (!params) {
+      const range = academicYearToDateRange(academicYear.value);
+      if (!range) {
         disciplinesByAllTeachers.value = [];
         return;
       }
-      const rows = await getDepartmentDisciplinesWithTeachers(params);
+      const rows = await getDepartmentDisciplinesWithTeachers({
+        academicYear: academicYear.value,
+      });
 
       const withTeacher = rows.filter(
         (row) => row.teacherFio != null && String(row.teacherFio).trim() !== ''
