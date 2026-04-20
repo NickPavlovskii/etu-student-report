@@ -39,6 +39,7 @@
   import { useRouter } from 'vue-router';
   import { ACADEMIC_YEAR_SELECT_ITEMS } from '@/constants/academicYearSelectItems';
   import { useAcademicYear } from '@/composables/useAcademicYear';
+  import { bumpUserStorageTick } from '@/composables/userStorageTick';
 
   defineEmits(['toggle-drawer']);
   const router = useRouter();
@@ -56,7 +57,7 @@
 
   const logout = () => {
     localStorage.removeItem('user');
-
+    bumpUserStorageTick();
     router.push('/auth');
   };
 </script>

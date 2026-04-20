@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 import type { User } from '@/types/user';
+import { userStorageTick } from './userStorageTick';
 
 function hasAdminRole(role: string | undefined): boolean {
   if (!role) return false;
@@ -8,6 +9,7 @@ function hasAdminRole(role: string | undefined): boolean {
 
 export function useAuth() {
   const user = computed<User | null>(() => {
+    void userStorageTick.value;
     const raw = localStorage.getItem('user');
     if (raw) {
       try {

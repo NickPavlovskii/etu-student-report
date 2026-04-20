@@ -1,4 +1,5 @@
 import { computed } from 'vue';
+import { userStorageTick } from './userStorageTick';
 
 /** Проверка, что в роли есть ADMIN (role приходит как TEACHER | ADMIN или "TEACHER,ADMIN") */
 function hasAdminRole(role: string | undefined): boolean {
@@ -12,6 +13,7 @@ function hasAdminRole(role: string | undefined): boolean {
 
 export function useUser() {
   const user = computed(() => {
+    void userStorageTick.value;
     const raw = localStorage.getItem('user');
     return raw ? JSON.parse(raw) : null;
   });
