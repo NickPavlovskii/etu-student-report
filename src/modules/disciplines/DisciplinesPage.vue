@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted, watch } from 'vue';
+  import { ref, computed, onMounted, watch, type Ref } from 'vue';
   import { useRouter } from 'vue-router';
   import DisciplinesFilters from './components/Disciplinesfilters.vue';
   import DisciplineCard from './components/DisciplineCard.vue';
@@ -114,15 +114,14 @@
     if (m >= 9 || m <= 1) return 'autumn';
     return 'spring';
   }
-  const filteredRef = ref([]);
+  const filteredRef = ref<DisciplineListRow[]>([]);
   const {
     loading,
     loadData,
     uniqueDisciplines,
-    uniqueSemesters,
     totalGroups,
     totalWorksStats,
-  } = useDisciplines(filteredRef);
+  } = useDisciplines(filteredRef as Ref<unknown[]>);
 
   function disciplineInSemesterHalf(
     d: DisciplineListRow,
@@ -188,7 +187,7 @@
     filteredDisciplines.value.filter((d) => (d.groupsCount ?? 0) > 0)
   );
 
-  function disciplineCardItem(item) {
+  function disciplineCardItem(item: DisciplineListRow) {
     const { teacherFio: _omit, ...rest } = item;
     return rest;
   }
@@ -207,7 +206,7 @@
     }
   });
 
-  function openDiscipline(planRowId) {
+  function openDiscipline(planRowId: string | number) {
     router.push({ name: 'discipline', params: { id: String(planRowId) } });
   }
 </script>

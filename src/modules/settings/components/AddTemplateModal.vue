@@ -220,7 +220,7 @@
               <span class="criteria-label">Заголовок таблицы</span>
               <v-select
                 v-model="form.tableTitle"
-                :items="tableTitleOptions"
+                :items="tableTitleItems"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -257,7 +257,7 @@
               </span>
               <v-select
                 v-model="form.tablePosition"
-                :items="tablePositionOptions"
+                :items="tablePositionItems"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -367,6 +367,15 @@
     ADD_TEMPLATE_TABLE_POSITION_OPTIONS as tablePositionOptions,
   } from '../constants/addTemplateModalOptions';
 
+  const fontItems: string[] = [...fontOptions];
+  const fontSizeItems: string[] = [...fontSizeOptions];
+  const illNumberingItems: string[] = [...illNumberingOptions];
+  const figurePositionItems: string[] = [...figurePositionOptions];
+  const figureCaptionItems: string[] = [...figureCaptionOptions];
+  const tableTitleItems: string[] = [...tableTitleOptions];
+  const tableTitlePlacementItems: string[] = [...tableTitlePlacementOptions];
+  const tablePositionItems: string[] = [...tablePositionOptions];
+
   const props = defineProps<{
     modelValue: boolean;
     initialForm: AddTemplateForm | null;
@@ -429,7 +438,7 @@
     if (!canSubmitTemplate.value) {
       return;
     }
-    emit('submit', { ...form.value });
+    emit('submit', { ...form.value } as AddTemplateForm);
   }
 </script>
 

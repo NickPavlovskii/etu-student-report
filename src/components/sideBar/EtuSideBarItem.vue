@@ -32,24 +32,14 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
-import { computed } from 'vue';
 import type { SideBarItem } from './model';
 
-const route = useRoute();
-const emit = defineEmits(['select']);
-
-const props = defineProps<{
+defineProps<{
   item: SideBarItem;
   rail: boolean;
 }>();
 
-const isActive = computed(() => {
-  const path = route.path;
-  const itemPath = props.item.path;
-  if (path === itemPath) return true;
-  return path.startsWith(itemPath + '/');
-});
+const emit = defineEmits(['select']);
 </script>
 
 <style scoped lang="scss">

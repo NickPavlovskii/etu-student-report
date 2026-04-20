@@ -1,6 +1,19 @@
 /// <reference types="vite/client" />
 
+import type { DefineComponent } from 'vue'
 import type { InfoApi, ServerConfig } from '@/api/types'
+
+declare module '*.vue' {
+  const component: DefineComponent<object, object, unknown>
+  export default component
+}
+
+declare module 'vuetify/styles'
+
+interface ImportMetaEnv {
+  /** Полный URL API (часто с суффиксом `/api`, как в локальном fallback). */
+  readonly VITE_API_URL?: string
+}
 
 declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { ServerConfig } from './utils';
-import { getFallbackServerConfig } from './utils';
+import { getFallbackServerConfig, normalizeViteApiUrl } from './utils';
 
 axios.defaults.headers.accept = 'application/json';
 
@@ -40,8 +40,14 @@ export function applyServerConfigBaseUrl(config: ServerConfig): void {
   }
 
   const s = config.api?.services;
-  const infoUrl = s?.infoUrl ?? s?.baseUrl ?? fallbackInfo;
-  const baseUrl = s?.baseUrl ?? s?.infoUrl ?? fallbackBase;
+  let infoUrl = s?.infoUrl ?? s?.baseUrl ?? fallbackInfo;
+  let baseUrl = s?.baseUrl ?? s?.infoUrl ?? fallbackBase;
+
+  const viteBase = normalizeViteApiUrl();
+  if (viteBase) {
+    baseUrl = viteBase;
+    infoUrl = viteBase;
+  }
 
   baseAxios.defaults.baseURL = baseUrl;
   infoAxios.defaults.baseURL = infoUrl;

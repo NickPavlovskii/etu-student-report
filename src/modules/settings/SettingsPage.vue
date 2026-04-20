@@ -412,8 +412,9 @@
         }
       }
       disciplines.value = [...seen.values()];
-      if (disciplines.value.length > 0 && !selectedDisciplineId.value) {
-        selectedDisciplineId.value = disciplines.value[0].id;
+      const firstDisc = disciplines.value[0];
+      if (disciplines.value.length > 0 && !selectedDisciplineId.value && firstDisc) {
+        selectedDisciplineId.value = firstDisc.id;
       }
     } catch {
       disciplines.value = [];

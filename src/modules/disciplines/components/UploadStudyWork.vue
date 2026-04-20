@@ -536,9 +536,11 @@
     const parts = base.split('_').map((p) => p.trim()).filter(Boolean);
     if (parts.length >= 3) {
       const maybeWorkType = parts[2];
-      const opt = bestMatchOption(maybeWorkType, controlTypesOptions.value);
-      if (opt && !workType.value) {
-        workType.value = opt;
+      if (maybeWorkType) {
+        const opt = bestMatchOption(maybeWorkType, controlTypesOptions.value);
+        if (opt && !workType.value) {
+          workType.value = opt;
+        }
       }
       // если есть 4-я часть — пробуем как название
       if (parts[3] && !workTitle.value.trim()) {

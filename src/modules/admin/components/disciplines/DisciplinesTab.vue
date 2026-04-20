@@ -45,18 +45,20 @@
   import DisciplinesEmptyState from './DisciplinesEmptyState.vue';
   import DisciplinesToolbar from './DisciplinesToolbar.vue';
   import { useDisciplinesTabView } from '../../composables/useDisciplinesTab';
+  import type { AdminDisciplinesContext } from '../../injectionKeys';
   import {
     adminDisciplinesKey,
     adminOpenDisciplineKey,
   } from '../../injectionKeys';
 
-  const d = inject(adminDisciplinesKey);
+  const injectedDisciplines = inject(adminDisciplinesKey);
   const openDiscipline = inject(adminOpenDisciplineKey);
-  if (!d || !openDiscipline) {
+  if (!injectedDisciplines || !openDiscipline) {
     throw new Error(
       'DisciplinesTab: adminDisciplinesKey / adminOpenDisciplineKey не найдены'
     );
   }
+  const d: AdminDisciplinesContext = injectedDisciplines;
 
   const disciplineTeacherFilter = computed(() => d.disciplineTeacherFilter.value);
   const teacherFilterItems = computed(() => d.teacherFilterItems.value);

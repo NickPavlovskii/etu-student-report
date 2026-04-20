@@ -70,7 +70,9 @@ export function useAdminUsers() {
 
   function avatarColorClass(t: TeacherDto): string {
     const seed = `${t.lastName ?? ''}|${t.firstName ?? ''}|${t.email ?? ''}`;
-    return AVATAR_CLASSES[djb2(seed) % AVATAR_CLASSES.length];
+    const cls =
+      AVATAR_CLASSES[djb2(seed) % AVATAR_CLASSES.length] ?? AVATAR_CLASSES[0];
+    return cls;
   }
 
   function teacherRoles(t: TeacherDto): string[] {
@@ -116,10 +118,14 @@ export function useAdminUsers() {
         );
         for (let j = 0; j < results.length; j++) {
           const r = results[j];
+          const teacher = chunk[j];
+          if (!r || !teacher) {
+            continue;
+          }
           enriched.push(
             r.status === 'fulfilled'
               ? r.value
-              : { ...chunk[j], disciplines: [] }
+              : { ...teacher, disciplines: [] }
           );
         }
       }
