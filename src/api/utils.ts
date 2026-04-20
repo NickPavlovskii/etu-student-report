@@ -11,6 +11,14 @@ export function normalizeViteApiUrl(): string | undefined {
   return t.replace(/\/+$/, '')
 }
 
+export function resolveApiBaseUrlFromVite(): string | undefined {
+  const origin = normalizeViteApiUrl()
+  if (!origin) return undefined
+  return origin.replace(/\/+$/, '').endsWith('/api')
+    ? origin.replace(/\/+$/, '')
+    : `${origin.replace(/\/+$/, '')}/api`
+}
+
 export function getFallbackServerConfig(): ServerConfig {
   if (import.meta.env.DEV) {
     const url = '/api'
@@ -23,7 +31,7 @@ export function getFallbackServerConfig(): ServerConfig {
       },
     }
   }
-  const vite = normalizeViteApiUrl()
+  const vite = resolveApiBaseUrlFromVite()
   const fallback = vite ?? 'http://localhost:8081/api'
   return {
     api: {

@@ -5,7 +5,11 @@ import type { InfoApi, ServerConfig } from '@/api/types'
 interface ImportMetaEnv {
   /** Версия приложения из `package.json` (подставляется в `vite.config.ts`). */
   readonly VITE_APP_VERSION: string
-  /** Полный URL API (часто с суффиксом `/api`, как в локальном fallback). */
+  /**
+   * Origin бэкенда, например `https://etu-reports-backend-1.onrender.com`.
+   * Префикс `/api` для axios добавляется в `resolveApiBaseUrlFromVite()`;
+   * можно сразу указать полный базис с `/api` — тогда дублирования не будет.
+   */
   readonly VITE_API_URL?: string
 }
 
