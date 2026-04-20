@@ -6,6 +6,11 @@ import type { Plugin } from 'vite'
 
 const OUT_DIR = 'dist/frontend/contents/panda/client'
 
+const pkgPath = path.join(path.resolve(__dirname), 'package.json')
+const appVersion = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as {
+  version: string
+}
+
 function serverProductsCopyPlugin(): Plugin {
   const root = path.resolve(__dirname)
   const productsServer = path.join(root, 'products', 'server')
@@ -41,6 +46,9 @@ function serverProductsCopyPlugin(): Plugin {
 }
 
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion.version),
+  },
   plugins: [vue(), serverProductsCopyPlugin()],
   build: {
     outDir: OUT_DIR,
