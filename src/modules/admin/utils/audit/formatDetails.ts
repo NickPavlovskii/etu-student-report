@@ -33,12 +33,12 @@ function formatRolesPhrase(roleTokenString: string, capitalize = false): string 
     ? names
     : names.map((n) => n.charAt(0).toLowerCase() + n.slice(1));
   if (formatted.length === 1) {
-    return formatted[0];
+    return formatted[0] ?? '';
   }
   if (formatted.length === 2) {
-    return `${formatted[0]} и ${formatted[1]}`;
+    return `${formatted[0] ?? ''} и ${formatted[1] ?? ''}`;
   }
-  return `${formatted.slice(0, -1).join(', ')} и ${formatted[formatted.length - 1]}`;
+  return `${formatted.slice(0, -1).join(', ')} и ${formatted[formatted.length - 1] ?? ''}`;
 }
 
 function labelField(key: string): string {
@@ -90,7 +90,7 @@ function parseToStringMap(raw: string): Record<string, string> {
   const list = segments.length > 0 ? segments : [raw];
   for (const seg of list) {
     const m = seg.match(PAIR_RE);
-    if (m) {
+    if (m?.[1] != null && m[2] != null) {
       out[m[1]] = m[2].trim();
     }
   }
@@ -175,7 +175,7 @@ function buildNarrativeFromMap(
   const roleVal = map.role ?? map.roles ?? '';
   const email = map.email;
 
-  if (keys.length === 1 && roleVal && isRoleKey(keys[0])) {
+  if (keys.length === 1 && roleVal && keys[0] != null && isRoleKey(keys[0])) {
     const phrase = formatRolesPhrase(roleVal, true);
     if (action === 'ROLE_CHANGED') {
       return `Роль изменена на «${phrase}».`;
@@ -203,7 +203,7 @@ function buildNarrativeFromMap(
     if (lk === 'email' || lk === 'role' || lk === 'roles') {
       continue;
     }
-    const s = sentenceForField(key, map[key], action);
+    const s = sentenceForField(key, map[key] ?? '', action);
     if (s) {
       sentences.push(s);
     }
@@ -222,7 +222,7 @@ function buildNarrativeFromMap(
 
 function formatRolledBackText(s: string): string | null {
   const m = s.match(/^Отменено:\s*(.+?)(?:\s*\((.+)\))?$/i);
-  if (!m) {
+  if (!m?.[1]) {
     return null;
   }
   const actionPart = m[1].trim();
@@ -306,7 +306,9 @@ export function formatAuditDetails(
       if (!m) {
         return seg;
       }
-      return sentenceForField(m[1], m[2].trim(), action);
+      return m[1] != null && m[2] != null
+        ? sentenceForField(m[1], m[2].trim(), action)
+        : seg;
     })
     .filter(Boolean)
     .join(' ');

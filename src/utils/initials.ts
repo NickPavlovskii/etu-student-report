@@ -6,7 +6,11 @@ export function initials(str: string): string {
   if (!s) return '—';
   const parts = s.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
+    const a = parts[0]?.[0];
+    const b = parts[1]?.[0];
+    if (a && b) {
+      return (a + b).toUpperCase();
+    }
   }
   return s.slice(0, 2).toUpperCase();
 }

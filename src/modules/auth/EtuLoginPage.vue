@@ -102,11 +102,7 @@
 </template>
 
 <script setup lang="ts">
-  import { useRouter } from 'vue-router';
-
   import logoUrl from '@/assets/logo.jpg';
-
-  const router = useRouter();
 
   const onSubmit = () => {
     (document.querySelector('form') as HTMLFormElement)?.submit();

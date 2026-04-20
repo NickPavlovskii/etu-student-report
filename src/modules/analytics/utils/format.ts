@@ -34,7 +34,9 @@ export function avatarColor(name: string): string {
   for (let i = 0; i < (name ?? '').length; i++) {
     h += (name ?? '').charCodeAt(i);
   }
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+  return (
+    AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length] ?? AVATAR_COLORS[0]
+  );
 }
 
 /**

@@ -249,8 +249,8 @@ function mapTeacherCardToItem(
   return {
     discipline,
     codeRow: planRowId || discipline,
-    course: c.course ?? c.Course ?? '—',
-    semester: c.semester ?? c.Semester ?? '—',
+    course: String(c.course ?? c.Course ?? '—'),
+    semester: String(c.semester ?? c.Semester ?? '—'),
     educationLevel: String(c.educationLevel ?? c.education_level ?? ''),
     educationForm: String(c.educationForm ?? c.education_form ?? ''),
     loaded: stat?.loaded ?? '0 / 0',
@@ -310,8 +310,14 @@ export function useAdminDisciplines(teachers: Ref<TeacherDto[]>) {
     disciplinesError.value = null;
 
     try {
-      const params = academicYearToDateRange(academicYear.value);
-      const rows = await getDepartmentDisciplinesWithTeachers(params);
+      const range = academicYearToDateRange(academicYear.value);
+      if (!range) {
+        disciplinesByAllTeachers.value = [];
+        return;
+      }
+      const rows = await getDepartmentDisciplinesWithTeachers({
+        academicYear: academicYear.value,
+      });
 
       const withTeacher = rows.filter(
         (row) => row.teacherFio != null && String(row.teacherFio).trim() !== ''

@@ -1,13 +1,9 @@
-import type { ComputedRef, Ref } from 'vue';
 import type { DisciplineWithTeacherRowDto } from '@/api/info';
 
 /** Результат `useTablePagination` для `AnalyticsWidgetCard`. */
-export type AnalyticsWidgetPaginationVm = {
-  page: Ref<number>;
-  pageCount: ComputedRef<number>;
-  total: ComputedRef<number>;
-  rangeLabel: ComputedRef<string>;
-};
+export type AnalyticsWidgetPaginationVm = ReturnType<
+  typeof import('@/composables/useTablePagination').useTablePagination<unknown>
+>;
 
 export type ScopeMode = 'department' | 'personal';
 

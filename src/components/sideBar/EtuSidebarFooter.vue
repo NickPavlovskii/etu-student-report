@@ -22,7 +22,7 @@
   import { computed, watch } from 'vue';
   import { useAuth } from '@/composables/useAuth';
 
-  const { user, isTeacher, isHead } = useAuth();
+  const { user } = useAuth();
 
   watch(
     user,

@@ -254,6 +254,8 @@
     ScopeMode,
     AnalyticsDisciplineTableRow,
     AnalyticsViewMode,
+    TeacherTreeBlock,
+    TeacherTreeChildRow,
   } from './model';
   import { teacherTreeTableColumns } from './constants/columns';
   import {
@@ -467,9 +469,7 @@
       : 'mdi-chevron-right';
   }
 
-  function visibleTeacherChildRows<
-    T extends { teacher: string; children: readonly unknown[] },
-  >(block: T) {
+  function visibleTeacherChildRows(block: TeacherTreeBlock): TeacherTreeChildRow[] {
     return expandedTeachers.value.has(block.teacher) ? [...block.children] : [];
   }
 

@@ -2,6 +2,15 @@ import type { ServerConfig } from './types';
 
 export type { ServerConfig } from './types';
 
+/** Полный URL бэкенда из сборки (без обрезки в UI хостинга). Пробелы и хвостовой `/` убираются. */
+export function normalizeViteApiUrl(): string | undefined {
+  const raw = import.meta.env.VITE_API_URL
+  if (typeof raw !== 'string') return undefined
+  const t = raw.trim()
+  if (!t) return undefined
+  return t.replace(/\/+$/, '')
+}
+
 export function getFallbackServerConfig(): ServerConfig {
   if (import.meta.env.DEV) {
     const url = '/api'
@@ -14,11 +23,13 @@ export function getFallbackServerConfig(): ServerConfig {
       },
     }
   }
+  const vite = normalizeViteApiUrl()
+  const fallback = vite ?? 'http://localhost:8081/api'
   return {
     api: {
       services: {
-        baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8081/api',
-        infoUrl: import.meta.env.VITE_API_URL || 'http://localhost:8081/api',
+        baseUrl: fallback,
+        infoUrl: fallback,
       },
     },
   }

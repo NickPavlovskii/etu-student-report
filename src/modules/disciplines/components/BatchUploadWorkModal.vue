@@ -676,10 +676,13 @@
     if (!parts.length) return;
 
     const last = parts[parts.length - 1];
-    if (/^\d{4}-\d{4}$/.test(last) || /^\d{4}\/\d{4}$/.test(last)) {
+    if (
+      last &&
+      (/^\d{4}-\d{4}$/.test(last) || /^\d{4}\/\d{4}$/.test(last))
+    ) {
       const norm = last.replace(/\//g, '-');
-      const allowed = new Set(
-        ACADEMIC_YEAR_SELECT_ITEMS.map((i) => i.value)
+      const allowed = new Set<string>(
+        ACADEMIC_YEAR_SELECT_ITEMS.map((i) => String(i.value))
       );
       if (allowed.has(norm)) {
         academicYear.value = norm;
@@ -840,27 +843,6 @@
       { templateId: tid, annotate: annotate.value }
     );
     applyBatchValidationToRows(res, rows.value);
-  }
-
-  async function runValidationOnly() {
-    errorText.value = '';
-    if (!rows.value.length) return;
-    if (!autoCheck.value) {
-      errorText.value =
-        'Галочка проверки выключена. Включите её, чтобы выполнить проверку.';
-      return;
-    }
-    busy.value = true;
-    phase.value = 'validate';
-    try {
-      await executeBatchValidation();
-    } catch (e: unknown) {
-      errorText.value =
-        e instanceof Error ? e.message : 'Ошибка batch-проверки';
-    } finally {
-      phase.value = 'idle';
-      busy.value = false;
-    }
   }
 
   async function uploadAllRows(): Promise<void> {

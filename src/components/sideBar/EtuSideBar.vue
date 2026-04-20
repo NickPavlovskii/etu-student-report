@@ -26,6 +26,13 @@
           <span class="drawer-title">
             {{ title }}
           </span>
+          <span
+            v-if="appVersion"
+            class="drawer-app-version"
+            aria-hidden="true"
+          >
+            v{{ appVersion }}
+          </span>
         </div>
       </div>
 
@@ -114,6 +121,8 @@ const rail = ref(false);
 const drawerValue = computed(() => props.modelValue ?? true);
 const logoSrc = computed(() => props.logoSrc ?? '/assets/logo.svg');
 
+const appVersion = import.meta.env.VITE_APP_VERSION;
+
 const safeItems = computed(() =>
   (props.items ?? []).filter((i): i is SideBarItem => {
     if (!i) {
@@ -196,14 +205,27 @@ function onSelect(item: SideBarItem) {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
   font-weight: 600;
   color: #111827;
 }
 
 .drawer-title {
+  flex: 1;
+  min-width: 0;
   font-size: 18px;
   font-weight: 600;
   color: #111827;
+}
+
+.drawer-app-version {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #9ca3af;
+  letter-spacing: 0.02em;
 }
 
 .etu-sidebar .footer-divider {
@@ -359,9 +381,16 @@ function onSelect(item: SideBarItem) {
 }
 
 .v-navigation-drawer.etu-sidebar .drawer-title,
-.v-navigation-drawer.etu-sidebar .drawer-header-text,
-.v-navigation-drawer.etu-sidebar .drawer-header-text span {
+.v-navigation-drawer.etu-sidebar .drawer-header-text {
   color: #1f2937;
+}
+
+.v-navigation-drawer.etu-sidebar .drawer-header-text span:not(.drawer-app-version) {
+  color: #1f2937;
+}
+
+.v-navigation-drawer.etu-sidebar .drawer-app-version {
+  color: #9ca3af;
 }
 
 .v-navigation-drawer.etu-sidebar .v-list-item-title,

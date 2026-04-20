@@ -53,12 +53,14 @@
   import AuditToolbar from './AuditToolbar.vue';
   import AuditTable from './AuditTable.vue';
   import RollbackConfirmDialog from './RollbackConfirmDialog.vue';
+  import type { AdminAuditContext } from '../../injectionKeys';
   import { adminAuditKey } from '../../injectionKeys';
 
-  const a = inject(adminAuditKey);
-  if (!a) {
+  const injectedAudit = inject(adminAuditKey);
+  if (!injectedAudit) {
     throw new Error('AuditTab: adminAuditKey не найден (ожидается AdminPage)');
   }
+  const a: AdminAuditContext = injectedAudit;
 
   const auditLog = computed(() => a.auditLog.value);
   const auditSearch = computed(() => a.auditSearch.value);

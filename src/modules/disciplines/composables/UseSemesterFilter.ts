@@ -1,7 +1,9 @@
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, type Ref, type ComputedRef } from 'vue';
 
-export function useSemesterFilter(uniqueSemesters) {
-  const semester = ref([]);
+export function useSemesterFilter(
+  uniqueSemesters: Ref<unknown[]> | ComputedRef<unknown[]>
+) {
+  const semester = ref<unknown[]>([]);
   const checkAll = ref(false);
   const indeterminate = ref(false);
 
@@ -23,7 +25,7 @@ export function useSemesterFilter(uniqueSemesters) {
     indeterminate.value = val.length > 0 && !checkAll.value;
   });
 
-  function handleCheckAll(val) {
+  function handleCheckAll(val: boolean) {
     semester.value = val ? [...uniqueSemesters.value] : [];
     indeterminate.value = false;
   }
