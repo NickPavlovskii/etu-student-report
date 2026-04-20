@@ -1,0 +1,12 @@
+# Сборка фронта: см. package.json → "build": "vue-tsc -b && vite build"
+# Выход Vite задаётся в vite.config.ts (outDir), не в корневом dist/
+[build]
+  command = "npm run build"
+  publish = "dist/frontend/contents/panda/client"
+
+# Vue Router (history): прямые заходы на /auth, /disciplines/... и обновление страницы
+# без этого Netlify отдаёт 404 — статика отдаётся по пути, остальное — index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
