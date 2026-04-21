@@ -1,4 +1,4 @@
-import type { Ref } from 'vue';
+import type { ComputedRef, Ref } from 'vue';
 import { ref, shallowRef, computed, watch } from 'vue';
 import { useUser } from '@/composables/useUser';
 import {
@@ -33,8 +33,11 @@ export function useAnalytics(filters: {
   academicYear: Ref<string>;
   studyPeriod: Ref<StudyPeriod>;
   scopeMode?: Ref<ScopeMode>;
+  fetchEnabled?: Ref<boolean> | ComputedRef<boolean>;
 }) {
   const { lastName, canSeeAll } = useUser();
+
+  const fetchEnabled = filters.fetchEnabled ?? ref(true);
 
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -56,7 +59,6 @@ export function useAnalytics(filters: {
   const bySemester = shallowRef<BySemesterRow[]>([]);
   const teachersSummary = shallowRef<TeachersSummaryItem[]>([]);
   const disciplinesWithTeachers = shallowRef<DisciplineWithTeacherRowDto[]>([]);
-  /** Сырые карточки дисциплин преподавателя (личная аналитика, названия + семестр). */
   const teacherDisciplineCards = ref<unknown[]>([]);
 
   const scope = computed(() => filters.scopeMode?.value ?? 'department');
@@ -65,6 +67,7 @@ export function useAnalytics(filters: {
   );
 
   async function loadAll() {
+    if (!fetchEnabled.value) return;
     if (!lastName.value && !canSeeAll.value) return;
     const q = params.value;
     if (!q) {
@@ -131,10 +134,6 @@ export function useAnalytics(filters: {
     }
   }
 
-  /**
-   * Блок «Загружено работ»: сумма по таблице дисциплин за выбранный учебный год
-   * (те же строки, что в виджете — после loadAll).
-   */
   const kpi = computed(() => {
     const rows = disciplinesTable.value;
     if (rows.length > 0) {
@@ -173,8 +172,12 @@ export function useAnalytics(filters: {
       () => normalizeAcademicYear(filters.academicYear.value),
       () => filters.studyPeriod.value,
       () => (filters.scopeMode?.value ?? 'department'),
+      () => fetchEnabled.value,
     ],
     () => {
+      if (!fetchEnabled.value) {
+        return;
+      }
       void loadAll();
     }
   );

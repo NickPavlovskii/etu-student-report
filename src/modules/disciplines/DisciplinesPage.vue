@@ -233,4 +233,10 @@
     box-shadow: none;
     border: none;
   }
+
+  @media (max-width: 599px) {
+    .page {
+      padding: 14px 12px 28px;
+    }
+  }
 </style>

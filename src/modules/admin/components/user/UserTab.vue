@@ -10,7 +10,7 @@
       :columns="columnsForTable"
       :rows="teachers"
       :loading="usersLoading"
-      :show-skeleton="false"
+      :show-skeleton="true"
       :shadow="true"
       :row-class="() => 'users-table__tr'"
       :row-style="userRowStyle"
@@ -123,11 +123,6 @@
       </template>
     </etu-data-table>
 
-    <etu-tea-loader
-      overlay
-      :loading="usersLoading"
-    />
-
     <user-disciplines-tooltip
       :visible="discTip.visible"
       :items="discTip.items"
@@ -140,6 +135,7 @@
 
 <script setup lang="ts">
   import { computed, inject, reactive, ref, toRef } from 'vue';
+  import { useSuppressGlobalAxiosWhileLoading } from '@/composables/useSuppressGlobalAxiosWhileLoading';
   import type { TeacherDto } from '@/api/info';
   import type { TableColumn } from '@/components/global/etu-data-table/types';
   import UserToolbar from './UserToolbar.vue';
@@ -163,6 +159,8 @@
   const teachers = computed(() => u.teachers.value);
 
   const usersLoading = computed(() => u.usersLoading.value);
+
+  useSuppressGlobalAxiosWhileLoading(usersLoading);
 
   const columnsForTable = computed<TableColumn<TeacherDto>[]>(() =>
     USER_TABLE_COLUMNS.map((c) => ({

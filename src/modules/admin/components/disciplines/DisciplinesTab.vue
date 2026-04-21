@@ -41,6 +41,7 @@
 
 <script setup lang="ts">
   import { computed, inject } from 'vue';
+  import { useSuppressGlobalAxiosWhileLoading } from '@/composables/useSuppressGlobalAxiosWhileLoading';
   import DisciplinesCardsGrid from './DisciplinesCardsGrid.vue';
   import DisciplinesEmptyState from './DisciplinesEmptyState.vue';
   import DisciplinesToolbar from './DisciplinesToolbar.vue';
@@ -66,6 +67,8 @@
   const disciplinesError = computed(() => d.disciplinesError.value);
 
   const { isLoading, isIdle } = useDisciplinesTabView(d);
+
+  useSuppressGlobalAxiosWhileLoading(isLoading);
 
   function onDisciplineTeacherFilterUpdate(value: string | null) {
     d.disciplineTeacherFilter.value = value;

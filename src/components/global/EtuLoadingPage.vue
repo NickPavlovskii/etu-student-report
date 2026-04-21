@@ -7,10 +7,19 @@
   </div>
 </template>
 
-<script setup>
-defineProps({
-  text: { type: String, default: 'Загрузка' },
-});
+<script setup lang="ts">
+  import { onBeforeMount, onUnmounted } from 'vue';
+  import {
+    beginGlobalAxiosOverlaySuppression,
+    endGlobalAxiosOverlaySuppression,
+  } from '@/api/axiosLoading';
+
+  defineProps({
+    text: { type: String, default: 'Загрузка' },
+  });
+
+  onBeforeMount(() => beginGlobalAxiosOverlaySuppression());
+  onUnmounted(() => endGlobalAxiosOverlaySuppression());
 </script>
 
 <style scoped>

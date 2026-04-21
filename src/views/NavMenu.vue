@@ -14,11 +14,13 @@
   import { useRouter } from 'vue-router';
   import EtuSideBar from '@/components/sideBar/EtuSideBar.vue';
   import { useAuth } from '@/composables/useAuth';
+  import { usePhoneLayout } from '@/composables/usePhoneLayout';
   import type { SideBarItem } from '@/components/sideBar/model';
   import logoUrl from '@/assets/logo.jpg';
 
   const { user } = useAuth();
   const router = useRouter();
+  const { isPhone } = usePhoneLayout();
 
   const isAdminRole = computed(() => {
     const role = String(user.value?.role ?? '').toUpperCase();
@@ -60,9 +62,12 @@
     },
   ];
   const sidebarItems = computed(() => {
-    if (!isAdminRole.value) return baseItems;
+    const base = isPhone.value
+      ? baseItems.filter((i) => i.name !== 'analytics')
+      : baseItems;
+    if (!isAdminRole.value) return base;
     return [
-      ...baseItems,
+      ...base,
       { title: '', name: 'divider', path: '', divider: true },
       ...adminItems,
     ];

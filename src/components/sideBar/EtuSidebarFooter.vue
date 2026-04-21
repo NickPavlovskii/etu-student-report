@@ -7,34 +7,14 @@
         <span v-if="teacherDept">· {{ teacherDept }}</span>
       </div>
     </div>
-    <v-btn
-      icon
-      variant="text"
-      size="small"
-      class="settings-btn"
-    >
-      <v-icon class="settings-icon">mdi-cog-outline</v-icon>
-    </v-btn>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { computed, watch } from 'vue';
+  import { computed } from 'vue';
   import { useAuth } from '@/composables/useAuth';
 
   const { user } = useAuth();
-
-  watch(
-    user,
-    (u) => {
-      console.log('[EtuSidebarFooter] Роли пользователя:', {
-        role: u?.role,
-        roleDisplay: u?.roleDisplay,
-        raw: u ? { ...u, role: u.role, roleDisplay: u.roleDisplay } : null,
-      });
-    },
-    { immediate: true }
-  );
 
   const teacherFullName = computed(() => user.value?.fioShort ?? 'Преподаватель');
   const teacherDept = computed(() => user.value?.department ?? '');

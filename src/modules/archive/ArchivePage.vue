@@ -149,4 +149,10 @@
   .export-btn-wrap :deep(.etu-btn:hover) {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   }
+
+  @media (max-width: 599px) {
+    .page {
+      padding: 14px 12px 32px;
+    }
+  }
 </style>

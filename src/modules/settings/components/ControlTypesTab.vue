@@ -277,7 +277,7 @@
     align-items: center;
     gap: 8px;
     padding: 9px 18px;
-    background: #111827;
+    background: #bb8d54;
     color: #fff;
     border: none;
     border-radius: 11px;

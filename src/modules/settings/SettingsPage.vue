@@ -649,6 +649,12 @@
     min-height: 100%;
   }
 
+  @media (max-width: 599px) {
+    .page {
+      padding: 14px 12px 32px;
+    }
+  }
+
   .settings-nav {
     margin-bottom: 24px;
   }

@@ -22,12 +22,6 @@
       :open-rollback-confirm="a.openRollbackConfirm"
     />
 
-    <etu-tea-loader
-      overlay
-      label="Загрузка"
-      :loading="auditLoading"
-    />
-
     <rollback-confirm-dialog
       :model-value="rollbackDialog"
       :loading="rollbackLoading"
@@ -50,6 +44,7 @@
 
 <script setup lang="ts">
   import { computed, inject } from 'vue';
+  import { useSuppressGlobalAxiosWhileLoading } from '@/composables/useSuppressGlobalAxiosWhileLoading';
   import AuditToolbar from './AuditToolbar.vue';
   import AuditTable from './AuditTable.vue';
   import RollbackConfirmDialog from './RollbackConfirmDialog.vue';
@@ -67,6 +62,9 @@
   const auditActionFilter = computed(() => a.auditActionFilter.value);
   const auditDatePreset = computed(() => a.auditDatePreset.value);
   const auditLoading = computed(() => a.auditLoading.value);
+
+  useSuppressGlobalAxiosWhileLoading(auditLoading);
+
   const rollbackDialog = computed(() => a.rollbackDialog.value);
   const rollbackLoading = computed(() => a.rollbackLoading.value);
   const rollbackSnackbar = computed(() => a.rollbackSnackbar.value);
