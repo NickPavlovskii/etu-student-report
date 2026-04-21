@@ -230,4 +230,15 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     border: 1px solid #e5e7eb;
   }
+
+  @media (max-width: 599px) {
+    .page {
+      padding: 14px 12px 32px;
+    }
+
+    .admin-window {
+      padding: 14px 12px 18px;
+      border-radius: 10px;
+    }
+  }
 </style>

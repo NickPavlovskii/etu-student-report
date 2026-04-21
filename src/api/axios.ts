@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { ServerConfig } from './utils';
+import { attachAxiosLoading } from './axiosLoading';
 import { getFallbackServerConfig, resolveApiBaseUrlFromVite } from './utils';
 
 axios.defaults.headers.accept = 'application/json';
@@ -16,15 +17,20 @@ function resolveInitialBases(): { baseUrl: string; infoUrl: string } {
 
 const { baseUrl: initialBaseUrl, infoUrl: initialInfoUrl } = resolveInitialBases();
 
+const jsonClientHeaders = { Accept: 'application/json' as const };
+
 export const baseAxios = axios.create({
   baseURL: initialBaseUrl,
-  headers: { 'Content-Type': 'application/json' },
+  headers: jsonClientHeaders,
 });
 
 export const infoAxios = axios.create({
   baseURL: initialInfoUrl,
-  headers: { 'Content-Type': 'application/json' },
+  headers: jsonClientHeaders,
 });
+
+attachAxiosLoading(baseAxios);
+attachAxiosLoading(infoAxios);
 
 export function applyServerConfigBaseUrl(config: ServerConfig): void {
   const fb = getFallbackServerConfig();
@@ -32,7 +38,6 @@ export function applyServerConfigBaseUrl(config: ServerConfig): void {
   const fallbackInfo = fbS?.infoUrl ?? fbS?.baseUrl ?? '/api';
   const fallbackBase = fbS?.baseUrl ?? fbS?.infoUrl ?? fallbackInfo;
 
-  // В dev всегда относительный /api → Vite proxy на бэкенд (без CORS и без «битых» IP из config.json).
   if (import.meta.env.DEV) {
     baseAxios.defaults.baseURL = fallbackBase;
     infoAxios.defaults.baseURL = fallbackInfo;

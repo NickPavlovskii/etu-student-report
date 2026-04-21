@@ -122,4 +122,33 @@
     font-weight: 500;
     text-transform: none;
   }
+
+  @media (max-width: 599px) {
+    .app-header {
+      padding: 0 6px 0 4px;
+    }
+
+    .header-title {
+      font-size: 1rem;
+      padding-left: 8px;
+      max-width: 42vw;
+    }
+
+    .date-info {
+      display: none;
+    }
+
+    .year-select {
+      max-width: 118px;
+    }
+
+    .year-select :deep(.v-field) {
+      margin-right: 4px;
+      padding-right: 6px;
+    }
+
+    .mr-5 {
+      margin-right: 8px !important;
+    }
+  }
 </style>

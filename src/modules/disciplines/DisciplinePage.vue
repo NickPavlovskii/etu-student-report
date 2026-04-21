@@ -71,9 +71,9 @@
               title="Мультизагрузка"
               width="auto"
               height="40"
-              color="#111827"
-              :prepend-icon="PLUS_ICON"
-              :border-color="'#E5E7EB'"
+              color="#bb8d54"
+              :prepend-icon="MULTI_UPLOAD_ACCENT_ICON"
+              :border-color="'#bb8d54'"
               :bg-color="'white'"
               :border="true"
               @click="openBatchUpload"
@@ -172,6 +172,7 @@
   import { useRoute, useRouter } from 'vue-router';
   import ARCHIVE_ICON from '@/assets/icons/archive.svg';
   import PLUS_ICON from '@/assets/icons/plus.svg';
+  import MULTI_UPLOAD_ACCENT_ICON from '@/assets/icons/multi-upload-accent.svg';
   import UploadWorkModal from './components/UploadStudyWork.vue';
   import BatchUploadWorkModal from './components/BatchUploadWorkModal.vue';
   import StudentsReportsTable from './components/StudentsReportsTable.vue';
@@ -558,5 +559,41 @@
     display: flex;
     justify-content: space-between;
     gap: 24px;
+  }
+
+  @media (max-width: 599px) {
+    .page {
+      padding: 12px;
+    }
+
+    .block {
+      padding: 14px;
+    }
+
+    .top-row-inner {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .actions {
+      flex-direction: column;
+      width: 100%;
+      gap: 10px;
+    }
+
+    .actions :deep(.etu-btn) {
+      width: 100% !important;
+      max-width: none;
+    }
+
+    .title {
+      font-size: 1.125rem;
+    }
+
+    .stats {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
   }
 </style>

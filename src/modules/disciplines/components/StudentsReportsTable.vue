@@ -61,12 +61,12 @@
             <tr
               v-show="openedGroups[group]?.opened"
               class="student-row"
+              @click="toggleStudent(group, getStudentId(student))"
             >
               <td class="col-expand td-expand-indent">
                 <v-icon
                   class="expand-icon"
                   size="18"
-                  @click.stop="toggleStudent(group, getStudentId(student))"
                 >
                   {{ studentRowExpandIcon(group, student) }}
                 </v-icon>

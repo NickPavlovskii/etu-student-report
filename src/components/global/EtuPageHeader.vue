@@ -114,4 +114,53 @@ withDefaults(
   font-size: 14px;
   color: #6b7280;
 }
+
+@media (max-width: 599px) {
+  .header-card,
+  .stats-card {
+    padding: 14px 14px 16px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+  }
+
+  .header-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .header-right {
+    width: 100%;
+  }
+
+  .header-right :deep(.v-btn),
+  .header-right :deep(.v-select),
+  .header-right :deep(.v-btn-toggle) {
+    max-width: 100%;
+  }
+
+  .head-inner {
+    gap: 12px;
+  }
+
+  .head-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+  }
+
+  .head-icon-wrap :deep(.v-icon) {
+    font-size: 28px !important;
+  }
+
+  .page-title {
+    font-size: 1.2rem;
+    line-height: 1.25;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    margin-top: 4px;
+  }
+}
 </style>

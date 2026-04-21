@@ -1,5 +1,40 @@
 <template>
-  <etu-loading-page v-if="loading" />
+  <div
+    v-if="isPhone"
+    class="analytics-mobile-gate"
+  >
+    <v-container
+      fluid
+      class="analytics-mobile-gate__inner"
+    >
+      <div class="analytics-mobile-gate__card">
+        <div class="analytics-mobile-gate__icon-wrap">
+          <v-icon
+            size="40"
+            color="#2563eb"
+          >
+            mdi-monitor-dashboard
+          </v-icon>
+        </div>
+        <h1 class="analytics-mobile-gate__title">Аналитика</h1>
+        <p class="analytics-mobile-gate__lead">
+          Этот раздел пока недоступен в мобильной версии. Откройте его на планшете
+          или компьютере — так удобнее смотреть таблицы и графики.
+        </p>
+        <v-btn
+          color="primary"
+          variant="flat"
+          class="analytics-mobile-gate__btn"
+          prepend-icon="mdi-view-grid-outline"
+          @click="router.push('/disciplines')"
+        >
+          К моим дисциплинам
+        </v-btn>
+      </div>
+    </v-container>
+  </div>
+
+  <etu-loading-page v-else-if="loading" />
   <v-container
     v-else
     fluid
@@ -247,6 +282,7 @@
   import { useRouter } from 'vue-router';
   import { useUser } from '@/composables/useUser';
   import { useAcademicYear } from '@/composables/useAcademicYear';
+  import { usePhoneLayout } from '@/composables/usePhoneLayout';
   import type { TeachersSummaryItem, StudyPeriod } from '@/api/info';
   import { useTablePagination } from '@/composables/useTablePagination';
   import { useAnalytics } from './composables/useAnalytics';
@@ -283,6 +319,9 @@
   const router = useRouter();
   const { user, canSeeAll } = useUser();
   const { academicYear } = useAcademicYear();
+  const { isPhone } = usePhoneLayout();
+
+  const analyticsFetchEnabled = computed(() => !isPhone.value);
 
   const academicYearForDisplay = computed(() =>
     academicYear.value.replace(/\//g, '-').replace(/-/g, '–').trim()
@@ -340,6 +379,7 @@
     academicYear,
     scopeMode,
     studyPeriod,
+    fetchEnabled: analyticsFetchEnabled,
   });
 
   const disciplinesWithTeachersFiltered = computed(() =>
@@ -474,11 +514,12 @@
   }
 
   onMounted(async () => {
-    if (user.value?.lastName || canSeeAll.value) {
-      await loadAll();
-    } else {
+    if (!user.value?.lastName && !canSeeAll.value) {
       router.push('/auth');
+      return;
     }
+    if (isPhone.value) return;
+    await loadAll();
   });
 
   watch(showDepartmentStats, (dept) => {
@@ -502,10 +543,76 @@
 </script>
 
 <style scoped>
+  .analytics-mobile-gate {
+    min-height: 100%;
+    background: linear-gradient(180deg, #f1f5f9 0%, #f8fafc 45%, #eef2ff 100%);
+    padding: 20px 0 40px;
+    box-sizing: border-box;
+  }
+
+  .analytics-mobile-gate__inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 120px);
+    padding: 12px 16px;
+  }
+
+  .analytics-mobile-gate__card {
+    max-width: 400px;
+    width: 100%;
+    padding: 28px 22px 26px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    box-shadow:
+      0 4px 6px -1px rgba(15, 23, 42, 0.06),
+      0 12px 32px -8px rgba(37, 99, 235, 0.12);
+    text-align: center;
+  }
+
+  .analytics-mobile-gate__icon-wrap {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 16px;
+    border-radius: 18px;
+    background: #eff6ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .analytics-mobile-gate__title {
+    margin: 0 0 12px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+  }
+
+  .analytics-mobile-gate__lead {
+    margin: 0 0 22px;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: #64748b;
+  }
+
+  .analytics-mobile-gate__btn {
+    text-transform: none;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
   .page {
     background: #f5f6f8;
     padding: 28px 30px 50px;
     min-height: 100%;
+  }
+
+  @media (max-width: 959px) {
+    .page {
+      padding: 18px 14px 36px;
+    }
   }
 
   .widgets-row {
