@@ -10,8 +10,19 @@
       :empty-text="emptyText"
       :pagination="pagination"
     >
+      <template #head-actions>
+        <analytics-widget-export-actions
+          v-if="rows.length > 0"
+          :chart-png-disabled="viewMode !== 'chart'"
+          @export-excel="onExportExcel"
+          @export-chart-png="onExportChartPng"
+        />
+      </template>
       <template v-if="viewMode === 'chart'">
-        <div class="widget-body__scroll">
+        <div
+          ref="chartRoot"
+          class="widget-body__scroll analytics-chart-capture"
+        >
           <analytics-horizontal-bar-chart :rows="chartRows" />
         </div>
       </template>
@@ -22,7 +33,6 @@
             table-class="analytics-table"
             :columns="groupsTableColumns"
             :rows="pagination.pagedItems"
-            :show-skeleton="false"
           >
             <template #tbody>
               <tr
@@ -62,6 +72,8 @@
   import { groupsTableColumns } from '../../constants/columns';
   import AnalyticsWidgetCard from '../shared/AnalyticsWidgetCard.vue';
   import AnalyticsHorizontalBarChart from '../charts/AnalyticsHorizontalBarChart.vue';
+  import AnalyticsWidgetExportActions from '../AnalyticsWidgetExportActions.vue';
+  import { useAnalyticsExport } from '../../composables/useAnalyticsExport';
 
   const props = withDefaults(
     defineProps<{
@@ -74,7 +86,9 @@
   );
 
   const viewMode = ref<AnalyticsViewMode>('table');
+  const chartRoot = ref<HTMLElement | null>(null);
   const pagination = useTablePagination(() => props.rows, 7);
+  const { exportToExcel, exportChartToPng } = useAnalyticsExport();
 
   const totals = computed(() => {
     let plan = 0;
@@ -94,6 +108,26 @@
       uploaded: row.uploaded,
     }))
   );
+
+  function onExportExcel() {
+    const t = totals.value;
+    const body = props.rows.map((r) => [r.label, r.plan, r.uploaded]);
+    body.push(['Итого', t.plan, t.up]);
+    exportToExcel(
+      ['Группа', 'Ожидается', 'Загружено'],
+      body,
+      'analitika_zagruzki_po_gruppam',
+      'Группы'
+    );
+  }
+
+  async function onExportChartPng() {
+    try {
+      await exportChartToPng(chartRoot.value, 'analitika_gruppy_grafik');
+    } catch (e) {
+      console.warn('Экспорт графика:', e);
+    }
+  }
 </script>
 
 <style scoped>

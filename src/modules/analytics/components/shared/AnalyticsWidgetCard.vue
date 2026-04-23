@@ -24,14 +24,18 @@
           </p>
         </div>
       </div>
-      <v-btn-toggle
-        v-model="viewMode"
-        class="view-toggle view-toggle--pill"
-        data-analytics-view-toggle
-        density="comfortable"
-        variant="flat"
-        mandatory
-      >
+      <div class="widget-head__actions">
+        <div class="widget-head__extras">
+          <slot name="head-actions" />
+        </div>
+        <v-btn-toggle
+          v-model="viewMode"
+          class="view-toggle view-toggle--pill"
+          data-analytics-view-toggle
+          density="comfortable"
+          variant="flat"
+          mandatory
+        >
         <v-btn
           value="table"
           size="small"
@@ -46,7 +50,8 @@
           <v-icon start>mdi-chart-bar</v-icon>
           График
         </v-btn>
-      </v-btn-toggle>
+        </v-btn-toggle>
+      </div>
     </div>
     <div
       class="widget-body widget-body--toggle-view"
@@ -119,6 +124,18 @@
     flex-wrap: wrap;
     flex-shrink: 0;
     margin-bottom: 16px;
+  }
+  .widget-head__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .widget-head__extras {
+    display: flex;
+    align-items: center;
   }
   .widget-head--simple {
     align-items: center;

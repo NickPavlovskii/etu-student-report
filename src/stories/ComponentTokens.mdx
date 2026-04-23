@@ -1,0 +1,177 @@
+import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/blocks';
+
+<Meta title="Документация/Токены компонентов" />
+
+<Title>Переменные внутри компонентов</Title>
+
+<div class="docs-tokens-page">
+
+<p class="docs-tokens-lead">
+  Некоторые глобальные компоненты задают собственные <strong>CSS custom properties</strong> — их можно переопределить на контейнере, не меняя разметку и логику компонента.
+</p>
+
+<section class="docs-tokens-section">
+
+<h2 class="docs-tokens-h2">
+  EtuDataTable <code class="docs-tokens-code-inline">.etu-dt-wrap</code>
+</h2>
+
+<p class="docs-tokens-hint">
+  Значения по умолчанию заданы в <code class="docs-tokens-code-inline">EtuDataTable.vue</code>. Переопределение: задайте переменные на элементе с классом <code class="docs-tokens-code-inline">etu-dt-wrap</code> (или выше по дереву, если каскадом удобнее).
+</p>
+
+<h3 class="docs-tokens-h3">Цветовые токены</h3>
+
+<ColorPalette>
+  <ColorItem
+    title="--etu-dt-border"
+    subtitle="Рамка обёртки · #e5e7eb"
+    colors={{ 'Рамка': '#e5e7eb' }}
+  />
+  <ColorItem
+    title="--etu-dt-bg"
+    subtitle="Фон таблицы · #ffffff"
+    colors={{ Фон: '#ffffff' }}
+  />
+  <ColorItem
+    title="--etu-dt-cell-border"
+    subtitle="Разделители строк · #f3f4f6"
+    colors={{ 'Ячейки': '#f3f4f6' }}
+  />
+  <ColorItem
+    title="--etu-dt-th-color"
+    subtitle="Текст заголовков · #9ca3af"
+    colors={{ Заголовки: '#9ca3af' }}
+  />
+  <ColorItem
+    title="--etu-dt-th-bg"
+    subtitle="Фон шапки · #f9fafb"
+    colors={{ Шапка: '#f9fafb' }}
+  />
+  <ColorItem
+    title="--etu-dt-th-border"
+    subtitle="Границы шапки · #e5e7eb"
+    colors={{ 'Граница шапки': '#e5e7eb' }}
+  />
+  <ColorItem
+    title="--etu-dt-sep"
+    subtitle="Разделитель колонок (th-sep) · #e5e7eb"
+    colors={{ Разделитель: '#e5e7eb' }}
+  />
+  <ColorItem
+    title="--etu-dt-row-hover"
+    subtitle="Фон строки при наведении · #fafafa"
+    colors={{ Hover: '#fafafa' }}
+  />
+</ColorPalette>
+
+<h3 class="docs-tokens-h3">Размеры и типографика</h3>
+
+<div class="docs-tokens-wrap">
+  <table class="docs-tokens-table">
+    <thead>
+      <tr>
+        <th>Переменная</th>
+        <th>По умолчанию</th>
+        <th>Назначение</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>--etu-dt-font</code></td>
+        <td class="docs-tokens-val">14px</td>
+        <td>Размер шрифта ячеек</td>
+      </tr>
+      <tr>
+        <td><code>--etu-dt-th-font</code></td>
+        <td class="docs-tokens-val">11px</td>
+        <td>Размер шрифта заголовков</td>
+      </tr>
+      <tr>
+        <td><code>--etu-dt-th-weight</code></td>
+        <td class="docs-tokens-val">700</td>
+        <td>Насыщенность заголовков</td>
+      </tr>
+      <tr>
+        <td><code>--etu-dt-th-spacing</code></td>
+        <td class="docs-tokens-val">0.07em</td>
+        <td>Межбуквенный интервал заголовков</td>
+      </tr>
+      <tr>
+        <td><code>--etu-dt-cell-pad-y</code></td>
+        <td class="docs-tokens-val">12px</td>
+        <td>Вертикальные отступы ячеек</td>
+      </tr>
+      <tr>
+        <td><code>--etu-dt-cell-pad-x</code></td>
+        <td class="docs-tokens-val">16px</td>
+        <td>Горизонтальные отступы ячеек</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p class="docs-tokens-caption">Пример переопределения на обёртке таблицы:</p>
+
+```css
+.my-theme .etu-dt-wrap {
+  --etu-dt-border: #cbd5e1;
+  --etu-dt-th-bg: #f1f5f9;
+  --etu-dt-row-hover: #eff6ff;
+}
+```
+
+</section>
+
+<section class="docs-tokens-section">
+
+<h2 class="docs-tokens-h2">
+  EtuLabelChip <code class="docs-tokens-code-inline">.etu-label-chip</code>
+</h2>
+
+<div class="docs-tokens-callout">
+  Размеры и отступы inline-варианта задаются через внутренние переменные <code class="docs-tokens-code-inline">--_etu-chip-*</code> (см. <code class="docs-tokens-code-inline">EtuLabelChip.vue</code>). Для варианта с точкой (<code class="docs-tokens-code-inline">dot</code>) цвет маркера задаётся пропом <code class="docs-tokens-code-inline">dotColor</code> → <code class="docs-tokens-code-inline">--_etu-chip-dot</code>.
+</div>
+
+</section>
+
+<section class="docs-tokens-section">
+
+<h2 class="docs-tokens-h2">
+  EtuTeaLoader <code class="docs-tokens-code-inline">.etu-tea-loader</code>
+</h2>
+
+<p class="docs-tokens-hint">
+  Цвет SVG (чайник и пар) задаётся одной переменной на корне компонента.
+</p>
+
+<ColorPalette>
+  <ColorItem
+    title="--etu-tea-color"
+    subtitle="Цвет SVG (чайник / пар) · #334155"
+    colors={{ 'Чайник / пар': '#334155' }}
+  />
+</ColorPalette>
+
+<div class="docs-tokens-wrap">
+  <table class="docs-tokens-table">
+    <thead>
+      <tr>
+        <th>Переменная</th>
+        <th>По умолчанию</th>
+        <th>Назначение</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>--etu-tea-color</code></td>
+        <td class="docs-tokens-val">#334155</td>
+        <td>Цвет SVG (чайник / пар)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</section>
+
+</div>

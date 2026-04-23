@@ -10,8 +10,19 @@
       body-paired-col
       :pagination="pagination"
     >
+      <template #head-actions>
+        <analytics-widget-export-actions
+          v-if="rows.length > 0"
+          :chart-png-disabled="viewMode !== 'chart'"
+          @export-excel="onExportExcel"
+          @export-chart-png="onExportChartPng"
+        />
+      </template>
       <template v-if="viewMode === 'chart'">
-        <div class="widget-body__scroll">
+        <div
+          ref="chartRoot"
+          class="widget-body__scroll analytics-chart-capture"
+        >
           <analytics-horizontal-bar-chart :rows="chartRows" />
         </div>
       </template>
@@ -22,7 +33,6 @@
             table-class="analytics-table"
             :columns="teachersTableColumns"
             :rows="pagination.pagedItems"
-            :show-skeleton="false"
           >
             <template #tbody>
               <tr
@@ -78,6 +88,8 @@
   import { teachersTableColumns } from '../../constants/columns';
   import AnalyticsWidgetCard from '../shared/AnalyticsWidgetCard.vue';
   import AnalyticsHorizontalBarChart from '../charts/AnalyticsHorizontalBarChart.vue';
+  import AnalyticsWidgetExportActions from '../AnalyticsWidgetExportActions.vue';
+  import { useAnalyticsExport } from '../../composables/useAnalyticsExport';
 
   const props = withDefaults(
     defineProps<{
@@ -88,8 +100,10 @@
   );
 
   const viewMode = ref<AnalyticsViewMode>('table');
+  const chartRoot = ref<HTMLElement | null>(null);
   const { num } = useProgressFormat();
   const pagination = useTablePagination(() => props.rows);
+  const { exportToExcel, exportChartToPng } = useAnalyticsExport();
 
   const totals = computed(() => {
     let plan = 0;
@@ -122,6 +136,31 @@
       uploaded: teacherUploadedNum(row),
     }))
   );
+
+  function onExportExcel() {
+    const t = totals.value;
+    const body = props.rows.map((r) => [
+      teacherName(r),
+      r.disciplinesCount ?? '—',
+      num(r.expectedCount),
+      teacherUploadedNum(r),
+    ]);
+    body.push(['Итого', '—', t.plan, t.up]);
+    exportToExcel(
+      ['Преподаватель', 'Дисциплин', 'Ожидается', 'Загружено'],
+      body,
+      'analitika_zagruzki_po_prepodavatelyam',
+      'Преподаватели'
+    );
+  }
+
+  async function onExportChartPng() {
+    try {
+      await exportChartToPng(chartRoot.value, 'analitika_prepodavateli_grafik');
+    } catch (e) {
+      console.warn('Экспорт графика:', e);
+    }
+  }
 </script>
 
 <style scoped>

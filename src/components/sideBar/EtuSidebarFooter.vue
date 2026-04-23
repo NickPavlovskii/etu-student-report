@@ -29,9 +29,15 @@
       role.includes('TEACHER') ||
       roleDisplay.toLowerCase().includes('преподаватель') ||
       !role.length;
-    if (hasAdmin) return 'Преподаватель / Администратор';
-    if (hasTeacher) return 'Преподаватель';
-    if (roleDisplay) return roleDisplay;
+    if (hasAdmin) {
+      return 'Преподаватель / Администратор';
+    }
+    if (hasTeacher) {
+      return 'Преподаватель';
+    }
+    if (roleDisplay) {
+      return roleDisplay;
+    }
     return 'Преподаватель';
   });
 </script>
