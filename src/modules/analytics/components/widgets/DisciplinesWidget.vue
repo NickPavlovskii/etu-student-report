@@ -9,8 +9,19 @@
       empty-text="Нет данных по дисциплинам за этот учебный год"
       :pagination="pagination"
     >
+      <template #head-actions>
+        <analytics-widget-export-actions
+          v-if="rows.length > 0"
+          :chart-png-disabled="viewMode !== 'chart'"
+          @export-excel="onExportExcel"
+          @export-chart-png="onExportChartPng"
+        />
+      </template>
       <template v-if="viewMode === 'chart'">
-        <div class="widget-body__scroll">
+        <div
+          ref="chartRoot"
+          class="widget-body__scroll analytics-chart-capture"
+        >
           <analytics-v-bar-chart
             :items="bars"
             :chart-height="200"
@@ -27,7 +38,6 @@
                 table-class="analytics-table--detail analytics-table--plan-detail"
                 :columns="disciplinesPlanTableColumns"
                 :rows="pagination.pagedItems"
-                :show-skeleton="false"
               >
                 <template #tbody>
                   <tr
@@ -96,7 +106,6 @@
               table-class="analytics-table"
               :columns="disciplinesSimpleTableColumns"
               :rows="pagination.pagedItems"
-              :show-skeleton="false"
             >
               <template #tbody>
                 <tr
@@ -154,6 +163,8 @@
   } from '../../utils/format';
   import AnalyticsWidgetCard from '../shared/AnalyticsWidgetCard.vue';
   import AnalyticsVBarChart from '../charts/AnalyticsVBarChart.vue';
+  import AnalyticsWidgetExportActions from '../AnalyticsWidgetExportActions.vue';
+  import { useAnalyticsExport } from '../../composables/useAnalyticsExport';
 
   const props = defineProps<{
     rows: AnalyticsDisciplineTableRow[];
@@ -162,7 +173,9 @@
   }>();
 
   const viewMode = ref<AnalyticsViewMode>('table');
+  const chartRoot = ref<HTMLElement | null>(null);
   const pagination = useTablePagination(() => props.rows);
+  const { exportToExcel, exportChartToPng } = useAnalyticsExport();
 
   const totals = computed(() => {
     let plan = 0;
@@ -201,6 +214,67 @@
       };
     })
   );
+
+  function groupsCellForExcel(row: AnalyticsDisciplineTableRow): string {
+    const list = formatGroupsForDisplay(row.groups);
+    if (!list.length) return '—';
+    return list.map((g) => planRowGroupChipLabel(g)).join('; ');
+  }
+
+  function onExportExcel() {
+    const t = totals.value;
+    if (props.usePlanDetail) {
+      const body = props.rows.map((r) => [
+        r.disciplineName,
+        r.teacherFio?.trim() || r.teacherLastName?.trim() || '—',
+        r.course ?? '—',
+        r.semester ?? '—',
+        groupsCellForExcel(r),
+        r.studentsCount,
+        r.expectedCount,
+        r.uploadedCount,
+      ]);
+      body.push(['Итого', '', '', '', '', '', t.plan, t.up]);
+      exportToExcel(
+        [
+          'Дисциплина',
+          'Преподаватель',
+          'Курс',
+          'Семестр',
+          'Группы',
+          'Студентов',
+          'Ожидается',
+          'Загружено',
+        ],
+        body,
+        'analitika_zagruzki_po_disciplinam_plan',
+        'Дисциплины'
+      );
+    } else {
+      const body = props.rows.map((r) => [
+        r.disciplineName,
+        r.groupsCount,
+        r.studentsCount,
+        r.expectedCount,
+        r.uploadedCount,
+      ]);
+      body.push(['Итого', '', '', t.plan, t.up]);
+      exportToExcel(
+        ['Дисциплина', 'Групп', 'Студентов', 'Ожидается', 'Загружено'],
+        body,
+        'analitika_zagruzki_po_disciplinam',
+        'Дисциплины'
+      );
+    }
+  }
+
+  async function onExportChartPng() {
+    try {
+      await exportChartToPng(chartRoot.value, 'analitika_discipliny_grafik');
+    } catch (e) {
+      console.warn('Экспорт графика:', e);
+    }
+  }
 </script>
 
 <style scoped>

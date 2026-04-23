@@ -1,0 +1,105 @@
+import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/blocks';
+
+<Meta title="Документация/CSS-переменные (:root)" />
+
+<Title>Глобальные CSS-переменные</Title>
+
+<div class="docs-tokens-page">
+
+<p class="docs-tokens-lead">
+  Переменные объявлены в <code class="docs-tokens-code-inline">src/scss/_variables.scss</code> и импортируются через <code class="docs-tokens-code-inline">src/scss/main.scss</code>. Их можно использовать в любых стилях приложения для согласованных цветов текста и границ.
+</p>
+
+<h2 class="docs-tokens-h2">Корпоративные цвета (Corporate Color Codes)</h2>
+
+<p class="docs-tokens-hint">
+  Официальная палитра для печати и экрана. Для вёрстки достаточно <strong>Hex</strong>; CMYK — для полиграфии.
+</p>
+
+<div class="docs-tokens-wrap">
+  <table class="docs-tokens-table docs-tokens-table--corp">
+    <thead>
+      <tr>
+        <th>Название</th>
+        <th>Hex</th>
+        <th>RGB</th>
+        <th>CMYK</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Navy blue (тёмно-синий)</td>
+        <td class="docs-tokens-val"><code>#05336e</code></td>
+        <td class="docs-tokens-val">R:5 G:51 B:110</td>
+        <td>C:100% M:75% Y:0% K:37%</td>
+      </tr>
+      <tr>
+        <td>Tan / bronze (бронза)</td>
+        <td class="docs-tokens-val"><code>#bb8d54</code></td>
+        <td class="docs-tokens-val">R:187 G:141 B:84</td>
+        <td>C:0% M:30% Y:70% K:40%</td>
+      </tr>
+      <tr>
+        <td>Gray (серый)</td>
+        <td class="docs-tokens-val"><code>#6d6e71</code></td>
+        <td class="docs-tokens-val">R:109 G:110 B:113</td>
+        <td>C:0% M:0% Y:0% K:70%</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h3 class="docs-tokens-h3">Образцы</h3>
+
+<ColorPalette>
+  <ColorItem
+    title="Navy blue"
+    subtitle="Корпоративный тёмно-синий · #05336e · rgb(5, 51, 110)"
+    colors={{ 'Navy blue': '#05336e' }}
+  />
+  <ColorItem
+    title="Tan / bronze"
+    subtitle="Бронзовый акцент · #bb8d54 · rgb(187, 141, 84)"
+    colors={{ 'Tan / bronze': '#bb8d54' }}
+  />
+  <ColorItem
+    title="Gray"
+    subtitle="Корпоративный серый · #6d6e71 · rgb(109, 110, 113)"
+    colors={{ Gray: '#6d6e71' }}
+  />
+</ColorPalette>
+
+<h2 class="docs-tokens-h2">Переменные темы приложения (<code class="docs-tokens-code-inline">:root</code>)</h2>
+
+<p class="docs-tokens-hint">
+  Значения ниже совпадают с текущим <code class="docs-tokens-code-inline">_variables.scss</code> в репозитории.
+</p>
+
+<ColorPalette>
+  <ColorItem
+    title="--light-platinum"
+    subtitle="Светлая граница (нейтральный серый)"
+    colors={{ 'light-platinum': '#e5e7eb' }}
+  />
+  <ColorItem
+    title="--light-gray"
+    subtitle="Вторичный текст / подписи"
+    colors={{ 'light-gray': '#9ca3af' }}
+  />
+  <ColorItem
+    title="--black-color"
+    subtitle="Основной тёмный текст"
+    colors={{ 'black-color': '#111827' }}
+  />
+</ColorPalette>
+
+<p class="docs-tokens-caption">Пример использования в CSS:</p>
+
+```css
+.my-block {
+  border: 1px solid var(--light-platinum);
+  color: var(--black-color);
+}
+```
+
+</div>

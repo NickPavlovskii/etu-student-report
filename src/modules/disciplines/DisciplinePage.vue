@@ -123,6 +123,7 @@
 
     <students-reports-table
       v-if="hasStudents"
+      :loading="loading"
       :students-by-group="studentsByGroup"
       :reports="reports"
       :controls="controls"

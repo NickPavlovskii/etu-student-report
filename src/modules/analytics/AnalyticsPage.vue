@@ -141,35 +141,47 @@
                   </p>
                 </div>
               </div>
-              <v-btn-toggle
-                v-model="viewTeacherTree"
-                class="view-toggle view-toggle--pill"
-                data-analytics-view-toggle
-                density="comfortable"
-                variant="flat"
-                mandatory
-              >
-                <v-btn
-                  value="table"
-                  size="small"
+              <div class="widget-head__actions">
+                <div class="widget-head__extras">
+                  <analytics-widget-export-actions
+                    :chart-png-disabled="viewTeacherTree !== 'chart'"
+                    @export-excel="onExportTeacherTreeExcel"
+                    @export-chart-png="onExportTeacherTreeChartPng"
+                  />
+                </div>
+                <v-btn-toggle
+                  v-model="viewTeacherTree"
+                  class="view-toggle view-toggle--pill"
+                  data-analytics-view-toggle
+                  density="comfortable"
+                  variant="flat"
+                  mandatory
                 >
-                  <v-icon start>mdi-table-large</v-icon>
-                  Таблица
-                </v-btn>
-                <v-btn
-                  value="chart"
-                  size="small"
-                >
-                  <v-icon start>mdi-chart-bar</v-icon>
-                  График
-                </v-btn>
-              </v-btn-toggle>
+                  <v-btn
+                    value="table"
+                    size="small"
+                  >
+                    <v-icon start>mdi-table-large</v-icon>
+                    Таблица
+                  </v-btn>
+                  <v-btn
+                    value="chart"
+                    size="small"
+                  >
+                    <v-icon start>mdi-chart-bar</v-icon>
+                    График
+                  </v-btn>
+                </v-btn-toggle>
+              </div>
             </div>
             <div class="widget-body widget-body--toggle-view">
               <template
                 v-if="viewTeacherTree === 'chart' && teacherDetailBlocks.length"
               >
-                <div class="widget-body__scroll">
+                <div
+                  ref="teacherChartRoot"
+                  class="widget-body__scroll analytics-chart-capture"
+                >
                   <analytics-horizontal-bar-chart :rows="teacherTreeBarRows" />
                 </div>
                 <analytics-table-pagination
@@ -191,7 +203,6 @@
                     table-class="tree-table tree-table--fixed analytics-table--detail"
                     :columns="teacherTreeTableColumns"
                     :rows="[]"
-                    :show-skeleton="false"
                   >
                     <template #tbody>
                       <template
@@ -315,6 +326,8 @@
   import AnalyticsStudyPeriodSwitcher from './components/AnalyticsStudyPeriodSwitcher.vue';
   import AnalyticsHorizontalBarChart from './components/charts/AnalyticsHorizontalBarChart.vue';
   import AnalyticsTablePagination from './components/AnalyticsTablePagination.vue';
+  import AnalyticsWidgetExportActions from './components/AnalyticsWidgetExportActions.vue';
+  import { useAnalyticsExport } from './composables/useAnalyticsExport';
 
   const router = useRouter();
   const { user, canSeeAll } = useUser();
@@ -329,6 +342,8 @@
 
   const scopeMode = ref<ScopeMode>('personal');
   const viewTeacherTree = ref<AnalyticsViewMode>('table');
+  const teacherChartRoot = ref<HTMLElement | null>(null);
+  const { exportToExcel, exportChartToPng } = useAnalyticsExport();
 
   const expandedTeachers = ref<Set<string>>(new Set());
 
@@ -513,6 +528,45 @@
     return expandedTeachers.value.has(block.teacher) ? [...block.children] : [];
   }
 
+  function buildTeacherTreeExcelRows(blocks: TeacherTreeBlock[]): (string | number)[][] {
+    const out: (string | number)[][] = [];
+    for (const b of blocks) {
+      out.push([b.teacher, '—', '—', b.plan, b.uploaded]);
+      for (const ch of b.children) {
+        out.push([
+          b.teacher,
+          ch.disciplineName,
+          ch.groupTags.join('; '),
+          ch.plan,
+          ch.uploaded,
+        ]);
+      }
+    }
+    return out;
+  }
+
+  function onExportTeacherTreeExcel() {
+    const blocks = teacherDetailBlocks.value;
+    if (!blocks.length) return;
+    exportToExcel(
+      ['Преподаватель', 'Дисциплина', 'Группы', 'Ожидается', 'Загружено'],
+      buildTeacherTreeExcelRows(blocks),
+      'analitika_detalizacija_po_prepodavatelyam',
+      'Детализация'
+    );
+  }
+
+  async function onExportTeacherTreeChartPng() {
+    try {
+      await exportChartToPng(
+        teacherChartRoot.value,
+        'analitika_detalizacija_prepodavateli_grafik'
+      );
+    } catch (e) {
+      console.warn('Экспорт графика:', e);
+    }
+  }
+
   onMounted(async () => {
     if (!user.value?.lastName && !canSeeAll.value) {
       router.push('/auth');
@@ -664,6 +718,18 @@
     margin-bottom: 16px;
   }
   .widget-head--simple {
+    align-items: center;
+  }
+  .widget-head__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .widget-head__extras {
+    display: flex;
     align-items: center;
   }
   .widget-head__left {

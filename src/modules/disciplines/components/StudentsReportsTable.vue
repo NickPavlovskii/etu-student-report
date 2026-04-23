@@ -8,7 +8,8 @@
       wrap-class="students-etu-wrap"
       :columns="etuColumns"
       :rows="[]"
-      :show-skeleton="false"
+      :loading="loading"
+      :skeleton-rows="8"
     >
       <template #colgroup>
         <colgroup>
@@ -31,11 +32,7 @@
           >
             <td class="col-expand">
               <v-icon size="18">
-                {{
-                  openedGroups[group]?.opened
-                    ? 'mdi-chevron-down'
-                    : 'mdi-chevron-right'
-                }}
+                {{ groupExpandIcons[group] }}
               </v-icon>
             </td>
             <td colspan="7">
@@ -141,20 +138,21 @@
     }))
   );
 
-  /**
-   * Таблица студентов и отчётов по дисциплине.
-   * Группы раскрываются по клику; для каждого студента показываются темы из controls,
-   * статус загрузки отчёта, проверка и кнопка скачивания.
-   */
   const props = withDefaults(
     defineProps<{
+      /** Показ скелетона в `etu-data-table` при перезагрузке данных дисциплины */
+      loading?: boolean;
       studentsByGroup: Record<string, StudentDto[]>;
       reports: ReportDto[];
       controls: ControlScheduleDto[];
       visibleControlTypes?: string[];
       displayedTopicsByControlType?: Record<string, string[] | undefined>;
     }>(),
-    { visibleControlTypes: undefined, displayedTopicsByControlType: () => ({}) }
+    {
+      loading: false,
+      visibleControlTypes: undefined,
+      displayedTopicsByControlType: () => ({}),
+    }
   );
 
   const emit = defineEmits<{
@@ -191,6 +189,16 @@
       students[studentId] = false;
     }
   }
+
+  const groupExpandIcons = computed<Record<string, string>>(() => {
+    const out: Record<string, string> = {};
+    for (const group of Object.keys(props.studentsByGroup ?? {})) {
+      out[group] = openedGroups[group]?.opened
+        ? 'mdi-chevron-down'
+        : 'mdi-chevron-right';
+    }
+    return out;
+  });
 
   const reportIndex = computed(() => {
     const map = new Map<string, ReportDto>();

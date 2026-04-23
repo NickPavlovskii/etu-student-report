@@ -49,11 +49,9 @@
       </thead>
 
       <tbody>
-        <slot
-          v-if="$slots.tbody"
-          name="tbody"
-        />
-        <template v-else-if="loading && showSkeleton">
+        <template
+          v-if="loading && showSkeleton && (!$slots.tbody || rows.length === 0)"
+        >
           <tr
             v-for="n in skeletonRows"
             :key="`sk-${n}`"
@@ -70,7 +68,10 @@
             </td>
           </tr>
         </template>
-
+        <slot
+          v-else-if="$slots.tbody"
+          name="tbody"
+        />
         <template v-else-if="rows.length">
           <tr
             v-for="(row, rowIndex) in rows"
@@ -104,8 +105,8 @@
 
         <tr v-else-if="!loading">
           <td
-            :colspan="Math.max(columns.length, 1)"
             class="cell-empty"
+            :colspan="Math.max(columns.length, 1)"
           >
             <slot name="empty">
               <div class="cell-empty-inner">
@@ -186,7 +187,9 @@
   function rowKeyValue(row: T, rowIndex: number): string | number {
     if (props.rowKey != null && props.rowKey !== '') {
       const v = row[props.rowKey];
-      if (v != null && v !== '') return v as string | number;
+      if (v != null && v !== '') {
+        return v as string | number;
+      }
     }
     return `row-${rowIndex}`;
   }

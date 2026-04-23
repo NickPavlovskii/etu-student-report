@@ -8,8 +8,19 @@
       :has-data="rows.length > 0"
       :pagination="pagination"
     >
+      <template #head-actions>
+        <analytics-widget-export-actions
+          v-if="rows.length > 0"
+          :chart-png-disabled="viewMode !== 'chart'"
+          @export-excel="onExportExcel"
+          @export-chart-png="onExportChartPng"
+        />
+      </template>
       <template v-if="viewMode === 'chart'">
-        <div class="widget-body__scroll">
+        <div
+          ref="chartRoot"
+          class="widget-body__scroll analytics-chart-capture"
+        >
           <analytics-v-bar-chart
             :items="bars"
             :chart-height="200"
@@ -24,7 +35,6 @@
             table-class="analytics-table--semesters"
             :columns="semesterTableColumns"
             :rows="pagination.pagedItems"
-            :show-skeleton="false"
           >
             <template #tbody>
               <tr
@@ -67,15 +77,19 @@
   import { semesterTableColumns } from '../../constants/columns';
   import AnalyticsWidgetCard from '../shared/AnalyticsWidgetCard.vue';
   import AnalyticsVBarChart from '../charts/AnalyticsVBarChart.vue';
+  import AnalyticsWidgetExportActions from '../AnalyticsWidgetExportActions.vue';
+  import { useAnalyticsExport } from '../../composables/useAnalyticsExport';
 
   const props = defineProps<{
     rows: BySemesterRow[];
   }>();
 
   const viewMode = ref<AnalyticsViewMode>('table');
+  const chartRoot = ref<HTMLElement | null>(null);
   const { num } = useProgressFormat();
 
   const pagination = useTablePagination(() => props.rows);
+  const { exportToExcel, exportChartToPng } = useAnalyticsExport();
 
   function numSemUpload(row: BySemesterRow) {
     return num(row.uploadedCount ?? row.totalWorks);
@@ -108,6 +122,31 @@
     }
     return { plan, up };
   });
+
+  function onExportExcel() {
+    const t = totals.value;
+    const body = props.rows.map((r) => [
+      r.course ?? '—',
+      r.semester ?? '—',
+      r.expectedCount,
+      numSemUpload(r),
+    ]);
+    body.push(['Итого', '—', t.plan, t.up]);
+    exportToExcel(
+      ['Курс', 'Семестр', 'Ожидается', 'Загружено'],
+      body,
+      'analitika_zagruzki_po_semestram',
+      'Семестры'
+    );
+  }
+
+  async function onExportChartPng() {
+    try {
+      await exportChartToPng(chartRoot.value, 'analitika_semestry_grafik');
+    } catch (e) {
+      console.warn('Экспорт графика:', e);
+    }
+  }
 </script>
 
 <style scoped>

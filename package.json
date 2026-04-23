@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.vue",
     "lint:fix": "eslint . --ext .ts,.vue --fix",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build -o storybook-static",
     "docker:build": "docker build -t student-works-pwa .",
     "docker:run": "docker run -p 8080:80 student-works-pwa"
   },
@@ -17,6 +19,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.13.4",
     "element-plus": "^2.13.0",
+    "html2canvas": "^1.4.1",
     "vue": "^3.5.24",
     "vue-router": "^4.6.4",
     "vuetify": "^3.11.3",
@@ -24,6 +27,8 @@
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.10.0",
+    "@storybook/addon-docs": "^10.3.5",
+    "@storybook/vue3-vite": "^10.3.5",
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
@@ -37,6 +42,7 @@
     "eslint-plugin-vue": "^9.0.0",
     "postcss": "^8.5.6",
     "sass": "^1.97.1",
+    "storybook": "^10.3.5",
     "typescript": "~5.9.3",
     "vite": "^7.2.4",
     "vue-eslint-parser": "^9.0.0",
