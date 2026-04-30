@@ -82,6 +82,9 @@
                         :uploaded="row.uploadedCount"
                         :plan="row.expectedCount"
                       />
+                      <div class="moodle-note">
+                        Из них в Moodle: {{ getMoodleCount(row) }}
+                      </div>
                     </td>
                   </tr>
                   <tr
@@ -94,6 +97,9 @@
                         :uploaded="totals.up"
                         :plan="totals.plan"
                       />
+                      <div class="moodle-note">
+                        Из них в Moodle: {{ totals.moodle }}
+                      </div>
                     </td>
                   </tr>
                 </template>
@@ -120,6 +126,9 @@
                       :uploaded="row.uploadedCount"
                       :plan="row.expectedCount"
                     />
+                    <div class="moodle-note">
+                      Из них в Moodle: {{ getMoodleCount(row) }}
+                    </div>
                   </td>
                 </tr>
                 <tr
@@ -132,6 +141,9 @@
                       :uploaded="totals.up"
                       :plan="totals.plan"
                     />
+                    <div class="moodle-note">
+                      Из них в Moodle: {{ totals.moodle }}
+                    </div>
                   </td>
                 </tr>
               </template>
@@ -180,12 +192,18 @@
   const totals = computed(() => {
     let plan = 0;
     let up = 0;
+    let moodle = 0;
     for (const r of props.rows) {
       plan += r.expectedCount;
       up += r.uploadedCount;
+      moodle += getMoodleCount(r);
     }
-    return { plan, up };
+    return { plan, up, moodle };
   });
+
+  function getMoodleCount(row: AnalyticsDisciplineTableRow): number {
+    return Number((row as any).moodleLinksCount ?? (row as any).moodleUploadedCount) || 0;
+  }
 
   function detailRowKey(row: AnalyticsDisciplineTableRow) {
     return [
@@ -211,6 +229,7 @@
         shortLabel: clip(label, 22),
         plan: r.expectedCount,
         uploaded: r.uploadedCount,
+        moodle: getMoodleCount(r),
       };
     })
   );
@@ -233,8 +252,9 @@
         r.studentsCount,
         r.expectedCount,
         r.uploadedCount,
+        getMoodleCount(r),
       ]);
-      body.push(['Итого', '', '', '', '', '', t.plan, t.up]);
+      body.push(['Итого', '', '', '', '', '', t.plan, t.up, t.moodle]);
       exportToExcel(
         [
           'Дисциплина',
@@ -245,6 +265,7 @@
           'Студентов',
           'Ожидается',
           'Загружено',
+          'Из них в Moodle',
         ],
         body,
         'analitika_zagruzki_po_disciplinam_plan',
@@ -257,10 +278,18 @@
         r.studentsCount,
         r.expectedCount,
         r.uploadedCount,
+        getMoodleCount(r),
       ]);
-      body.push(['Итого', '', '', t.plan, t.up]);
+      body.push(['Итого', '', '', t.plan, t.up, t.moodle]);
       exportToExcel(
-        ['Дисциплина', 'Групп', 'Студентов', 'Ожидается', 'Загружено'],
+        [
+          'Дисциплина',
+          'Групп',
+          'Студентов',
+          'Ожидается',
+          'Загружено',
+          'Из них в Moodle',
+        ],
         body,
         'analitika_zagruzki_po_disciplinam',
         'Дисциплины'
@@ -299,5 +328,11 @@
     border: 1px solid #e2e8f0;
     background: #fff;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .moodle-note {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #4f46e5;
+    font-weight: 600;
   }
 </style>

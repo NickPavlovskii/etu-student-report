@@ -16,6 +16,9 @@
       <div class="kpi-hero__value">
         {{ totalWorks }} из {{ expectedCount }}
       </div>
+      <div class="kpi-hero__moodle">
+        Из них в Moodle: {{ moodleWorks }}
+      </div>
       <div class="kpi-hero__track">
         <div
           class="kpi-hero__fill"
@@ -33,6 +36,7 @@
   const props = defineProps<{
     totalWorks: number;
     expectedCount: number;
+    moodleWorks?: number;
   }>();
 
   const pct = computed(() => {
@@ -83,6 +87,12 @@
     border-radius: 6px;
     overflow: hidden;
     max-width: 420px;
+  }
+  .kpi-hero__moodle {
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #4f46e5;
+    font-weight: 600;
   }
   .kpi-hero__fill {
     height: 100%;

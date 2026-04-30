@@ -7,8 +7,9 @@ import {
   computeExpectedWorksTotal,
   computeUploadedWorkSlots,
 } from '../utils/disciplineWorksPlan';
+import { isMoodleReport } from '../utils/reportSource';
 
-export type DisciplineWorksStats = { uploaded: number; total: number };
+export type DisciplineWorksStats = { uploaded: number; total: number; moodleUploaded: number };
 
 export function useDisciplineWorksStats(
   studentsByGroup: Ref<Record<string, StudentInGroupRow[]>>,
@@ -31,7 +32,8 @@ export function useDisciplineWorksStats(
       topicRowCountByGroup.value
     );
     const uploaded = computeUploadedWorkSlots(reports.value ?? []);
-    return { uploaded, total };
+    const moodleUploaded = (reports.value ?? []).filter((r) => isMoodleReport(r)).length;
+    return { uploaded, total, moodleUploaded };
   });
 
   return { disciplineWorksStats };

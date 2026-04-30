@@ -1,7 +1,8 @@
 <template>
   <v-dialog
     :model-value="modelValue"
-    max-width="980"
+    :max-width="isCompactScreen ? undefined : 980"
+    :fullscreen="isCompactScreen"
     persistent
     scrollable
     @update:model-value="$emit('update:modelValue', $event)"
@@ -9,9 +10,9 @@
     <v-card class="batch-card">
       <div class="header">
         <div>
-          <h3>Мультизагрузка работ</h3>
+          <h3>Массовая загрузка</h3>
           <div class="sub">
-            Выберите несколько файлов, укажите группу/вид контроля и сопоставьте студентов.
+            Выберите источник (файлы или Moodle), укажите группу/вид контроля.
           </div>
         </div>
         <v-btn
@@ -65,8 +66,26 @@
             hide-details
           />
         </div>
+        <div class="source-mode-switch">
+          <v-btn-toggle
+            v-model="sourceMode"
+            density="comfortable"
+            mandatory
+            divided
+          >
+            <v-btn value="file">
+              Файлы
+            </v-btn>
+            <v-btn value="moodle">
+              Moodle
+            </v-btn>
+          </v-btn-toggle>
+        </div>
 
-        <div class="files-block">
+        <div
+          v-if="sourceMode === 'file'"
+          class="files-block"
+        >
           <div class="files-head">
             <div class="files-title">Файлы</div>
             <div class="files-actions">
@@ -88,6 +107,7 @@
           </div>
 
           <input
+            v-if="sourceMode === 'file'"
             ref="fileInput"
             type="file"
             accept=".pdf,.doc,.docx"
@@ -100,11 +120,16 @@
             v-if="!rows.length"
             class="empty"
           >
-            Добавьте несколько файлов студентов.
-            Рекомендуемый формат имени: <br />
-            <code>Группа_НомерЗачётки_описание_работы_2024-2025.docx</code>
-            (части через <code>_</code>; группа — как в списке или код вроде
-            <code>0370</code>; номер зачётки — 5–9 цифр; в конце учебный год из списка)
+            <template v-if="sourceMode === 'file'">
+              Добавьте несколько файлов студентов.
+              Рекомендуемый формат имени: <br />
+              <code>Группа_НомерЗачётки_описание_работы_2024-2025.docx</code>
+              (части через <code>_</code>; группа — как в списке или код вроде
+              <code>0370</code>; номер зачётки — 5–9 цифр; в конце учебный год из списка)
+            </template>
+            <template v-else>
+              Добавьте строки студентов и оставьте ссылку Moodle.
+            </template>
           </div>
 
           <div
@@ -125,10 +150,12 @@
               class="trow"
             >
               <div class="file-cell">
-                <div class="file-name">{{ r.file.name }}</div>
-                <div class="file-meta">
-                  {{ formatBytes(r.file.size) }}
-                </div>
+                <template v-if="r.file">
+                  <div class="file-name">{{ r.file.name }}</div>
+                  <div class="file-meta">
+                    {{ formatBytes(r.file.size) }}
+                  </div>
+                </template>
               </div>
 
               <div>
@@ -158,7 +185,7 @@
               </div>
 
               <div class="status">
-                <template v-if="r.validation">
+                <template v-if="sourceMode === 'file' && r.validation">
                   <span
                     :class="['pill', r.validation.valid ? 'ok' : 'warn']"
                   >
@@ -183,7 +210,7 @@
               </div>
 
               <div
-                v-if="r.validation?.annotatedFileBase64"
+                v-if="sourceMode === 'file' && r.validation?.annotatedFileBase64"
                 class="annotated"
               >
                 <v-btn
@@ -199,7 +226,27 @@
           </div>
         </div>
 
-        <div class="options">
+        <div
+          v-else
+          class="moodle-single-link"
+        >
+          <v-text-field
+            v-model="moodleCourseUrl"
+            class="field moodle-link-input"
+            label="Ссылка Moodle для выбранной темы *"
+            variant="outlined"
+            density="compact"
+            hide-details
+          />
+          <div class="empty">
+            Ссылка будет назначена всем студентам выбранной группы по выбранной теме.
+          </div>
+        </div>
+
+        <div
+          v-if="sourceMode === 'file'"
+          class="options"
+        >
           <v-checkbox
             v-model="autoCheck"
             color="primary"
@@ -238,7 +285,9 @@
           {{
             busy && phase === 'validate'
               ? 'Проверка…'
-              : 'Загрузить все'
+              : sourceMode === 'file'
+                ? 'Загрузить все'
+                : 'Сохранено в Moodle'
           }}
         </v-btn>
       </v-card-actions>
@@ -271,7 +320,7 @@
               class="batch-review-row"
             >
               <div class="batch-review-row-main">
-                <span class="batch-review-fname">{{ r.file.name }}</span>
+                <span class="batch-review-fname">{{ r.file?.name ?? '—' }}</span>
                 <template v-if="r.validation">
                   <span
                     :class="['pill', r.validation.valid ? 'ok' : 'warn']"
@@ -326,11 +375,17 @@
 
 <script setup lang="ts">
   import { computed, nextTick, ref, watch } from 'vue';
+  import { useDisplay } from 'vuetify';
   import { useAcademicYear } from '@/composables/useAcademicYear';
   import { useDownload } from '@/composables/useDownload';
   import { useUser } from '@/composables/useUser';
   import { ACADEMIC_YEAR_SELECT_ITEMS } from '@/constants/academicYearSelectItems';
-  import { uploadDisciplineReport, validateBatch, type ValidationResult } from '@/api/info';
+  import {
+    putDisciplineMoodleLink,
+    uploadDisciplineReport,
+    validateBatch,
+    type ValidationResult,
+  } from '@/api/info';
   import type { BatchValidationResult } from '@/api/types';
   import ValidationReportModal from './ValidationReportModal.vue';
   import type { StudentInGroupRow, UploadDisciplineModalProps, UploadWorkPayload } from '../modal/uploadWorkModal';
@@ -351,10 +406,14 @@
   const { academicYear } = useAcademicYear();
   const { uploadedBy } = useUser();
   const { downloadAnnotatedFile } = useDownload();
+  const { mdAndDown } = useDisplay();
+  const isCompactScreen = computed(() => mdAndDown.value);
 
   const selectedGroup = ref('');
   const workType = ref('');
   const topic = ref('');
+  const sourceMode = ref<'file' | 'moodle'>('file');
+  const moodleCourseUrl = ref('');
   const autoCheck = ref(true);
   const annotate = ref(false);
   const errorText = ref<string>('');
@@ -368,7 +427,7 @@
 
   type Row = {
     id: string;
-    file: File;
+    file: File | null;
     studentId: number | string | null;
     workTitle: string;
     validation?: ValidationResult | null;
@@ -489,11 +548,17 @@
     const g = selectedGroup.value.trim();
     const wt = workType.value.trim();
     if (!g || !wt) return false;
+    if (sourceMode.value === 'moodle') {
+      return moodleCourseUrl.value.trim().length > 0 && studentsForSelect.value.length > 0;
+    }
     if (!rows.value.length) return false;
-    return rows.value.every((r) => Number.isFinite(Number(r.studentId)) && r.workTitle.trim().length > 0);
+    const commonFilled = rows.value.every((r) => Number.isFinite(Number(r.studentId)) && r.workTitle.trim().length > 0);
+    if (!commonFilled) return false;
+    return rows.value.every((r) => r.file instanceof File);
   });
 
   function openFileDialog() {
+    if (sourceMode.value !== 'file') return;
     fileInput.value?.click();
   }
 
@@ -786,7 +851,8 @@
 
   function downloadAnnotated(r: Row) {
     const b64 = r.validation?.annotatedFileBase64;
-    const name = r.validation?.annotatedFileName ?? `${r.file.name}_замечания.docx`;
+    const fallbackName = r.file?.name ?? 'отчет';
+    const name = r.validation?.annotatedFileName ?? `${fallbackName}_замечания.docx`;
     if (!b64) return;
     downloadAnnotatedFile(b64, name);
   }
@@ -804,7 +870,9 @@
       check: autoCheck.value ? (r.validation?.percent ?? null) : null,
       status: 'Загружен',
       uploadedBy: uploadedBy.value ?? 'unknown',
-      file: r.file,
+      file: r.file ?? undefined,
+      moodleUrl: '',
+      storageType: 'file',
     };
   }
 
@@ -823,7 +891,7 @@
       if (k) byKey.set(k, x.result);
     }
     fileRows.forEach((r, i) => {
-      const k = normalizeBatchFileKey(r.file.name);
+      const k = normalizeBatchFileKey(r.file?.name ?? '');
       let val = k ? byKey.get(k) : undefined;
       if (!val && items[i]?.result) {
         val = items[i].result;
@@ -833,20 +901,40 @@
   }
 
   async function executeBatchValidation(): Promise<void> {
+    const fileRows = rows.value.filter((r) => r.file instanceof File);
+    if (!fileRows.length) return;
     const resolved = workType.value.trim();
     const tid =
       props.templateId ??
       (resolved ? props.templateIdByWorkType?.[resolved] : undefined) ??
       null;
     const res = await validateBatch(
-      rows.value.map((r) => r.file),
+      fileRows.map((r) => r.file as File),
       { templateId: tid, annotate: annotate.value }
     );
-    applyBatchValidationToRows(res, rows.value);
+    applyBatchValidationToRows(res, fileRows);
   }
 
   async function uploadAllRows(): Promise<void> {
     phase.value = 'upload';
+    if (sourceMode.value === 'moodle') {
+      await putDisciplineMoodleLink(
+        props.teacherLastName,
+        props.planRowId,
+        {
+          groupName: selectedGroup.value,
+          controlType: workType.value,
+          topic: String(topic.value || '').trim(),
+          academicYear: String(academicYear.value || '').trim(),
+          moodleUrl: String(moodleCourseUrl.value).trim(),
+          updatedBy: uploadedBy.value ?? 'unknown',
+        }
+      );
+      errorText.value = '';
+      emit('update:modelValue', false);
+      emit('uploaded');
+      return;
+    }
     for (const r of rows.value) {
       const payload = buildUploadPayload(r);
       await uploadDisciplineReport(
@@ -868,7 +956,7 @@
   function openValidationDetail(r: Row) {
     if (!r.validation) return;
     validationDetailResult.value = r.validation;
-    validationDetailBreadcrumb.value = r.file.name;
+    validationDetailBreadcrumb.value = r.file?.name ?? 'Работа';
     showValidationDetailDialog.value = true;
   }
 
@@ -889,13 +977,18 @@
   async function validateAndUpload() {
     errorText.value = '';
     if (!canSubmit.value) {
-      errorText.value =
-        'Заполните группу, вид контроля, студента и название работы для каждого файла.';
+      errorText.value = sourceMode.value === 'moodle'
+        ? 'Заполните группу, вид контроля и ссылку Moodle.'
+        : 'Заполните группу, вид контроля, студента и название работы для каждого файла.';
       return;
     }
     busy.value = true;
     try {
       if (autoCheck.value) {
+        if (sourceMode.value === 'moodle') {
+          await uploadAllRows();
+          return;
+        }
         phase.value = 'validate';
         await executeBatchValidation();
         showBatchReviewDialog.value = true;
@@ -922,12 +1015,25 @@
       }
     }
   );
+
+  watch(sourceMode, (mode) => {
+    if (mode === 'file') {
+      rows.value = [];
+    }
+    errorText.value = '';
+    if (mode === 'moodle') {
+      autoCheck.value = false;
+    }
+  });
 </script>
 
 <style scoped>
   .batch-card {
     border-radius: 16px;
     overflow: hidden;
+    max-height: min(92vh, 920px);
+    display: flex;
+    flex-direction: column;
   }
   .header {
     display: flex;
@@ -949,12 +1055,17 @@
   }
   .body {
     padding: 12px 24px 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   .top-grid {
     display: grid;
     grid-template-columns: 1.2fr 1.2fr 1.6fr 0.8fr;
     gap: 12px;
     margin-bottom: 16px;
+  }
+  .source-mode-switch {
+    margin-bottom: 12px;
   }
   .field :deep(.v-field) {
     border-radius: 10px;
@@ -982,6 +1093,12 @@
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+  .moodle-link-input {
+    margin-bottom: 10px;
+  }
+  .moodle-single-link {
+    margin-top: 6px;
   }
   .empty {
     padding: 14px;
@@ -1077,6 +1194,7 @@
     padding: 16px 24px 20px;
     gap: 10px;
     flex-wrap: wrap;
+    border-top: 1px solid #e5e7eb;
   }
 
   .batch-review-card {
@@ -1139,9 +1257,26 @@
     flex-wrap: wrap;
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 960px) {
     .top-grid {
       grid-template-columns: 1fr;
+    }
+    .header {
+      padding: 16px 16px 10px;
+    }
+    .body {
+      padding: 10px 16px 14px;
+    }
+    .actions {
+      padding: 12px 16px 14px;
+    }
+    .files-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .files-actions {
+      width: 100%;
+      justify-content: space-between;
     }
     .thead,
     .trow {
@@ -1149,6 +1284,39 @@
     }
     .row-actions {
       justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .batch-card {
+      border-radius: 0;
+      max-height: 100dvh;
+      height: 100dvh;
+    }
+    .source-mode-switch :deep(.v-btn-toggle) {
+      width: 100%;
+    }
+    .source-mode-switch :deep(.v-btn) {
+      flex: 1 1 0;
+    }
+    .files-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .files-actions > .v-btn {
+      width: 100%;
+    }
+    .actions {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      z-index: 2;
+    }
+    .actions :deep(.v-btn) {
+      width: 100%;
+    }
+    .actions :deep(.v-spacer) {
+      display: none;
     }
   }
 </style>

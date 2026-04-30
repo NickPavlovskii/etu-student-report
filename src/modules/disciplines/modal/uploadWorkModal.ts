@@ -21,7 +21,9 @@ export type UploadWorkPayload = {
   check?: number | null;
   status: string;
   uploadedBy: string;
-  file: File;
+  file?: File;
+  moodleUrl?: string;
+  storageType?: 'file' | 'moodle';
 };
 
 /** Строка настройки вида контроля (группа, темы) */

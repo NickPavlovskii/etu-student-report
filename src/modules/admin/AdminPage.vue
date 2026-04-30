@@ -25,6 +25,7 @@
     <v-window
       v-model="activeTab"
       class="admin-window"
+      :touch="false"
     >
       <v-window-item value="users">
         <user-tab />

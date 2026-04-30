@@ -91,6 +91,18 @@
       <div class="action-cell-inner">
         <template v-if="report">
           <v-btn
+            v-if="isMoodleReport(report)"
+            variant="outlined"
+            size="small"
+            class="action-moodle-btn"
+            title="Открыть в Moodle"
+            @click.stop="openMoodle(report)"
+          >
+            <v-icon size="16" start>mdi-open-in-new</v-icon>
+            Moodle
+          </v-btn>
+          <v-btn
+            v-else
             icon
             variant="text"
             size="small"
@@ -129,6 +141,7 @@
   import downloadIcon from '@/assets/icons/download.svg';
   import eyeIcon from '@/assets/icons/eye.svg';
   import type { ReportDto, TopicRow } from '../modal/reports';
+  import { getReportMoodleUrl, isMoodleReport } from '../utils/reportSource';
   import {
     reportCheckStateClass,
     reportCheckStatusIcon,
@@ -143,6 +156,12 @@
     (e: 'download', report: ReportDto): void;
     (e: 'viewReport', report: ReportDto): void;
   }>();
+
+  function openMoodle(report: ReportDto) {
+    const moodleUrl = getReportMoodleUrl(report);
+    if (!moodleUrl) return;
+    window.open(moodleUrl, '_blank', 'noopener,noreferrer');
+  }
 </script>
 
 <style scoped>
@@ -283,5 +302,12 @@
     width: 16px;
     height: 16px;
     display: block;
+  }
+
+  .action-moodle-btn {
+    min-height: 30px;
+    text-transform: none;
+    letter-spacing: 0;
+    padding-inline: 10px;
   }
 </style>

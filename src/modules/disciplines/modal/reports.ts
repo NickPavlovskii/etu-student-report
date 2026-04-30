@@ -16,6 +16,8 @@ export type ReportDto = {
   status: string;
   uploadedBy: string;
   fileName: string;
+  moodleUrl?: string | null;
+  storageType?: string | null;
 };
 
 export type ControlScheduleDto = {

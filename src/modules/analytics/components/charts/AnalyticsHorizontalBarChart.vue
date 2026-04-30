@@ -60,11 +60,17 @@
                 {{ r.uploaded }}
               </span>
             </div>
+            <div class="analytics-tt__row">
+              <span class="analytics-tt__dot analytics-tt__dot--up" />
+              <span class="analytics-tt__k">Из них в Moodle</span>
+              <span class="analytics-tt__v">{{ r.moodle ?? 0 }}</span>
+            </div>
           </div>
           <div class="analytics-tt__foot">{{ progressLine(r) }}</div>
         </div>
       </v-tooltip>
       <div class="hbar-inline-nums">{{ r.uploaded }} из {{ r.plan }}</div>
+      <div class="hbar-inline-moodle">Из них в Moodle: {{ r.moodle ?? 0 }}</div>
     </div>
   </div>
 </template>
@@ -188,5 +194,13 @@
     font-size: 12px;
     color: #6b7280;
     text-align: right;
+  }
+  .hbar-inline-moodle {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    color: #4f46e5;
+    text-align: right;
+    margin-top: -4px;
+    font-weight: 600;
   }
 </style>

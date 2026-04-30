@@ -37,10 +37,32 @@ export type UploadReportPayload = {
   check?: number | null;
   status: string;
   uploadedBy: string;
-  file: File;
+  file?: File;
+  moodleUrl?: string;
+  storageType?: 'file' | 'moodle';
 };
 
 export type UploadReportPayloadCard = Omit<UploadReportPayload, 'controlType'>;
+
+export type MoodleDisciplineLinkDto = {
+  planRowId: number;
+  groupName: string;
+  controlType: string;
+  topic: string;
+  academicYear: string;
+  moodleUrl: string;
+  updatedAt?: string;
+  updatedBy?: string;
+};
+
+export type PutMoodleDisciplineLinkPayload = {
+  groupName: string;
+  controlType: string;
+  topic: string;
+  academicYear: string;
+  moodleUrl: string;
+  updatedBy: string;
+};
 
 // ——— auth ———
 export interface AuthModule {
@@ -167,12 +189,14 @@ export type AnalyticsQueryParams = {
 export type TeacherStatsKpi = {
   expectedCount: number;
   totalWorks: number;
+  moodleWorks?: number;
 };
 
 export type AdminAnalyticsKpi = {
   totalTeachers?: number;
   expectedCount: number;
   totalWorks: number;
+  moodleWorks?: number;
 };
 
 export type TeachersSummaryItem = {
@@ -182,6 +206,8 @@ export type TeachersSummaryItem = {
   expectedCount: number;
   uploadedCount?: number;
   totalWorks?: number;
+  moodleLinksCount?: number;
+  moodleUploadedCount?: number;
 };
 
 export type DisciplinesTableItem = {
@@ -190,6 +216,8 @@ export type DisciplinesTableItem = {
   studentsCount: number;
   expectedCount: number;
   uploadedCount: number;
+  moodleUploadedCount?: number;
+  moodleLinksCount?: number;
 };
 
 export type BySemesterRow = {
@@ -197,6 +225,8 @@ export type BySemesterRow = {
   semester?: number | string;
   expectedCount: number;
   uploadedCount?: number;
+  moodleUploadedCount?: number;
+  moodleLinksCount?: number;
   totalWorks?: number;
   groupsCount?: number;
   studentsCount?: number;
@@ -221,6 +251,7 @@ export type DisciplineWithTeacherRowDto = {
   studentsCount: number;
   expectedCount: number;
   uploadedCount: number;
+  moodleLinksCount?: number;
 };
 
 export interface AnalyticsModule {
@@ -291,6 +322,21 @@ export interface DisciplinesModule {
     planRowId: number,
     payload: UploadReportPayloadCard
   ): Promise<any>;
+  getDisciplineMoodleLinks(
+    lastName: string,
+    planRowId: number,
+    academicYear?: string
+  ): Promise<MoodleDisciplineLinkDto[]>;
+  putDisciplineMoodleLink(
+    lastName: string,
+    planRowId: number,
+    payload: PutMoodleDisciplineLinkPayload
+  ): Promise<MoodleDisciplineLinkDto>;
+  deleteDisciplineMoodleLink(
+    lastName: string,
+    planRowId: number,
+    payload: Omit<PutMoodleDisciplineLinkPayload, 'moodleUrl' | 'updatedBy'>
+  ): Promise<void>;
   downloadReport(reportId: number): Promise<Blob>;
 }
 

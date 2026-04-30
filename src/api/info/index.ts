@@ -69,6 +69,8 @@ export type {
   ValidationResult,
   ValidateOptions,
   UploadReportPayloadCard,
+  MoodleDisciplineLinkDto,
+  PutMoodleDisciplineLinkPayload,
   ControlScheduleDto,
   UploadReportPayload,
 } from '../types';
@@ -111,6 +113,9 @@ export const {
   getControlTypesFromApi,
   uploadDisciplineReport,
   uploadDisciplineReportForCard,
+  getDisciplineMoodleLinks,
+  putDisciplineMoodleLink,
+  deleteDisciplineMoodleLink,
   downloadReport,
 } = infoApi.disciplines;
 

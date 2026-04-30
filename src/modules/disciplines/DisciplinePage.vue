@@ -71,7 +71,7 @@
           </v-btn>
           <div class="actions">
             <etu-button
-              title="Перейти в архив"
+              title="Архив"
               width="auto"
               height="40"
               color="#111827"
@@ -94,7 +94,7 @@
             />
             <etu-button
               v-if="hasStudents"
-              title="Мультизагрузка"
+              title="Массовая загрузка"
               width="auto"
               height="40"
               color="#bb8d54"
@@ -143,6 +143,12 @@
           icon="mdi-file-upload-outline"
           color="green"
           :value="`${disciplineWorksStats.uploaded} / ${disciplineWorksStats.total}`"
+        />
+        <etu-info-card
+          title="Работы в Moodle"
+          icon="mdi-google-classroom"
+          color="blue"
+          :value="String(disciplineWorksStats.moodleUploaded)"
         />
       </div>
     </v-card>
@@ -206,10 +212,12 @@
   import DisciplineMeta from './components/DisciplineMeta.vue';
   import ValidationReportModal from './components/ValidationReportModal.vue';
   import type { ReportDto } from './modal/reports';
+  import type { MoodleDisciplineLinkDto } from '@/api/types';
   import {
     getDisciplineCard,
     getDisciplineStudents,
     getDisciplineReports,
+    getDisciplineMoodleLinks,
     uploadDisciplineReport,
     downloadReport as apiDownloadReport,
     getDisciplineControls,
@@ -226,6 +234,7 @@
   import { useDisciplineWorksStats } from './composables/useDisciplineWorksStats';
   import type { StudentDto } from './modal/student';
   import { normTeacherLast } from '@/modules/disciplines/utils/disciplineTeacherAssignments';
+  import { getReportMoodleUrl, isMoodleReport } from './utils/reportSource';
 
   const route = useRoute();
   const router = useRouter();
@@ -421,7 +430,20 @@
       ]);
 
       try {
-        reports.value = await getDisciplineReports(ln, id, year);
+        const [apiReports, moodleLinks] = await Promise.all([
+          getDisciplineReports(ln, id, year),
+          getDisciplineMoodleLinks(ln, id, year).catch(
+            () => [] as MoodleDisciplineLinkDto[]
+          ),
+        ]);
+        reports.value = mergeReportsWithMoodleLinks(
+          apiReports,
+          moodleLinks,
+          students.value ?? [],
+          id,
+          ln,
+          year
+        );
       } catch (e) {
         console.warn('Ошибка получения отчётов:', e);
         reports.value = [];
@@ -474,6 +496,78 @@
   };
   const goToArchive = () => router.push('/archive');
 
+  function normalizeAcademicYear(raw: string): string {
+    return String(raw ?? '').trim().replace(/\//g, '-');
+  }
+
+  function mergeReportsWithMoodleLinks(
+    apiReports: ReportDto[],
+    moodleLinks: MoodleDisciplineLinkDto[],
+    studentsList: StudentDto[],
+    currentPlanRowId: number,
+    teacherLastName: string,
+    currentAcademicYear: string
+  ): ReportDto[] {
+    const base = [...(apiReports ?? [])];
+    if (!moodleLinks?.length || !studentsList?.length) return base;
+
+    const normalizedCurrentYear = normalizeAcademicYear(currentAcademicYear);
+    const studentsByGroupMap = new Map<string, number[]>();
+    for (const s of studentsList) {
+      const group = String((s as any)?.groupName ?? (s as any)?.group ?? '').trim();
+      const sid = Number(
+        (s as any)?.studentId ??
+          (s as any)?.student_id ??
+          (s as any)?.iotId ??
+          (s as any)?.iot_id ??
+          (s as any)?.lkId ??
+          (s as any)?.lk_id
+      );
+      if (!group || !Number.isFinite(sid) || sid <= 0) continue;
+      const list = studentsByGroupMap.get(group) ?? [];
+      list.push(sid);
+      studentsByGroupMap.set(group, list);
+    }
+
+    let virtualId = -1;
+    for (const link of moodleLinks) {
+      const linkYear = normalizeAcademicYear(link.academicYear);
+      if (normalizedCurrentYear && linkYear && linkYear !== normalizedCurrentYear) {
+        continue;
+      }
+
+      const groupName = String(link.groupName ?? '').trim();
+      const topic = String(link.topic ?? '').trim();
+      const moodleUrl = String(link.moodleUrl ?? '').trim();
+      if (!groupName || !topic || !moodleUrl) continue;
+
+      const studentIds = studentsByGroupMap.get(groupName) ?? [];
+      for (const studentId of studentIds) {
+        base.push({
+          id: virtualId--,
+          planRowId: currentPlanRowId,
+          studentId,
+          groupName,
+          teacherLastName,
+          topic,
+          workType: String(link.controlType ?? '').trim() || 'Moodle',
+          workTitle: String(link.controlType ?? '').trim() || topic,
+          academicYear: currentAcademicYear,
+          uploadDate: null,
+          version: 0,
+          check: null,
+          status: 'В Moodle',
+          uploadedBy: String(link.updatedBy ?? '').trim() || 'moodle-link',
+          fileName: '',
+          moodleUrl,
+          storageType: 'moodle',
+        });
+      }
+    }
+
+    return base;
+  }
+
   async function onUpload(payload: any) {
     const dto = await uploadDisciplineReport(
       uploadUrlLastName.value,
@@ -490,7 +584,9 @@
         check: payload.check ?? null,
         status: payload.status ?? 'Загружен',
         uploadedBy: uploadedBy.value,
-        file: payload.file as File,
+        file: payload.file as File | undefined,
+        moodleUrl: payload.moodleUrl ?? '',
+        storageType: payload.storageType ?? 'file',
       }
     );
     reports.value = [dto, ...reports.value];
@@ -498,6 +594,13 @@
   }
 
   async function handleDownload(reportDto: ReportDto) {
+    if (isMoodleReport(reportDto)) {
+      const moodleUrl = getReportMoodleUrl(reportDto);
+      if (moodleUrl) {
+        window.open(moodleUrl, '_blank', 'noopener,noreferrer');
+      }
+      return;
+    }
     const blob = await apiDownloadReport(reportDto.id);
     downloadBlob(blob, reportDto.fileName || 'report');
   }

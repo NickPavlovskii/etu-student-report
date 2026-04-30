@@ -72,6 +72,11 @@
                     {{ it.uploaded }}
                   </span>
                 </div>
+                <div class="analytics-tt__row">
+                  <span class="analytics-tt__dot analytics-tt__dot--up" />
+                  <span class="analytics-tt__k">Из них в Moodle</span>
+                  <span class="analytics-tt__v">{{ it.moodle ?? 0 }}</span>
+                </div>
               </div>
               <div class="analytics-tt__foot">{{ progressLine(it) }}</div>
             </div>
@@ -89,6 +94,7 @@
             >
               {{ it.uploaded }} из {{ it.plan }}
             </div>
+            <div class="vbar-moodle">Moodle: {{ it.moodle ?? 0 }}</div>
           </div>
         </div>
       </div>
@@ -290,6 +296,17 @@
     font-variant-numeric: tabular-nums;
     text-align: center;
     line-height: 1.2;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .vbar-moodle {
+    font-size: 10px;
+    color: #4f46e5;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
     max-width: 100%;
     white-space: nowrap;
     overflow: hidden;

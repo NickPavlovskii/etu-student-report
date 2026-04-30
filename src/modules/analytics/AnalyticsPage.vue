@@ -71,6 +71,7 @@
       <kpi-hero-card
         :total-works="displayKpi.totalWorks"
         :expected-count="displayKpi.expectedCount"
+        :moodle-works="displayKpi.moodleWorks ?? 0"
       />
 
       <v-row
@@ -231,6 +232,9 @@
                               :uploaded="block.uploaded"
                               :plan="block.plan"
                             />
+                            <div class="tree-moodle-note">
+                              Из них в Moodle: {{ block.moodle ?? 0 }}
+                            </div>
                           </td>
                         </tr>
                         <tr
@@ -261,6 +265,9 @@
                               :uploaded="ch.uploaded"
                               :plan="ch.plan"
                             />
+                            <div class="tree-moodle-note">
+                              Из них в Moodle: {{ ch.moodle ?? 0 }}
+                            </div>
                           </td>
                         </tr>
                       </template>
@@ -328,6 +335,12 @@
   import AnalyticsTablePagination from './components/AnalyticsTablePagination.vue';
   import AnalyticsWidgetExportActions from './components/AnalyticsWidgetExportActions.vue';
   import { useAnalyticsExport } from './composables/useAnalyticsExport';
+
+  function getMoodleWorksCount(
+    row: { moodleLinksCount?: number; moodleUploadedCount?: number }
+  ): number {
+    return Number(row.moodleLinksCount ?? row.moodleUploadedCount) || 0;
+  }
 
   const router = useRouter();
   const { user, canSeeAll } = useUser();
@@ -473,13 +486,16 @@
     if (rows.length > 0) {
       let expectedCount = 0;
       let totalWorks = 0;
+      let moodleWorks = 0;
       for (const r of rows) {
         expectedCount += Number(r.expectedCount) || 0;
         totalWorks += Number(r.uploadedCount) || 0;
+        moodleWorks += getMoodleWorksCount(r as any);
       }
       return {
         expectedCount,
         totalWorks,
+        moodleWorks,
         totalTeachers: kpi.value?.totalTeachers,
       };
     }
@@ -487,6 +503,7 @@
       return {
         expectedCount: 0,
         totalWorks: 0,
+        moodleWorks: 0,
         totalTeachers: undefined,
       };
     }
@@ -513,6 +530,7 @@
       title: block.teacher,
       plan: block.plan,
       uploaded: block.uploaded,
+      moodle: block.moodle ?? 0,
     }))
   );
 
@@ -932,6 +950,13 @@
   .tree-col-upload.cell-upload-prog-wrap :deep(.upload-prog) {
     min-width: 108px;
     max-width: 168px;
+  }
+  .tree-moodle-note {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #4f46e5;
+    font-weight: 600;
+    text-align: right;
   }
   .row-total {
     font-weight: 600;
