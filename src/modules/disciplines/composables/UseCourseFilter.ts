@@ -6,6 +6,21 @@ export function useCourseFilter(uniqueCourses: any) {
   const indeterminate = ref(false);
 
   watch(
+    course,
+    (val) => {
+      const total = uniqueCourses.value.length;
+      if (total === 0) {
+        checkAll.value = false;
+        indeterminate.value = false;
+        return;
+      }
+      checkAll.value = val.length === total;
+      indeterminate.value = val.length > 0 && !checkAll.value;
+    },
+    { flush: 'sync' }
+  );
+
+  watch(
     uniqueCourses,
     (val: (number | string)[]) => {
       if (!val.length) {
@@ -35,11 +50,6 @@ export function useCourseFilter(uniqueCourses: any) {
     },
     { immediate: true }
   );
-
-  watch(course, (val) => {
-    checkAll.value = val.length === uniqueCourses.value.length;
-    indeterminate.value = val.length > 0 && !checkAll.value;
-  });
 
   function handleCheckAll(val: boolean) {
     course.value = val ? [...uniqueCourses.value] : [];
