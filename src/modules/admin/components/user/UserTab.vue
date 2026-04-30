@@ -7,6 +7,8 @@
     />
 
     <etu-data-table
+      scrollable
+      table-min-width="1180px"
       :columns="columnsForTable"
       :rows="teachers"
       :loading="usersLoading"
@@ -252,6 +254,7 @@
     --ease: cubic-bezier(0.4, 0, 0.2, 1);
 
     position: relative;
+    min-width: 0;
     min-height: 300px;
     font-family: 'DM Sans', 'Nunito Sans', system-ui, sans-serif;
   }

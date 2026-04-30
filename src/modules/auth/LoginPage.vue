@@ -38,6 +38,11 @@
   import { useRouter } from 'vue-router';
   import { loginByLastName } from '@/api/info';
   import { bumpUserStorageTick } from '@/composables/userStorageTick';
+  import {
+    unwrapAuthProfile,
+    buildRoleFieldsFromProfile,
+    copyProfileHeadFlagsInto,
+  } from '@/composables/authProfileMerge';
 
   const router = useRouter();
   const lastName = ref('');
@@ -67,25 +72,6 @@
       .join(' ');
   }
 
-  function unwrapProfile(raw: unknown): Record<string, unknown> | null {
-    if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) {
-      return null;
-    }
-    let o = raw as Record<string, unknown>;
-    if (
-      'data' in o &&
-      o.data != null &&
-      typeof o.data === 'object' &&
-      !Array.isArray(o.data)
-    ) {
-      o = o.data as Record<string, unknown>;
-    }
-    if (o.ok === false || o.success === false || o.found === false) {
-      return null;
-    }
-    return o;
-  }
-
   const login = async () => {
     error.value = false;
 
@@ -98,26 +84,23 @@
       bumpUserStorageTick();
 
       const raw = await loginByLastName(ln);
-      const profile = unwrapProfile(raw);
+      const profile = unwrapAuthProfile(raw);
       if (!profile) {
         error.value = true;
         return;
       }
 
-      const roleRaw = (profile.role ?? 'TEACHER').toString().toUpperCase().trim();
-      const role = roleRaw || 'TEACHER';
+      const p = profile as Record<string, unknown>;
+      const { role, roleDisplay } = buildRoleFieldsFromProfile(p);
 
-      const userToStore = {
+      const userToStore: Record<string, unknown> = {
         lastName: String(profile.lastName ?? ln),
         firstName: String(profile.firstName ?? ''),
         patronymic: String(profile.patronymic ?? ''),
         fioShort: String(profile.fioShort ?? makeFioShort(profile)),
 
         role,
-        roleDisplay: String(
-          profile.roleDisplay ??
-            (role === 'ADMIN' ? 'Администратор' : 'Преподаватель')
-        ),
+        roleDisplay,
         status: String(profile.status ?? 'active'),
 
         department: String(profile.department ?? profile.departmentName ?? ''),
@@ -125,6 +108,8 @@
         rank: String(profile.rank ?? ''),
         degree: String(profile.degree ?? ''),
       };
+
+      copyProfileHeadFlagsInto(userToStore, p);
 
       localStorage.setItem('user', JSON.stringify(userToStore));
       bumpUserStorageTick();

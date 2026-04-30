@@ -8,6 +8,7 @@
       },
       wrapClass,
     ]"
+    @wheel="onWrapWheel"
   >
     <table
       :class="['etu-dt-table', tableClass]"
@@ -176,6 +177,25 @@
     }
   );
 
+  /** Горизонтальный скролл (трекпад) не всплывает к родителю — иначе съезжают вкладки / страница. */
+  function onWrapWheel(e: WheelEvent) {
+    if (!props.scrollable) return;
+    const wrap = e.currentTarget as HTMLElement | null;
+    if (!wrap) return;
+
+    const dx = Math.abs(e.deltaX);
+    const dy = Math.abs(e.deltaY);
+
+    // Вертикальная прокрутка страницы должна работать всегда.
+    if (dy >= dx) return;
+
+    // Блокируем всплытие только когда реально есть горизонтальный скролл таблицы.
+    const canScrollX = wrap.scrollWidth > wrap.clientWidth;
+    if (!canScrollX) return;
+
+    e.stopPropagation();
+  }
+
   const emit = defineEmits<{
     'row-click': [row: T, index: number];
     sort: [key: string, order: 'asc' | 'desc'];
@@ -207,9 +227,12 @@
 
 <style scoped>
   .etu-dt-wrap {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     border-radius: 14px;
     border: 1.5px solid var(--etu-dt-border, #e5e7eb);
-    overflow: hidden;
     background: var(--etu-dt-bg, #fff);
     --etu-dt-border: #e5e7eb;
     --etu-dt-bg: #fff;
@@ -227,6 +250,10 @@
     --etu-dt-cell-pad-x: 16px;
   }
 
+  .etu-dt-wrap:not(.etu-dt-wrap--scroll) {
+    overflow: hidden;
+  }
+
   .etu-dt-wrap--shadow {
     box-shadow:
       0 1px 2px rgba(28, 25, 23, 0.04),
@@ -235,6 +262,11 @@
 
   .etu-dt-wrap--scroll {
     overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: auto;
+    touch-action: pan-x pan-y pinch-zoom;
   }
 
   .etu-dt-table {

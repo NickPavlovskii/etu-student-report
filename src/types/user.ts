@@ -8,5 +8,7 @@ export interface User {
   rank?: string;
   degree?: string;
   role?: string;
+  /** Если бэкенд отдаёт роли отдельным массивом — учитывается вместе с `role`. */
+  roles?: string[];
   roleDisplay?: string;
 }

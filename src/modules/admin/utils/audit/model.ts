@@ -9,4 +9,7 @@ export type AuditEntityInput = {
 
 export type AuditDetailsContext = {
   action?: string;
+  entityType?: string | null;
+  entityId?: string | null;
+  entityLabel?: string | null;
 };

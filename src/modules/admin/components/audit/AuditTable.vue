@@ -43,7 +43,25 @@
 
     <template #cell-details="{ row }">
       <span class="cell-details">
-        {{ formatAuditDetails(row.details, { action: row.action }) }}
+        <template
+          v-for="(seg, idx) in detailsSegments(
+            formatAuditDetails(row.details, {
+              action: row.action,
+              entityType: row.entityType,
+              entityId: row.entityId,
+              entityLabel: formatAuditEntityLabel(row),
+            })
+          )"
+          :key="`${row.id}-d-${idx}`"
+        >
+          <span
+            v-if="seg.strong"
+            class="cell-details-strong"
+          >
+            {{ seg.text }}
+          </span>
+          <template v-else>{{ seg.text }}</template>
+        </template>
       </span>
     </template>
 
@@ -121,6 +139,35 @@
   function rolledBackTitle(row: AuditLogEntryDto): string {
     return row.rolledBackBy ? `Отменено: ${row.rolledBackBy}` : '';
   }
+
+  function detailsSegments(text: string): { text: string; strong: boolean }[] {
+    const s = String(text ?? '');
+    if (!s) {
+      return [{ text: '', strong: false }];
+    }
+
+    const out: { text: string; strong: boolean }[] = [];
+    // Поддерживаем оба варианта кавычек из бэка: «...» и "..."
+    const re = /«([^»]+)»|"([^"]+)"/g;
+    let last = 0;
+    let m: RegExpExecArray | null = null;
+    while ((m = re.exec(s)) !== null) {
+      const start = m.index;
+      const end = re.lastIndex;
+      if (start > last) {
+        out.push({ text: s.slice(last, start), strong: false });
+      }
+      const inner = (m[1] ?? m[2] ?? '').trim();
+      if (inner) {
+        out.push({ text: inner, strong: true });
+      }
+      last = end;
+    }
+    if (last < s.length) {
+      out.push({ text: s.slice(last), strong: false });
+    }
+    return out.length ? out : [{ text: s, strong: false }];
+  }
 </script>
 
 <style scoped>
@@ -144,6 +191,11 @@
     line-height: 1.45;
     color: #374151;
     font-size: 13px;
+  }
+
+  .cell-details-strong {
+    color: #111827;
+    font-weight: 700;
   }
 
   .cell-action {

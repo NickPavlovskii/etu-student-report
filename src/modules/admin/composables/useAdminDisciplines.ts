@@ -4,10 +4,19 @@ import {
   getDisciplineGroups,
   getDisciplineReports,
   getDisciplineStudents,
+  getDisciplineTeacherAssignments,
   getDepartmentDisciplinesWithTeachers,
   type DisciplineWithTeacherRowDto,
   type TeacherDto,
 } from '@/api/info';
+import type { DisciplineTeacherAssignmentDto } from '@/api/types';
+import {
+  assignmentByPlanRowId,
+  assignmentDisplayFio,
+  effectiveActualLastName,
+  normTeacherLast,
+  reportApiLastNameForPlanRow,
+} from '@/modules/disciplines/utils/disciplineTeacherAssignments';
 import { useAcademicYear } from '@/composables/useAcademicYear';
 import {
   pickLatestReports,
@@ -192,6 +201,44 @@ async function loadStatsByPlanBatched(
   return stats;
 }
 
+function groupPlanIdsByReportApi(
+  planIds: number[],
+  byPlan: Map<number, DisciplineTeacherAssignmentDto>,
+  viewerLastName: string
+): Map<string, number[]> {
+  const m = new Map<string, number[]>();
+  for (const pid of planIds) {
+    const ln =
+      reportApiLastNameForPlanRow(byPlan.get(pid), viewerLastName).trim() ||
+      viewerLastName;
+    if (!m.has(ln)) {
+      m.set(ln, []);
+    }
+    m.get(ln)!.push(pid);
+  }
+  return m;
+}
+
+async function loadStatsForPlanGroups(
+  planIds: number[],
+  byPlan: Map<number, DisciplineTeacherAssignmentDto>,
+  viewerLastName: string,
+  year: string
+): Promise<Map<number, { loaded: string; progress: number }>> {
+  const stats = new Map<number, { loaded: string; progress: number }>();
+  const groups = groupPlanIdsByReportApi(planIds, byPlan, viewerLastName);
+  for (const [apiLn, ids] of groups) {
+    if (!apiLn || !ids.length) {
+      continue;
+    }
+    const part = await loadStatsByPlanBatched(apiLn, year, ids);
+    for (const [k, v] of part) {
+      stats.set(k, v);
+    }
+  }
+  return stats;
+}
+
 function extractLastName(
   row: Record<string, unknown>,
   teacherFio: string
@@ -296,6 +343,10 @@ export function useAdminDisciplines(teachers: Ref<TeacherDto[]>) {
   }
 
   function resolveTeacherLastName(item: AdminDisciplineCardItem): string {
+    const api = item.reportApiLastName?.trim();
+    if (api) {
+      return api;
+    }
     return (
       item.teacherLastName?.trim() ||
       (item.teacherFio ?? '').trim().split(/\s+/)[0] ||
@@ -323,7 +374,33 @@ export function useAdminDisciplines(teachers: Ref<TeacherDto[]>) {
         (row) => row.teacherFio != null && String(row.teacherFio).trim() !== ''
       );
 
-      const base = withTeacher.map(mapDepartmentRowToCard);
+      let assignList: DisciplineTeacherAssignmentDto[] = [];
+      try {
+        assignList = await getDisciplineTeacherAssignments();
+      } catch {
+        assignList = [];
+      }
+      const byPlanAll = assignmentByPlanRowId(assignList);
+
+      const base = withTeacher.map((row, index) => {
+        let item = mapDepartmentRowToCard(row, index);
+        const pid = safeNumber(row.planRowId ?? item.codeRow);
+        const a = byPlanAll.get(pid);
+        if (a) {
+          const planLn = (a.planLastName ?? '').trim();
+          const eff = effectiveActualLastName(a);
+          const needsPlanApi =
+            planLn &&
+            normTeacherLast(planLn) !== normTeacherLast(eff);
+          item = {
+            ...item,
+            teacherLastName: eff,
+            teacherFio: assignmentDisplayFio(a),
+            reportApiLastName: needsPlanApi ? planLn : undefined,
+          };
+        }
+        return item;
+      });
 
       const enriched = await enrichCardsWithGroups(
         base,
@@ -355,10 +432,75 @@ export function useAdminDisciplines(teachers: Ref<TeacherDto[]>) {
     disciplinesError.value = null;
 
     try {
+      let assignList: DisciplineTeacherAssignmentDto[] = [];
+      try {
+        assignList = await getDisciplineTeacherAssignments();
+      } catch {
+        assignList = [];
+      }
+      const byPlan = assignmentByPlanRowId(assignList);
+      const normSel = normTeacherLast(lastName);
+
       const raw = await getDisciplineCards(lastName, academicYear.value);
+      let normalized = normalizeDisciplineCardsResponse(raw);
+
+      if (assignList.length) {
+        normalized = normalized.filter((c) => {
+          const pid = safeNumber(c.planRowId ?? c.plan_row_id);
+          if (pid <= 0) {
+            return true;
+          }
+          const a = byPlan.get(pid);
+          if (!a) {
+            return true;
+          }
+          return normTeacherLast(effectiveActualLastName(a)) === normSel;
+        });
+
+        const extraByPlanLn = new Map<string, Set<number>>();
+        for (const a of assignList) {
+          if (normTeacherLast(effectiveActualLastName(a)) !== normSel) {
+            continue;
+          }
+          const planLn = (a.planLastName ?? '').trim();
+          if (!planLn || normTeacherLast(planLn) === normSel) {
+            continue;
+          }
+          const pid = Number(a.planRowId);
+          if (!Number.isFinite(pid) || pid <= 0) {
+            continue;
+          }
+          if (!extraByPlanLn.has(planLn)) {
+            extraByPlanLn.set(planLn, new Set());
+          }
+          extraByPlanLn.get(planLn)!.add(pid);
+        }
+
+        const existingIds = new Set(
+          normalized
+            .map((c) => safeNumber(c.planRowId ?? c.plan_row_id))
+            .filter((n) => n > 0)
+        );
+
+        for (const [planLn, idSet] of extraByPlanLn) {
+          try {
+            const otherRaw = await getDisciplineCards(planLn, academicYear.value);
+            const other = normalizeDisciplineCardsResponse(otherRaw);
+            for (const c of other) {
+              const pid = safeNumber(c.planRowId ?? c.plan_row_id);
+              if (idSet.has(pid) && !existingIds.has(pid)) {
+                normalized.push(c);
+                existingIds.add(pid);
+              }
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+      }
 
       const teacher = teachers.value.find((t) => t.lastName === lastName);
-      const teacherFio =
+      const teacherFioDefault =
         teacher?.fio ||
         [teacher?.lastName, teacher?.firstName, teacher?.patronymic]
           .filter(Boolean)
@@ -367,26 +509,35 @@ export function useAdminDisciplines(teachers: Ref<TeacherDto[]>) {
 
       const planIds = [
         ...new Set(
-          normalizeDisciplineCardsResponse(raw)
+          normalized
             .map((c) => safeNumber(c.planRowId ?? c.plan_row_id))
             .filter((n) => n > 0)
         ),
       ];
 
-      const stats = await loadStatsByPlanBatched(
+      const stats = await loadStatsForPlanGroups(
+        planIds,
+        byPlan,
         lastName,
-        academicYear.value,
-        planIds
+        academicYear.value
       );
 
-      const base = normalizeDisciplineCardsResponse(raw).map((c) =>
-        mapTeacherCardToItem(c, teacherFio, lastName, stats)
-      );
+      const base = normalized.map((c) => {
+        const pid = safeNumber(c.planRowId ?? c.plan_row_id);
+        const a = byPlan.get(pid);
+        const tfio = a ? assignmentDisplayFio(a) : teacherFioDefault;
+        const tln = a ? effectiveActualLastName(a) : lastName;
+        const item = mapTeacherCardToItem(c, tfio, tln, stats);
+        const apiLn = reportApiLastNameForPlanRow(a, lastName);
+        const reportApi =
+          normTeacherLast(apiLn) !== normTeacherLast(tln) ? apiLn : undefined;
+        return { ...item, reportApiLastName: reportApi };
+      });
 
       const enriched = await enrichCardsWithGroups(
         base,
         academicYear.value,
-        () => lastName
+        resolveTeacherLastName
       );
 
       if (seq !== loadByTeacherSeq) {

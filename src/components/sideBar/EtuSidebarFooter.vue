@@ -3,7 +3,7 @@
     <div class="user-info">
       <div class="user-name">{{ teacherFullName }}</div>
       <div class="user-role">
-        {{ teacherRole }}
+        {{ roleDisplay }}
         <span v-if="teacherDept">· {{ teacherDept }}</span>
       </div>
     </div>
@@ -12,34 +12,12 @@
 
 <script setup lang="ts">
   import { computed } from 'vue';
-  import { useAuth } from '@/composables/useAuth';
+  import { useUser } from '@/composables/useUser';
 
-  const { user } = useAuth();
+  const { user, roleDisplay } = useUser();
 
   const teacherFullName = computed(() => user.value?.fioShort ?? 'Преподаватель');
   const teacherDept = computed(() => user.value?.department ?? '');
-  const teacherRole = computed(() => {
-    const rawRole = (user.value?.role ?? '').toString().trim();
-    const role = rawRole.toUpperCase().split(',').map((r: string) => r.trim()).filter(Boolean);
-    const roleDisplay = (user.value?.roleDisplay ?? '').toString().trim();
-    const hasAdmin =
-      role.includes('ADMIN') ||
-      roleDisplay.toLowerCase().includes('администратор');
-    const hasTeacher =
-      role.includes('TEACHER') ||
-      roleDisplay.toLowerCase().includes('преподаватель') ||
-      !role.length;
-    if (hasAdmin) {
-      return 'Преподаватель / Администратор';
-    }
-    if (hasTeacher) {
-      return 'Преподаватель';
-    }
-    if (roleDisplay) {
-      return roleDisplay;
-    }
-    return 'Преподаватель';
-  });
 </script>
 
 <style scoped>

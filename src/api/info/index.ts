@@ -60,6 +60,8 @@ export type {
   TeacherDto,
   AuditLogEntryDto,
   AuditLogQueryParams,
+  DisciplineTeacherAssignmentDto,
+  UpdateDisciplineTeacherAssignmentRequest,
   TemplateDto,
   TemplateCriteriaDto,
   DownloadFormat,
@@ -81,6 +83,10 @@ export const {
   getAdminDisciplines,
   getAuditLog,
   rollbackAuditEntry,
+  getDisciplineTeacherAssignments,
+  getDisciplineTeacherAssignment,
+  putDisciplineTeacherAssignment,
+  deleteDisciplineTeacherAssignment,
 } = infoApi.admin;
 
 export const {

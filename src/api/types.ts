@@ -72,6 +72,7 @@ export type TeacherDto = {
   fio?: string;
   email?: string;
   role?: string;
+  roles?: string[];
   position?: string;
   rank?: string;
   degree?: string;
@@ -100,6 +101,30 @@ export type AuditLogQueryParams = {
   actor?: string;
 };
 
+/** Строка рабочей программы (teaching_load_csv) и преподаватель по плану / фактически. */
+export type DisciplineTeacherAssignmentDto = {
+  planRowId: number;
+  disciplineName?: string;
+  course?: number | string;
+  semester?: number | string;
+  planLastName?: string;
+  planFirstName?: string;
+  planPatronymic?: string;
+  planTeacherFio?: string;
+  actualLastName?: string;
+  actualFirstName?: string;
+  actualPatronymic?: string;
+  actualTeacherFio?: string;
+  hasOverride?: boolean;
+};
+
+export type UpdateDisciplineTeacherAssignmentRequest = {
+  actualLastName: string;
+  actualFirstName?: string;
+  actualPatronymic?: string;
+  updatedBy?: string;
+};
+
 export interface AdminModule {
   getAdminStats(academicYear?: string): Promise<AdminStatsDto>;
   getAdminTeachers(search?: string): Promise<TeacherDto[]>;
@@ -112,6 +137,20 @@ export interface AdminModule {
   getAdminDisciplines(): Promise<string[]>;
   getAuditLog(params?: AuditLogQueryParams): Promise<AuditLogEntryDto[]>;
   rollbackAuditEntry(entryId: number, actor?: string): Promise<AuditLogEntryDto>;
+  getDisciplineTeacherAssignments(
+    search?: string
+  ): Promise<DisciplineTeacherAssignmentDto[]>;
+  getDisciplineTeacherAssignment(
+    planRowId: number
+  ): Promise<DisciplineTeacherAssignmentDto>;
+  putDisciplineTeacherAssignment(
+    planRowId: number,
+    body: UpdateDisciplineTeacherAssignmentRequest
+  ): Promise<DisciplineTeacherAssignmentDto>;
+  deleteDisciplineTeacherAssignment(
+    planRowId: number,
+    actor?: string
+  ): Promise<void>;
 }
 
 // ——— analytics ———

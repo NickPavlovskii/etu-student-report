@@ -6,7 +6,7 @@
     <etu-page-header
       icon="mdi-shield-outline"
       title="Администрирование"
-      subtitle="Пользователи ИС, дисциплины кафедры, журнал событий"
+      subtitle="Сотрудники, дисциплины, назначения преподавателей по рабочей программе, журнал"
       icon-color="#2563eb"
       icon-bg-color="#eff6ff"
     />
@@ -18,6 +18,7 @@
     >
       <v-tab value="users">Сотрудники кафедры</v-tab>
       <v-tab value="disciplines">Дисциплины кафедры</v-tab>
+      <v-tab value="assignments">Закрепление дисциплин</v-tab>
       <v-tab value="audit">Журнал событий</v-tab>
     </v-tabs>
 
@@ -31,6 +32,10 @@
 
       <v-window-item value="disciplines">
         <disciplines-tab />
+      </v-window-item>
+
+      <v-window-item value="assignments">
+        <assignments-tab />
       </v-window-item>
 
       <v-window-item value="audit">
@@ -49,11 +54,14 @@
   import UserTab from './components/user/UserTab.vue';
   import DisciplinesTab from './components/disciplines/DisciplinesTab.vue';
   import AuditTab from './components/audit/AuditTab.vue';
+  import AssignmentsTab from './components/assignments/AssignmentsTab.vue';
   import { useAdminUsers } from './composables/useAdminUsers';
   import { useAdminDisciplines } from './composables/useAdminDisciplines';
   import { useAdminAudit } from './composables/useAdminAudit';
+  import { useAdminDisciplineAssignments } from './composables/useAdminDisciplineAssignments';
   import type { AdminDisciplineCardItem } from './model';
   import {
+    adminAssignmentsKey,
     adminAuditKey,
     adminDisciplinesKey,
     adminOpenDisciplineKey,
@@ -65,7 +73,7 @@
   const { academicYear } = useAcademicYear();
   const { user: currentUser } = useUser();
 
-  type AdminTab = 'users' | 'disciplines' | 'audit';
+  type AdminTab = 'users' | 'disciplines' | 'assignments' | 'audit';
 
   function parseAdminTabQuery(q: unknown): AdminTab | null {
     const raw = Array.isArray(q) ? q[0] : q;
@@ -73,7 +81,16 @@
     if (t === 'staff') {
       return 'users';
     }
-    if (t === 'users' || t === 'disciplines' || t === 'audit') {
+    if (
+      t === 'users' ||
+      t === 'disciplines' ||
+      t === 'assignments' ||
+      t === 'teacher-assignments' ||
+      t === 'audit'
+    ) {
+      if (t === 'teacher-assignments') {
+        return 'assignments';
+      }
       return t;
     }
     return null;
@@ -84,10 +101,12 @@
   );
   const adminUsers = useAdminUsers();
   const disciplines = useAdminDisciplines(adminUsers.teachers);
+  const assignments = useAdminDisciplineAssignments();
   const audit = useAdminAudit();
 
   provide(adminUsersKey, adminUsers);
   provide(adminDisciplinesKey, disciplines);
+  provide(adminAssignmentsKey, assignments);
   provide(adminAuditKey, audit);
 
   async function openDisciplineByName(item: AdminDisciplineCardItem) {
@@ -99,7 +118,7 @@
       router.push({
         name: 'discipline',
         params: { id: String(id) },
-        query: { fromAdmin: '1', teacherFio: item.teacherFio || '' },
+        query: adminDisciplineOpenQuery(item),
       });
       return;
     }
@@ -129,7 +148,7 @@
         router.push({
           name: 'discipline',
           params: { id: String(pr) },
-          query: { fromAdmin: '1', teacherFio: item.teacherFio || '' },
+          query: adminDisciplineOpenQuery(cached),
         });
         return;
       }
@@ -150,7 +169,7 @@
         router.push({
           name: 'discipline',
           params: { id: String(planId) },
-          query: { fromAdmin: '1', teacherFio: item.teacherFio || '' },
+          query: adminDisciplineOpenQuery(item),
         });
       } else {
         router.push('/disciplines');
@@ -161,6 +180,18 @@
   }
 
   provide(adminOpenDisciplineKey, openDisciplineByName);
+
+  function adminDisciplineOpenQuery(item: AdminDisciplineCardItem) {
+    const q: Record<string, string> = {
+      fromAdmin: '1',
+      teacherFio: item.teacherFio || '',
+    };
+    const planLn = item.reportApiLastName?.trim();
+    if (planLn) {
+      q.planTeacherLastName = planLn;
+    }
+    return q;
+  }
 
   async function loadAdminTabData(tab: AdminTab) {
     if (tab === 'users') {
@@ -177,6 +208,9 @@
       } else if (adminUsers.teachers.value.length > 0) {
         await disciplines.loadDisciplinesForAllTeachers();
       }
+    }
+    if (tab === 'assignments') {
+      await assignments.loadTab();
     }
     if (tab === 'audit') {
       await audit.loadAuditLog();
@@ -207,6 +241,8 @@
 
 <style scoped>
   .page {
+    max-width: 100%;
+    overflow-x: hidden;
     background: #f5f6f8;
     padding: 24px 28px 50px;
     min-height: 100%;
@@ -223,6 +259,7 @@
   }
 
   .admin-window {
+    min-width: 0;
     background: #fff;
     border-radius: 12px;
     padding: 24px;

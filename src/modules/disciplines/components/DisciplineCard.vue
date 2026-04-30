@@ -2,7 +2,17 @@
   <v-card
     class="discipline-card"
     elevation="0"
-    @click="$emit('click', card.codeRow)"
+    @click="
+      $emit('click', {
+        codeRow: card.codeRow,
+        planTeacherLastNameForApi: String(
+          item.planTeacherLastNameForApi ?? ''
+        ),
+        planTeacherFromPlanFio: String(
+          item.planTeacherFromPlanFio ?? ''
+        ),
+      })
+    "
   >
     <div class="card-header">
       <div class="card-header-inner">
@@ -23,6 +33,21 @@
             mdi-account-outline
           </v-icon>
           <span class="card-teacher-name">{{ card.teacherFio }}</span>
+        </div>
+        <div
+          v-if="card.planTeacherFromPlanFio"
+          class="card-plan-teacher-note"
+        >
+          <v-icon
+            size="14"
+            class="card-plan-teacher-note__icon"
+          >
+            mdi-information-outline
+          </v-icon>
+          По рабочей программе дисциплину ведёт:
+          <span class="card-plan-teacher-note__name">
+            {{ card.planTeacherFromPlanFio }}
+          </span>
         </div>
         <div
           v-if="card.educationForm || card.educationLevel"
@@ -113,7 +138,15 @@
     item: Record<string, unknown>;
   }>();
 
-  defineEmits<{ click: [codeRow: string | number] }>();
+  defineEmits<{
+    click: [
+      payload: {
+        codeRow: string | number;
+        planTeacherLastNameForApi: string;
+        planTeacherFromPlanFio: string;
+      },
+    ];
+  }>();
 
   const card = computed(() => {
     const i = props.item;
@@ -123,6 +156,7 @@
       course: (i.course ?? i.Course ?? '—') as string | number,
       semester: (i.semester ?? i.Semester ?? '—') as string | number,
       teacherFio: i.teacherFio as string | undefined,
+      planTeacherFromPlanFio: i.planTeacherFromPlanFio as string | undefined,
       educationLevel: i.educationLevel as string | undefined,
       educationForm: i.educationForm as string | undefined,
       loaded: i.loaded as number | string,
@@ -233,6 +267,30 @@
     line-height: 1.35;
     color: #0f172a;
     font-feature-settings: 'kern' 1;
+  }
+  .card-plan-teacher-note {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #92400e;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    padding: 4px 8px;
+    width: fit-content;
+    max-width: 100%;
+  }
+  .card-plan-teacher-note__icon {
+    color: #d97706;
+    flex-shrink: 0;
+  }
+  .card-plan-teacher-note__name {
+    font-weight: 700;
+    color: #7c2d12;
   }
   .card-meta {
     display: flex;

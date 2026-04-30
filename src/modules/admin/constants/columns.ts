@@ -1,6 +1,6 @@
-import type { UserTableColumn } from '../model';
+import type { AssignmentsTableColumn, UserTableColumn } from '../model';
 
-export type { UserTableColumn };
+export type { AssignmentsTableColumn, UserTableColumn };
 
 export const USER_TABLE_COLUMNS: UserTableColumn[] = [
   {
@@ -31,6 +31,45 @@ export const USER_TABLE_COLUMNS: UserTableColumn[] = [
     key: 'role',
     class: 'col-role',
     header: 'Роль',
+    headerClass: 'th-filled',
+  },
+];
+
+export const ASSIGNMENTS_TABLE_COLUMNS: AssignmentsTableColumn[] = [
+  {
+    key: 'disciplineName',
+    class: 'col-discipline',
+    header: 'Дисциплина',
+    headerClass: 'th-filled th-sep',
+  },
+  {
+    key: 'course',
+    class: 'col-course',
+    header: 'Курс',
+    headerClass: 'th-filled th-sep',
+  },
+  {
+    key: 'semester',
+    class: 'col-semester',
+    header: 'Семестр',
+    headerClass: 'th-filled th-sep',
+  },
+  {
+    key: 'planTeacher',
+    class: 'col-plan',
+    header: 'По плану',
+    headerClass: 'th-filled th-sep',
+  },
+  {
+    key: 'actualTeacher',
+    class: 'col-actual',
+    header: 'Фактический преподаватель',
+    headerClass: 'th-filled th-sep',
+  },
+  {
+    key: 'actions',
+    class: 'col-actions',
+    header: '',
     headerClass: 'th-filled',
   },
 ];

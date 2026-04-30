@@ -127,6 +127,39 @@ function applyFioCache(
   });
 }
 
+function extractTeacherChangeFromDetails(detailsRaw?: string) {
+  const details = String(detailsRaw ?? '').trim();
+  if (!details) {
+    return { before: '', after: '' };
+  }
+
+  const arrow = details.match(/(?:измен[её]н|снят[ао]?)[^:]*:\s*[«"]?(.+?)[»"]?\s*(?:->|→)\s*[«"]?(.+?)[»"]?(?:\.|$)/i);
+  if (arrow?.[1] && arrow[2]) {
+    return { before: arrow[1].trim(), after: arrow[2].trim() };
+  }
+
+  const kv = (key: string) =>
+    details.match(new RegExp(`${key}\\s*[:=]\\s*([^,.;]+)`, 'i'))?.[1]?.trim() ?? '';
+
+  const before =
+    kv('previousTeacherFio') ||
+    kv('beforeTeacherFio') ||
+    kv('oldTeacherFio') ||
+    kv('fromTeacherFio') ||
+    kv('previousLastName') ||
+    kv('beforeLastName') ||
+    kv('oldLastName');
+  const after =
+    kv('actualTeacherFio') ||
+    kv('newTeacherFio') ||
+    kv('toTeacherFio') ||
+    kv('actualLastName') ||
+    kv('newLastName') ||
+    kv('toLastName');
+
+  return { before, after };
+}
+
 export function useAdminAudit() {
   const { user } = useUser();
 
@@ -180,6 +213,45 @@ export function useAdminAudit() {
       if (seq !== loadAuditSeq) {
         return;
       }
+
+      // Диагностика: что именно пришло с сервера в журнал аудита.
+      console.groupCollapsed(
+        `[audit] raw rows: ${rows.length}, filter=${params.action || 'ALL'}`
+      );
+      console.table(
+        rows.map((r) => ({
+          id: r.id,
+          action: r.action,
+          entityType: r.entityType,
+          entityId: r.entityId,
+          actor: r.actor,
+          details: r.details,
+        }))
+      );
+      const teacherRows = rows.filter(
+        (r) =>
+          r.action === 'DISCIPLINE_TEACHER_SET' ||
+          r.action === 'DISCIPLINE_TEACHER_RESET'
+      );
+      if (teacherRows.length > 0) {
+        console.groupCollapsed('[audit] discipline teacher changes');
+        console.table(
+          teacherRows.map((r) => {
+            const ch = extractTeacherChangeFromDetails(r.details);
+            return {
+              id: r.id,
+              action: r.action,
+              disciplineRow: r.entityId ?? '',
+              beforeTeacher: ch.before || '(не передано сервером)',
+              afterTeacher: ch.after || '(не передано сервером)',
+              details: r.details ?? '',
+            };
+          })
+        );
+        console.groupEnd();
+      }
+      console.groupEnd();
+
       auditLog.value = rows;
 
       if (auditLog.value.length > 0) {
