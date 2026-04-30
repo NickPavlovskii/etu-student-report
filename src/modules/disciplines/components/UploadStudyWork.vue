@@ -658,6 +658,11 @@
     validating.value = true;
     try {
       const f = payload.file;
+      if (!(f instanceof File)) {
+        emit('submit', payload);
+        close();
+        return;
+      }
       const tid = resolvedTemplateId.value;
       const result = await validateDocument(
         f,
