@@ -27,6 +27,12 @@ function normalizeAcademicYear(raw: string): string {
   return raw.replace(/\//g, '-').trim();
 }
 
+function getMoodleWorksCount(
+  row: { moodleLinksCount?: number; moodleUploadedCount?: number }
+): number {
+  return Number(row.moodleLinksCount ?? row.moodleUploadedCount) || 0;
+}
+
 export type { ScopeMode } from '../model';
 
 export function useAnalytics(filters: {
@@ -139,13 +145,16 @@ export function useAnalytics(filters: {
     if (rows.length > 0) {
       let expectedCount = 0;
       let totalWorks = 0;
+      let moodleWorks = 0;
       for (const r of rows) {
         expectedCount += Number(r.expectedCount) || 0;
         totalWorks += Number(r.uploadedCount) || 0;
+        moodleWorks += getMoodleWorksCount(r);
       }
       return {
         expectedCount,
         totalWorks,
+        moodleWorks,
         totalTeachers: adminKpi.value?.totalTeachers,
       };
     }
@@ -154,6 +163,7 @@ export function useAnalytics(filters: {
       return {
         expectedCount: a.expectedCount ?? 0,
         totalWorks: a.totalWorks ?? 0,
+        moodleWorks: a.moodleWorks ?? 0,
         totalTeachers: a.totalTeachers,
       };
     }
@@ -162,6 +172,7 @@ export function useAnalytics(filters: {
       return {
         expectedCount: t.expectedCount ?? 0,
         totalWorks: t.totalWorks ?? 0,
+        moodleWorks: t.moodleWorks ?? 0,
       };
     }
     return null;

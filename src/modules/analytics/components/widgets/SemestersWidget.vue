@@ -48,6 +48,9 @@
                     :uploaded="numSemUpload(row)"
                     :plan="row.expectedCount"
                   />
+                  <div class="moodle-note">
+                    Из них в Moodle: {{ semMoodleNum(row) }}
+                  </div>
                 </td>
               </tr>
               <tr class="row-total">
@@ -57,6 +60,9 @@
                     :uploaded="totals.up"
                     :plan="totals.plan"
                   />
+                  <div class="moodle-note">
+                    Из них в Moodle: {{ totals.moodle }}
+                  </div>
                 </td>
               </tr>
             </template>
@@ -99,6 +105,10 @@
     return `sem-${String(row.course ?? '')}-${String(row.semester ?? '')}`;
   }
 
+  function semMoodleNum(row: BySemesterRow) {
+    return Number(row.moodleLinksCount ?? row.moodleUploadedCount) || 0;
+  }
+
   const bars = computed((): VBarItem[] =>
     toValue(pagination.pagedItems).map((r) => {
       const c = r.course ?? '—';
@@ -109,6 +119,7 @@
         shortLabel: label,
         plan: r.expectedCount,
         uploaded: numSemUpload(r),
+        moodle: semMoodleNum(r),
       };
     })
   );
@@ -116,11 +127,13 @@
   const totals = computed(() => {
     let plan = 0;
     let up = 0;
+    let moodle = 0;
     for (const r of props.rows) {
       plan += r.expectedCount;
       up += numSemUpload(r);
+      moodle += semMoodleNum(r);
     }
-    return { plan, up };
+    return { plan, up, moodle };
   });
 
   function onExportExcel() {
@@ -130,10 +143,11 @@
       r.semester ?? '—',
       r.expectedCount,
       numSemUpload(r),
+      semMoodleNum(r),
     ]);
-    body.push(['Итого', '—', t.plan, t.up]);
+    body.push(['Итого', '—', t.plan, t.up, t.moodle]);
     exportToExcel(
-      ['Курс', 'Семестр', 'Ожидается', 'Загружено'],
+      ['Курс', 'Семестр', 'Ожидается', 'Загружено', 'Из них в Moodle'],
       body,
       'analitika_zagruzki_po_semestram',
       'Семестры'
@@ -199,5 +213,11 @@
   }
   .semesters-widget :deep(.row-total td) {
     border-top: 2px solid #e5e7eb;
+  }
+  .moodle-note {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #4f46e5;
+    font-weight: 600;
   }
 </style>

@@ -15,6 +15,7 @@ export type VBarItem = {
   shortLabel: string;
   plan: number;
   uploaded: number;
+  moodle?: number;
 };
 
 /** Строка горизонтального bar-chart (ключ, заголовок, план / факт). */
@@ -23,6 +24,7 @@ export type HBarRow = {
   title: string;
   plan: number;
   uploaded: number;
+  moodle?: number;
 };
 
 export type TeacherPlanCardNormalized = {
@@ -38,6 +40,7 @@ export type TeacherTreeChildRow = {
   planRowId?: number;
   plan: number;
   uploaded: number;
+  moodle?: number;
   groupTags: string[];
 };
 
@@ -46,6 +49,7 @@ export type TeacherTreeBlock = {
   teacher: string;
   plan: number;
   uploaded: number;
+  moodle?: number;
   pct: number;
   children: TeacherTreeChildRow[];
 };
@@ -62,4 +66,5 @@ export type AnalyticsDisciplineTableRow = {
   studentsCount: number;
   expectedCount: number;
   uploadedCount: number;
+  moodleLinksCount?: number;
 };

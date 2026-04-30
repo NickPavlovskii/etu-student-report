@@ -58,6 +58,9 @@
                     :uploaded="teacherUploadedNum(row)"
                     :plan="num(row.expectedCount)"
                   />
+                  <div class="moodle-note">
+                    Из них в Moodle: {{ teacherMoodleNum(row) }}
+                  </div>
                 </td>
               </tr>
               <tr class="row-total">
@@ -67,6 +70,9 @@
                     :uploaded="totals.up"
                     :plan="totals.plan"
                   />
+                  <div class="moodle-note">
+                    Из них в Moodle: {{ totals.moodle }}
+                  </div>
                 </td>
               </tr>
             </template>
@@ -108,11 +114,13 @@
   const totals = computed(() => {
     let plan = 0;
     let up = 0;
+    let moodle = 0;
     for (const r of props.rows) {
       plan += num(r.expectedCount);
       up += teacherUploadedNum(r);
+      moodle += teacherMoodleNum(r);
     }
-    return { plan, up };
+    return { plan, up, moodle };
   });
 
   function teacherName(row: TeachersSummaryItem) {
@@ -128,12 +136,17 @@
     return typeof v === 'number' ? v : 0;
   }
 
+  function teacherMoodleNum(row: TeachersSummaryItem) {
+    return Number(row.moodleLinksCount ?? row.moodleUploadedCount) || 0;
+  }
+
   const chartRows = computed((): HBarRow[] =>
     toValue(pagination.pagedItems).map((row) => ({
       key: teacherKey(row),
       title: teacherName(row),
       plan: num(row.expectedCount),
       uploaded: teacherUploadedNum(row),
+      moodle: teacherMoodleNum(row),
     }))
   );
 
@@ -144,10 +157,11 @@
       r.disciplinesCount ?? '—',
       num(r.expectedCount),
       teacherUploadedNum(r),
+      teacherMoodleNum(r),
     ]);
-    body.push(['Итого', '—', t.plan, t.up]);
+    body.push(['Итого', '—', t.plan, t.up, t.moodle]);
     exportToExcel(
-      ['Преподаватель', 'Дисциплин', 'Ожидается', 'Загружено'],
+      ['Преподаватель', 'Дисциплин', 'Ожидается', 'Загружено', 'Из них в Moodle'],
       body,
       'analitika_zagruzki_po_prepodavatelyam',
       'Преподаватели'
@@ -192,5 +206,11 @@
     font-size: 12px;
     font-weight: 600;
     flex-shrink: 0;
+  }
+  .moodle-note {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #4f46e5;
+    font-weight: 600;
   }
 </style>

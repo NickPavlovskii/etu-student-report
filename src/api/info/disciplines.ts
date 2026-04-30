@@ -2,6 +2,7 @@ import type { AxiosInstance } from 'axios';
 import type {
   ControlScheduleDto,
   DisciplinesModule,
+  PutMoodleDisciplineLinkPayload,
   UploadReportPayload,
   UploadReportPayloadCard,
 } from '../types';
@@ -124,7 +125,13 @@ export default function disciplinesModule(api: AxiosInstance): DisciplinesModule
       );
       form.append('status', payload.status);
       form.append('uploadedBy', payload.uploadedBy);
-      form.append('file', payload.file);
+      if (payload.moodleUrl) {
+        form.append('moodleUrl', payload.moodleUrl);
+      }
+      form.append('storageType', payload.storageType ?? 'file');
+      if (payload.file) {
+        form.append('file', payload.file);
+      }
 
       const { data } = await api.post(
         `/teachers/${encodeURIComponent(lastName)}/discipline/${planRowId}/reports`,
@@ -154,7 +161,13 @@ export default function disciplinesModule(api: AxiosInstance): DisciplinesModule
       );
       form.append('status', payload.status);
       form.append('uploadedBy', payload.uploadedBy);
-      form.append('file', payload.file);
+      if (payload.moodleUrl) {
+        form.append('moodleUrl', payload.moodleUrl);
+      }
+      form.append('storageType', payload.storageType ?? 'file');
+      if (payload.file) {
+        form.append('file', payload.file);
+      }
 
       const { data } = await api.post(
         `/teachers/${encodeURIComponent(lastName)}/discipline/${planRowId}/reports`,
@@ -162,6 +175,44 @@ export default function disciplinesModule(api: AxiosInstance): DisciplinesModule
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
       return data;
+    },
+    async getDisciplineMoodleLinks(
+      lastName: string,
+      planRowId: number,
+      academicYear?: string
+    ) {
+      const params = academicYear ? { academicYear } : {};
+      const { data } = await api.get(
+        `/teachers/${encodeURIComponent(lastName)}/discipline/${planRowId}/moodle-links`,
+        { params }
+      );
+      return data;
+    },
+    async putDisciplineMoodleLink(
+      lastName: string,
+      planRowId: number,
+      payload: PutMoodleDisciplineLinkPayload
+    ) {
+      const { data } = await api.put(
+        `/teachers/${encodeURIComponent(lastName)}/discipline/${planRowId}/moodle-links`,
+        payload
+      );
+      return data;
+    },
+    async deleteDisciplineMoodleLink(
+      lastName: string,
+      planRowId: number,
+      payload: {
+        groupName: string;
+        controlType: string;
+        topic: string;
+        academicYear: string;
+      }
+    ) {
+      await api.delete(
+        `/teachers/${encodeURIComponent(lastName)}/discipline/${planRowId}/moodle-links`,
+        { params: payload }
+      );
     },
     async downloadReport(reportId: number): Promise<Blob> {
       const res = await api.get(`/reports/${reportId}/download`, {

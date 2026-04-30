@@ -3,11 +3,15 @@ import {
   getDisciplineCards,
   getDisciplineControls,
   getDisciplineGroups,
+  getDisciplineMoodleLinks,
   getDisciplineReports,
   getDisciplineStudents,
   getDisciplineTeacherAssignments,
 } from '@/api/info';
-import type { DisciplineTeacherAssignmentDto } from '@/api/types';
+import type {
+  DisciplineTeacherAssignmentDto,
+  MoodleDisciplineLinkDto,
+} from '@/api/types';
 import {
   assignmentByPlanRowId,
   effectiveActualLastName,
@@ -95,6 +99,72 @@ function makeReportKey(r: DisciplineReportRow | null | undefined): string {
     (r?.controlType ?? '').trim(),
     (r?.topic ?? '').trim(),
   ]);
+}
+
+function normalizeAcademicYear(raw: string): string {
+  return String(raw ?? '').trim().replace(/\//g, '-');
+}
+
+function mergeReportsWithMoodleLinks(
+  apiReports: DisciplineReportRow[],
+  moodleLinks: MoodleDisciplineLinkDto[],
+  studentsList: unknown[],
+  planRowId: number,
+  teacherLastName: string,
+  currentAcademicYear: string
+): DisciplineReportRow[] {
+  const base = [...(apiReports ?? [])];
+  if (!moodleLinks?.length || !studentsList?.length) return base;
+
+  const normalizedCurrentYear = normalizeAcademicYear(currentAcademicYear);
+  const studentsByGroupMap = new Map<string, number[]>();
+  for (const s of studentsList ?? []) {
+    const o = s as Record<string, unknown>;
+    const group = String(o.groupName ?? o.group ?? '').trim();
+    const sid = getStudentRecordId(s);
+    if (!group || sid <= 0) continue;
+    const list = studentsByGroupMap.get(group) ?? [];
+    list.push(sid);
+    studentsByGroupMap.set(group, list);
+  }
+
+  let virtualId = -1;
+  for (const link of moodleLinks) {
+    const linkYear = normalizeAcademicYear(link.academicYear);
+    if (normalizedCurrentYear && linkYear && linkYear !== normalizedCurrentYear) {
+      continue;
+    }
+    const groupName = String(link.groupName ?? '').trim();
+    const topic = String(link.topic ?? '').trim();
+    const moodleUrl = String(link.moodleUrl ?? '').trim();
+    if (!groupName || !topic || !moodleUrl) continue;
+
+    const studentIds = studentsByGroupMap.get(groupName) ?? [];
+    for (const studentId of studentIds) {
+      base.push({
+        id: virtualId--,
+        planRowId,
+        studentId,
+        groupName,
+        teacherLastName,
+        topic,
+        workType: String(link.controlType ?? '').trim() || 'Moodle',
+        controlType: String(link.controlType ?? '').trim() || 'Moodle',
+        workTitle: String(link.controlType ?? '').trim() || topic,
+        academicYear: currentAcademicYear,
+        uploadDate: null,
+        version: 0,
+        check: null,
+        status: 'В Moodle',
+        uploadedBy: String(link.updatedBy ?? '').trim() || 'moodle-link',
+        fileName: '',
+        moodleUrl,
+        storageType: 'moodle',
+      } as DisciplineReportRow);
+    }
+  }
+
+  return base;
 }
 
 export function pickLatestReports(
@@ -247,13 +317,26 @@ export function useDisciplines(
               ln
             ).trim();
             const apiLn = reportLn || ln;
-            const [reports, students, groupsLocal, controlsRaw] =
+            const [reports, students, groupsLocal, controlsRaw, moodleLinks] =
               await Promise.all([
                 getDisciplineReports(apiLn, id, year).catch(() => []),
                 getDisciplineStudents(apiLn, id, year).catch(() => []),
                 getDisciplineGroups(apiLn, id, year).catch(() => []),
                 getDisciplineControls(apiLn, id, year).catch(() => []),
+                getDisciplineMoodleLinks(apiLn, id, year).catch(
+                  () => [] as MoodleDisciplineLinkDto[]
+                ),
               ]);
+            const studentsArr = toArray(students);
+            const reportsArr = toArray(reports) as DisciplineReportRow[];
+            const mergedReports = mergeReportsWithMoodleLinks(
+              reportsArr,
+              moodleLinks,
+              studentsArr,
+              id,
+              apiLn,
+              year
+            );
             const rawGroups = toArray(groupsLocal);
             const groupNames = rawGroups
               .map((g) => normalizeGroupLabel(g))
@@ -261,8 +344,8 @@ export function useDisciplines(
             return [
               id,
               {
-                reports: toArray(reports) as DisciplineReportRow[],
-                students: toArray(students),
+                reports: mergedReports,
+                students: studentsArr,
                 groups: groupNames,
                 controls: toArray(controlsRaw) as ControlScheduleDto[],
               },

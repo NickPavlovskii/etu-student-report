@@ -45,6 +45,9 @@
                     :uploaded="row.uploaded"
                     :plan="row.plan"
                   />
+                  <div class="moodle-note">
+                    Из них в Moodle: {{ groupMoodle(row) }}
+                  </div>
                 </td>
               </tr>
               <tr class="row-total">
@@ -54,6 +57,9 @@
                     :uploaded="totals.up"
                     :plan="totals.plan"
                   />
+                  <div class="moodle-note">
+                    Из них в Moodle: {{ totals.moodle }}
+                  </div>
                 </td>
               </tr>
             </template>
@@ -93,12 +99,18 @@
   const totals = computed(() => {
     let plan = 0;
     let up = 0;
+    let moodle = 0;
     for (const r of props.rows) {
       plan += r.plan;
       up += r.uploaded;
+      moodle += groupMoodle(r);
     }
-    return { plan, up };
+    return { plan, up, moodle };
   });
+
+  function groupMoodle(row: VBarItem): number {
+    return Number(row.moodle) || 0;
+  }
 
   const chartRows = computed((): HBarRow[] =>
     toValue(pagination.pagedItems).map((row) => ({
@@ -106,15 +118,16 @@
       title: row.label,
       plan: row.plan,
       uploaded: row.uploaded,
+      moodle: groupMoodle(row),
     }))
   );
 
   function onExportExcel() {
     const t = totals.value;
-    const body = props.rows.map((r) => [r.label, r.plan, r.uploaded]);
-    body.push(['Итого', t.plan, t.up]);
+    const body = props.rows.map((r) => [r.label, r.plan, r.uploaded, groupMoodle(r)]);
+    body.push(['Итого', t.plan, t.up, t.moodle]);
     exportToExcel(
-      ['Группа', 'Ожидается', 'Загружено'],
+      ['Группа', 'Ожидается', 'Загружено', 'Из них в Moodle'],
       body,
       'analitika_zagruzki_po_gruppam',
       'Группы'
@@ -142,5 +155,11 @@
   .groups-widget :deep(.widget-card) {
     flex: 1 1 auto;
     min-height: 100%;
+  }
+  .moodle-note {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #4f46e5;
+    font-weight: 600;
   }
 </style>

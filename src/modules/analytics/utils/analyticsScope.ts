@@ -103,14 +103,16 @@ function splitInt(total: number, parts: number, index: number): number {
 
 function mergeDisciplinesStatsByName(
   rows: DisciplinesTableItem[]
-): Map<string, { e: number; u: number; s: number }> {
-  const m = new Map<string, { e: number; u: number; s: number }>();
+): Map<string, { e: number; u: number; s: number; ml: number }> {
+  const m = new Map<string, { e: number; u: number; s: number; ml: number }>();
   for (const r of rows) {
     const n = r.disciplineName.trim();
-    const cur = m.get(n) ?? { e: 0, u: 0, s: 0 };
+    const cur = m.get(n) ?? { e: 0, u: 0, s: 0, ml: 0 };
     cur.e += Number(r.expectedCount) || 0;
     cur.u += Number(r.uploadedCount) || 0;
     cur.s += Number(r.studentsCount) || 0;
+    cur.ml +=
+      Number(r.moodleLinksCount ?? r.moodleUploadedCount) || 0;
     m.set(n, cur);
   }
   return m;
@@ -155,6 +157,7 @@ export function buildPersonalDisciplinesTableFromCards(
     const totE = st?.e ?? 0;
     const totU = st?.u ?? 0;
     const totS = st?.s ?? 0;
+    const totMl = st?.ml ?? 0;
     const disambig =
       k > 1 || (c.course != null && c.semester != null);
     const label = disambig
@@ -166,6 +169,7 @@ export function buildPersonalDisciplinesTableFromCards(
       studentsCount: splitInt(totS, k, idx),
       expectedCount: splitInt(totE, k, idx),
       uploadedCount: splitInt(totU, k, idx),
+      moodleLinksCount: splitInt(totMl, k, idx),
     });
   }
   return result;
@@ -182,6 +186,8 @@ export function disciplinesTableFromBySemester(
       expectedCount: Number(r.expectedCount) || 0,
       uploadedCount:
         Number(r.uploadedCount ?? r.totalWorks) || 0,
+      moodleLinksCount:
+        Number((r as BySemesterRow & { moodleLinksCount?: number }).moodleLinksCount ?? r.moodleUploadedCount) || 0,
     }))
     .sort((a, b) => b.expectedCount - a.expectedCount);
 }
@@ -206,6 +212,7 @@ export function planRowsToDisciplineWidgetRows(
       studentsCount: Number(r.studentsCount) || 0,
       expectedCount: Number(r.expectedCount) || 0,
       uploadedCount: Number(r.uploadedCount) || 0,
+      moodleLinksCount: Number(r.moodleLinksCount) || 0,
     }))
     .sort((a, b) => {
       const d = a.disciplineName.localeCompare(b.disciplineName, 'ru');
@@ -226,6 +233,7 @@ export function disciplineTableItemsToWidgetRows(
     studentsCount: r.studentsCount,
     expectedCount: r.expectedCount,
     uploadedCount: r.uploadedCount,
+    moodleLinksCount: Number(r.moodleLinksCount ?? r.moodleUploadedCount) || 0,
   }));
 }
 
@@ -237,6 +245,7 @@ export function aggregateDisciplinesTableFromPlan(
     {
       expectedCount: number;
       uploadedCount: number;
+      moodleLinksCount: number;
       groupsCount: number;
       studentsCount: number;
     }
@@ -246,11 +255,13 @@ export function aggregateDisciplinesTableFromPlan(
     const cur = map.get(name) ?? {
       expectedCount: 0,
       uploadedCount: 0,
+      moodleLinksCount: 0,
       groupsCount: 0,
       studentsCount: 0,
     };
     cur.expectedCount += Number(row.expectedCount) || 0;
     cur.uploadedCount += Number(row.uploadedCount) || 0;
+    cur.moodleLinksCount += Number(row.moodleLinksCount) || 0;
     cur.groupsCount += Number(row.groupsCount) || 0;
     cur.studentsCount += Number(row.studentsCount) || 0;
     map.set(name, cur);
@@ -271,6 +282,7 @@ export function aggregateTeachersSummaryFromPlan(
     {
       expectedCount: number;
       uploadedCount: number;
+      moodleLinksCount: number;
       disciplines: Set<string>;
     }
   >();
@@ -281,11 +293,13 @@ export function aggregateTeachersSummaryFromPlan(
     const cur = map.get(t) ?? {
       expectedCount: 0,
       uploadedCount: 0,
+      moodleLinksCount: 0,
       disciplines: new Set<string>(),
     };
     cur.expectedCount += Number(row.expectedCount) || 0;
     cur.uploadedCount += Number(row.uploadedCount) || 0;
     cur.disciplines.add(row.disciplineName?.trim() || '');
+    cur.moodleLinksCount += Number(row.moodleLinksCount || 0);
     map.set(t, cur);
   }
   return [...map.entries()]
@@ -295,6 +309,7 @@ export function aggregateTeachersSummaryFromPlan(
       expectedCount: v.expectedCount,
       uploadedCount: v.uploadedCount,
       totalWorks: v.uploadedCount,
+      moodleLinksCount: v.moodleLinksCount,
       disciplinesCount: v.disciplines.size,
     }))
     .sort((a, b) => b.expectedCount - a.expectedCount);
@@ -308,6 +323,7 @@ export function buildTeacherDetailBlocks(
     {
       plan: number;
       uploaded: number;
+      moodle: number;
       children: TeacherTreeBlock['children'];
     }
   >();
@@ -315,16 +331,18 @@ export function buildTeacherDetailBlocks(
     const t = row.teacherFio?.trim() || row.teacherLastName?.trim() || '';
     if (!t) continue;
     if (!map.has(t)) {
-      map.set(t, { plan: 0, uploaded: 0, children: [] });
+      map.set(t, { plan: 0, uploaded: 0, moodle: 0, children: [] });
     }
     const b = map.get(t)!;
     b.plan += Number(row.expectedCount) || 0;
     b.uploaded += Number(row.uploadedCount) || 0;
+    b.moodle += Number(row.moodleLinksCount || 0);
     b.children.push({
       disciplineName: row.disciplineName?.trim() || '—',
       planRowId: row.planRowId,
       plan: Number(row.expectedCount) || 0,
       uploaded: Number(row.uploadedCount) || 0,
+      moodle: Number(row.moodleLinksCount) || 0,
       groupTags: formatGroupsForDisplay(row.groups),
     });
   }
@@ -333,6 +351,7 @@ export function buildTeacherDetailBlocks(
       teacher,
       plan: v.plan,
       uploaded: v.uploaded,
+      moodle: v.moodle,
       pct: v.plan
         ? Math.min(100, Math.round((v.uploaded / v.plan) * 100))
         : 0,
