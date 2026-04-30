@@ -16,6 +16,7 @@ const ROLE_ICO_MAP: Record<string, string> = {
   ADMIN: 'mdi-shield-account-outline',
   TEACHER: 'mdi-school-outline',
   HEAD: 'mdi-account-star-outline',
+  HEAD_DEPARTMENT: 'mdi-account-star-outline',
 };
 
 export function roleIco(v: string): string {
@@ -26,6 +27,7 @@ const ROLE_NAME_MAP: Record<string, string> = {
   ADMIN: 'Админ',
   TEACHER: 'Преподаватель',
   HEAD: 'Завед',
+  HEAD_DEPARTMENT: 'Зав. кафедры',
 };
 
 export function roleName(v: string): string {
@@ -40,6 +42,12 @@ export function tdClass(key: string): string {
     degree: 'td--pos',
     role: 'td--role',
     disciplines: 'td--disc',
+    disciplineName: 'td--disc',
+    course: 'td--num',
+    semester: 'td--num',
+    planTeacher: 'td--plan',
+    actualTeacher: 'td--actual',
+    actions: 'td--actions',
   };
   return m[key] ?? '';
 }

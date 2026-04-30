@@ -6,6 +6,8 @@ export const ENTITY_TYPE_LABELS: Readonly<Record<string, string>> = {
   TEMPLATE: 'Шаблон документа',
   DOCUMENT_TEMPLATE: 'Шаблон документа',
   DISCIPLINE: 'Дисциплина',
+  /** Как в логах Java: «Discipline plan row» */
+  DISCIPLINE_PLAN_ROW: 'Строка рабочей программы (дисциплина)',
   PLAN_ROW: 'Строка учебного плана',
   PLANROW: 'Строка учебного плана',
   USER: 'Учётная запись пользователя',
@@ -29,6 +31,7 @@ export const ROLE_LABELS: Readonly<Record<string, string>> = {
   TEACHER: 'Преподаватель',
   ADMIN: 'Администратор',
   HEAD: 'Заведующий кафедрой',
+  HEAD_DEPARTMENT: 'Зав. кафедры',
 };
 
 export const FIELD_LABELS: Readonly<Record<string, string>> = {
@@ -64,6 +67,14 @@ export const FIELD_LABELS: Readonly<Record<string, string>> = {
   entity_type: 'Тип объекта',
   entityid: 'Идентификатор',
   entity_id: 'Идентификатор',
+  actuallastname: 'Фамилия преподавателя (факт)',
+  actual_last_name: 'Фамилия преподавателя (факт)',
+  actualfirstname: 'Имя (факт)',
+  actual_first_name: 'Имя (факт)',
+  actualpatronymic: 'Отчество (факт)',
+  actual_patronymic: 'Отчество (факт)',
+  updatedby: 'Кто внёс изменение',
+  updated_by: 'Кто внёс изменение',
 };
 
 export const ACTION_INTRO: Readonly<Record<string, string>> = {
@@ -84,6 +95,10 @@ export const ROLLBACK_ACTION_RU: Readonly<Record<string, string>> = {
   'Создание шаблона': 'Создание шаблона документа отменено.',
   'Обновление шаблона': 'Обновление шаблона документа отменено.',
   'Удаление шаблона': 'Удаление шаблона документа отменено.',
+  'Назначение преподавателя по дисциплине':
+    'Назначение фактического преподавателя отменено.',
+  'Сброс преподавателя по дисциплине':
+    'Сброс фактического преподавателя отменён.',
 };
 
 export const PAIR_RE = /^([a-zA-Z_][\w]*)\s*:\s*([\s\S]+)$/;

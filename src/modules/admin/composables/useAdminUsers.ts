@@ -6,6 +6,7 @@ import {
   type TeacherDto,
 } from '@/api/info';
 import { useUser } from '@/composables/useUser';
+import { patchStoredUserRoleIfMatchesLastName } from '@/composables/refreshStoredUserRoles';
 import { initials as getInitials } from '@/utils/initials';
 import { ROLE_ITEMS } from '../constants';
 
@@ -29,25 +30,34 @@ function buildRoleUpdateBody(normalized: string[]): {
   role?: string;
   roles?: string[];
 } {
-  const hasAdmin = normalized.includes('ADMIN');
-  const hasTeacher = normalized.includes('TEACHER');
-  if (hasAdmin && hasTeacher) {
-    return { roles: ['Преподаватель', 'Администратор'] };
-  }
-  if (hasAdmin) {
-    return { role: 'ADMIN' };
-  }
-  if (hasTeacher) {
-    return { role: 'TEACHER' };
-  }
-  return { role: 'TEACHER' };
+  const apiRoles = normalized.map((r) =>
+    r === 'HEAD_DEPARTMENT' ? 'HEAD' : r
+  );
+  return {
+    role: roleFieldFromNormalized(apiRoles),
+    roles: apiRoles,
+  };
 }
 
 function roleFieldFromNormalized(normalized: string[]): string {
   const hasAdmin = normalized.includes('ADMIN');
   const hasTeacher = normalized.includes('TEACHER');
+  const hasHead =
+    normalized.includes('HEAD_DEPARTMENT') || normalized.includes('HEAD');
+  if (hasHead && hasAdmin && hasTeacher) {
+    return 'HEAD,ADMIN,TEACHER';
+  }
+  if (hasHead && hasTeacher) {
+    return 'HEAD,TEACHER';
+  }
+  if (hasHead && hasAdmin) {
+    return 'HEAD,ADMIN';
+  }
   if (hasAdmin && hasTeacher) {
     return 'ADMIN,TEACHER';
+  }
+  if (hasHead) {
+    return 'HEAD';
   }
   if (hasAdmin) {
     return 'ADMIN';
@@ -76,21 +86,36 @@ export function useAdminUsers() {
   }
 
   function teacherRoles(t: TeacherDto): string[] {
-    const raw = (t.role ?? '').trim().toUpperCase();
-    if (!raw) {
+    const roleField = String(t.role ?? '')
+      .trim()
+      .toUpperCase();
+    const rolesField = Array.isArray((t as { roles?: unknown }).roles)
+      ? ((t as { roles?: unknown }).roles as unknown[])
+      : [];
+    const parts = [
+      ...roleField
+        .split(',')
+        .map((s) => s.trim().toUpperCase())
+        .filter(Boolean),
+      ...rolesField.map((r) => String(r).trim().toUpperCase()).filter(Boolean),
+    ];
+    if (!parts.length) {
       return [];
     }
-    const parts = raw
-      .split(',')
-      .map((s) => s.trim().toUpperCase())
-      .filter(Boolean);
-    if (parts.includes('ADMIN')) {
-      return ['TEACHER', 'ADMIN'];
+    const recognized: string[] = [];
+    if (
+      parts.includes('TEACHER') ||
+      parts.includes('ADMIN') ||
+      parts.includes('HEAD_DEPARTMENT') ||
+      parts.includes('HEAD')
+    ) {
+      recognized.push('TEACHER');
     }
-    if (parts.includes('TEACHER')) {
-      return ['TEACHER'];
+    if (parts.includes('ADMIN')) recognized.push('ADMIN');
+    if (parts.includes('HEAD_DEPARTMENT') || parts.includes('HEAD')) {
+      recognized.push('HEAD_DEPARTMENT');
     }
-    return parts;
+    return recognized.length ? [...new Set(recognized)] : [...new Set(parts)];
   }
 
   async function loadTeachers() {
@@ -150,13 +175,22 @@ export function useAdminUsers() {
   }
 
   async function onRolesChange(t: TeacherDto, incoming: string[]) {
-    const normalized = (Array.isArray(incoming) ? incoming : [])
+    const normalized = [...new Set((Array.isArray(incoming) ? incoming : [])
       .map((v) => String(v).toUpperCase().trim())
-      .filter(Boolean);
+      .filter(Boolean))];
 
     if ([...teacherRoles(t)].sort().join() === [...normalized].sort().join()) {
       return;
     }
+
+    const prevRole = String(t.role ?? '');
+    const optimisticRole = roleFieldFromNormalized(normalized);
+    const ln = String(t.lastName).trim();
+    teachers.value = teachers.value.map((x) =>
+      String(x.lastName).trim() === ln
+        ? { ...x, role: optimisticRole, roles: normalized }
+        : x
+    );
 
     const body = buildRoleUpdateBody(normalized);
 
@@ -166,15 +200,25 @@ export function useAdminUsers() {
         body,
         user.value?.lastName
       );
-      const newRole =
-        (updated.role && String(updated.role).trim()) ||
-        roleFieldFromNormalized(normalized);
-      const ln = String(t.lastName).trim();
+      const newRole = String(updated.role ?? '').trim() || optimisticRole;
+      const nextRoles = teacherRoles({
+        ...updated,
+        role: newRole,
+        roles: Array.isArray((updated as { roles?: unknown }).roles)
+          ? ((updated as { roles?: unknown }).roles as string[])
+          : normalized,
+      } as TeacherDto);
       teachers.value = teachers.value.map((x) =>
-        String(x.lastName).trim() === ln ? { ...x, role: newRole } : x
+        String(x.lastName).trim() === ln
+          ? { ...x, role: newRole, roles: nextRoles }
+          : x
       );
+      patchStoredUserRoleIfMatchesLastName(ln, newRole);
     } catch (e) {
       console.error('[useAdminUsers] role update failed', e);
+      teachers.value = teachers.value.map((x) =>
+        String(x.lastName).trim() === ln ? { ...x, role: prevRole } : x
+      );
     }
   }
 

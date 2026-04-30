@@ -7,6 +7,14 @@ export const AUDIT_ACTION_ITEMS = [
   { title: 'Изменение шаблона', value: 'TEMPLATE_UPDATED' },
   { title: 'Удаление шаблона', value: 'TEMPLATE_DELETED' },
   { title: 'Смена роли', value: 'ROLE_CHANGED' },
+  {
+    title: 'Назначение преподавателя по дисциплине',
+    value: 'DISCIPLINE_TEACHER_SET',
+  },
+  {
+    title: 'Сброс преподавателя по дисциплине',
+    value: 'DISCIPLINE_TEACHER_RESET',
+  },
   { title: 'Отмена действия', value: 'ACTION_ROLLED_BACK' },
 ] as const;
 
@@ -26,6 +34,8 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   TEMPLATE_UPDATED: 'Изменение шаблона',
   TEMPLATE_DELETED: 'Удаление шаблона',
   ROLE_CHANGED: 'Смена роли',
+  DISCIPLINE_TEACHER_SET: 'Назначение преподавателя по дисциплине',
+  DISCIPLINE_TEACHER_RESET: 'Сброс преподавателя по дисциплине',
   ACTION_ROLLED_BACK: 'Отмена действия',
 };
 
@@ -37,6 +47,8 @@ export const AUDIT_ACTION_CHIP_CLASSES: Record<string, string> = {
   TEMPLATE_UPDATED: 'chip-orange',
   TEMPLATE_DELETED: 'chip-red',
   ROLE_CHANGED: 'chip-purple',
+  DISCIPLINE_TEACHER_SET: 'chip-blue',
+  DISCIPLINE_TEACHER_RESET: 'chip-orange',
   ACTION_ROLLED_BACK: 'chip-gray',
 };
 
@@ -48,5 +60,7 @@ export const AUDIT_ACTION_ICONS: Record<string, string> = {
   TEMPLATE_UPDATED: 'mdi-pencil-outline',
   TEMPLATE_DELETED: 'mdi-delete-outline',
   ROLE_CHANGED: 'mdi-account-switch-outline',
+  DISCIPLINE_TEACHER_SET: 'mdi-account-school-outline',
+  DISCIPLINE_TEACHER_RESET: 'mdi-account-arrow-left-outline',
   ACTION_ROLLED_BACK: 'mdi-undo',
 };

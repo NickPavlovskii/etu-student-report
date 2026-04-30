@@ -6,6 +6,32 @@
     class="page"
   >
     <div
+      v-if="showPlanTeacherNotice"
+      class="plan-teacher-notice"
+      role="status"
+    >
+      <div class="plan-teacher-notice__accent" aria-hidden="true" />
+      <div class="plan-teacher-notice__icon-wrap">
+        <v-icon
+          class="plan-teacher-notice__icon"
+          icon="mdi-book-account-outline"
+          size="22"
+        />
+      </div>
+      <div class="plan-teacher-notice__content">
+        <div class="plan-teacher-notice__title">
+          Нагрузка по рабочей программе
+        </div>
+        <p class="plan-teacher-notice__text">
+          По плану эта дисциплина закреплена за преподавателем
+          <span class="plan-teacher-notice__fio">{{ planTeacherFioLabel }}</span>.
+          Студенты, группы и отчёты загружаются из нагрузки этого преподавателя;
+          вы ведёте дисциплину как фактический ответственный.
+        </p>
+      </div>
+    </div>
+
+    <div
       v-if="viewingAsAdmin"
       class="admin-mode-banner"
       role="status"
@@ -150,7 +176,7 @@
   <batch-upload-work-modal
     v-model="batchUploadDialog"
     :plan-row-id="planRowId"
-    :teacher-last-name="effectiveLastName"
+    :teacher-last-name="uploadUrlLastName"
     :discipline="uiDiscipline"
     :groups="Object.keys(studentsByGroup)"
     :students-by-group="studentsByGroup"
@@ -199,6 +225,7 @@
   } from '@/modules/settings/composables/useDisciplineControlTypes';
   import { useDisciplineWorksStats } from './composables/useDisciplineWorksStats';
   import type { StudentDto } from './modal/student';
+  import { normTeacherLast } from '@/modules/disciplines/utils/disciplineTeacherAssignments';
 
   const route = useRoute();
   const router = useRouter();
@@ -218,6 +245,12 @@
   const reports = ref<ReportDto[]>([]);
 
   const planRowId = computed(() => Number(route.params.id));
+  const planTeacherLastNameQuery = computed(() =>
+    String(route.query.planTeacherLastName ?? '').trim()
+  );
+  const planTeacherFioQuery = computed(() =>
+    String(route.query.planTeacherFio ?? '').trim()
+  );
   const viewingAsAdmin = computed(
     () => route.query.fromAdmin === '1' || route.query.fromAdmin === 'true'
   );
@@ -243,6 +276,55 @@
       }
     }
     return lastName.value ?? '';
+  });
+
+  /** Фамилия в URL для GET дисциплины / групп / отчётов (нагрузка из плана). */
+  const apiPathLastName = computed(() => {
+    const fromQ = planTeacherLastNameQuery.value;
+    if (fromQ) {
+      return fromQ;
+    }
+    if (
+      viewingAsAdmin.value &&
+      viewingAsAdminTeacherFio.value &&
+      viewingAsAdminTeacherFio.value !== '—'
+    ) {
+      const firstWord = String(viewingAsAdminTeacherFio.value)
+        .trim()
+        .split(/\s+/)[0];
+      if (firstWord) {
+        return firstWord;
+      }
+    }
+    return lastName.value ?? '';
+  });
+
+  /** Для загрузки работ — фактический преподаватель (вы), не план. */
+  const uploadUrlLastName = computed(() => {
+    if (viewingAsAdmin.value) {
+      return effectiveLastName.value;
+    }
+    return lastName.value ?? '';
+  });
+
+  const showPlanTeacherNotice = computed(() => {
+    if (viewingAsAdmin.value) {
+      return false;
+    }
+    const me = (lastName.value ?? '').trim();
+    const path = planTeacherLastNameQuery.value;
+    if (!me || !path) {
+      return false;
+    }
+    return normTeacherLast(path) !== normTeacherLast(me);
+  });
+
+  const planTeacherFioLabel = computed(() => {
+    const f = planTeacherFioQuery.value;
+    if (f) {
+      return f;
+    }
+    return planTeacherLastNameQuery.value || 'другим преподавателем';
   });
 
   const visibleControlTypes = computed(() =>
@@ -330,7 +412,7 @@
     try {
       const year = academicYear.value;
       const id = planRowId.value;
-      const ln = effectiveLastName.value;
+      const ln = apiPathLastName.value;
 
       [discipline.value, students.value, controls.value] = await Promise.all([
         getDisciplineCard(ln, id, year),
@@ -350,7 +432,7 @@
   }
 
   onMounted(async () => {
-    if (effectiveLastName.value) {
+    if (apiPathLastName.value) {
       await loadAll();
     } else {
       router.push('/auth');
@@ -358,15 +440,20 @@
   });
 
   watch(academicYear, () => {
-    if (effectiveLastName.value) {
+    if (apiPathLastName.value) {
       loadAll();
     }
   });
 
   watch(
-    () => [route.params.id, route.query.teacherFio],
+    () => [
+      route.params.id,
+      route.query.teacherFio,
+      route.query.planTeacherLastName,
+      route.query.planTeacherFio,
+    ],
     () => {
-      if (effectiveLastName.value) {
+      if (apiPathLastName.value) {
         loadAll();
       }
     }
@@ -389,7 +476,7 @@
 
   async function onUpload(payload: any) {
     const dto = await uploadDisciplineReport(
-      effectiveLastName.value,
+      uploadUrlLastName.value,
       planRowId.value,
       {
         studentId: payload.studentId,
@@ -457,6 +544,72 @@
     background: #f5f6f8;
     padding: 16px;
   }
+
+  .plan-teacher-notice {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding: 16px 18px 16px 20px;
+    border-radius: 14px;
+    background: linear-gradient(145deg, #fffbeb 0%, #fef9c3 45%, #fff7ed 100%);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 8px 20px rgba(245, 158, 11, 0.12);
+    overflow: hidden;
+  }
+
+  .plan-teacher-notice__accent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #f59e0b, #d97706);
+    border-radius: 14px 0 0 14px;
+  }
+
+  .plan-teacher-notice__icon-wrap {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.85);
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(251, 191, 36, 0.45);
+  }
+
+  .plan-teacher-notice__icon {
+    color: #b45309 !important;
+  }
+
+  .plan-teacher-notice__content {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .plan-teacher-notice__title {
+    font-weight: 700;
+    font-size: 15px;
+    color: #92400e;
+    margin-bottom: 6px;
+  }
+
+  .plan-teacher-notice__text {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #57534e;
+  }
+
+  .plan-teacher-notice__fio {
+    font-weight: 700;
+    color: #1c1917;
+  }
+
   .admin-mode-banner {
     position: relative;
     display: flex;

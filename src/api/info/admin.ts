@@ -4,7 +4,9 @@ import type {
   AdminStatsDto,
   AuditLogEntryDto,
   AuditLogQueryParams,
+  DisciplineTeacherAssignmentDto,
   TeacherDto,
+  UpdateDisciplineTeacherAssignmentRequest,
 } from '../types';
 
 export default function adminModule(api: AxiosInstance): AdminModule {
@@ -59,6 +61,43 @@ export default function adminModule(api: AxiosInstance): AdminModule {
         { params }
       );
       return data ?? ({} as AuditLogEntryDto);
+    },
+    async getDisciplineTeacherAssignments(
+      search?: string
+    ): Promise<DisciplineTeacherAssignmentDto[]> {
+      const params = search ? { search } : {};
+      const { data } = await api.get<DisciplineTeacherAssignmentDto[]>(
+        '/admin/discipline-teacher-assignments',
+        { params }
+      );
+      return Array.isArray(data) ? data : [];
+    },
+    async getDisciplineTeacherAssignment(
+      planRowId: number
+    ): Promise<DisciplineTeacherAssignmentDto> {
+      const { data } = await api.get<DisciplineTeacherAssignmentDto>(
+        `/admin/discipline-teacher-assignments/${planRowId}`
+      );
+      return data ?? ({} as DisciplineTeacherAssignmentDto);
+    },
+    async putDisciplineTeacherAssignment(
+      planRowId: number,
+      body: UpdateDisciplineTeacherAssignmentRequest
+    ): Promise<DisciplineTeacherAssignmentDto> {
+      const { data } = await api.put<DisciplineTeacherAssignmentDto>(
+        `/admin/discipline-teacher-assignments/${planRowId}`,
+        body
+      );
+      return data ?? ({} as DisciplineTeacherAssignmentDto);
+    },
+    async deleteDisciplineTeacherAssignment(
+      planRowId: number,
+      actor?: string
+    ): Promise<void> {
+      const params = actor ? { actor } : {};
+      await api.delete(`/admin/discipline-teacher-assignments/${planRowId}`, {
+        params,
+      });
     },
   };
 }

@@ -5,8 +5,16 @@ import {
   getDisciplineGroups,
   getDisciplineReports,
   getDisciplineStudents,
-  getTeacherGroups,
+  getDisciplineTeacherAssignments,
 } from '@/api/info';
+import type { DisciplineTeacherAssignmentDto } from '@/api/types';
+import {
+  assignmentByPlanRowId,
+  effectiveActualLastName,
+  normTeacherLast,
+  planTeacherFioFromAssignment,
+  reportApiLastNameForPlanRow,
+} from '../utils/disciplineTeacherAssignments';
 import { useAcademicYear } from '@/composables/useAcademicYear';
 import type { DisciplineAggregate, DisciplineCardDto } from '../modal/disciplineCard';
 import type { ControlScheduleDto, ReportDto } from '../modal/reports';
@@ -114,20 +122,115 @@ export function useDisciplines(
   const { academicYear } = useAcademicYear();
   const loading = ref(false);
   const cards = ref<DisciplineCardDto[]>([]);
-  const groups = ref<unknown[]>([]);
   const reportsByPlanRowId = ref<Record<number, DisciplineReportRow[]>>({});
   const groupsByPlanRowId = ref<Record<number, string[]>>({});
   const studentsByPlanRowId = ref<Record<number, unknown[]>>({});
   const controlsByPlanRowId = ref<Record<number, ControlScheduleDto[]>>({});
+  /** Фамилия в URL /teachers/{ln}/discipline/{id}/… для каждой строки плана */
+  const planRowApiPathLastName = ref<Record<number, string>>({});
+  /** ФИО по плану — для подсказки при переданной нагрузке другого преподавателя */
+  const planRowPlanTeacherFio = ref<Record<number, string>>({});
+  const listViewerLastName = ref('');
 
   async function loadData(user: { lastName?: string }) {
-    const ln = user?.lastName;
+    const ln = (user?.lastName ?? '').trim();
     if (ln) {
       loading.value = true;
       try {
         const year = academicYear.value;
+
+        let assignments: DisciplineTeacherAssignmentDto[] | null = null;
+        try {
+          assignments = await getDisciplineTeacherAssignments();
+        } catch {
+          assignments = null;
+        }
+        const byPlan = assignmentByPlanRowId(assignments);
+        const normMe = normTeacherLast(ln);
+
         const cardsRes = await getDisciplineCards(ln, year);
-        cards.value = toArray(cardsRes) as DisciplineCardDto[];
+        let mergedCards = toArray(cardsRes) as DisciplineCardDto[];
+
+        if (assignments?.length) {
+          mergedCards = mergedCards.filter((c) => {
+            const pid = Number(c?.planRowId ?? c?.plan_row_id);
+            if (!Number.isFinite(pid) || pid <= 0) {
+              return true;
+            }
+            const a = byPlan.get(pid);
+            if (!a) {
+              return true;
+            }
+            return normTeacherLast(effectiveActualLastName(a)) === normMe;
+          });
+
+          const extraByPlanLn = new Map<string, Set<number>>();
+          for (const a of assignments) {
+            if (normTeacherLast(effectiveActualLastName(a)) !== normMe) {
+              continue;
+            }
+            const planLn = (a.planLastName ?? '').trim();
+            if (!planLn || normTeacherLast(planLn) === normMe) {
+              continue;
+            }
+            const pid = Number(a.planRowId);
+            if (!Number.isFinite(pid) || pid <= 0) {
+              continue;
+            }
+            if (!extraByPlanLn.has(planLn)) {
+              extraByPlanLn.set(planLn, new Set());
+            }
+            extraByPlanLn.get(planLn)!.add(pid);
+          }
+
+          const existingIds = new Set(
+            mergedCards
+              .map((c) => Number(c?.planRowId ?? c?.plan_row_id))
+              .filter((n) => Number.isFinite(n) && n > 0)
+          );
+
+          for (const [planLn, idSet] of extraByPlanLn) {
+            try {
+              const otherRes = await getDisciplineCards(planLn, year);
+              const other = toArray(otherRes) as DisciplineCardDto[];
+              for (const c of other) {
+                const pid = Number(c?.planRowId ?? c?.plan_row_id);
+                if (idSet.has(pid) && !existingIds.has(pid)) {
+                  mergedCards.push(c);
+                  existingIds.add(pid);
+                }
+              }
+            } catch {
+              /* плановый преподаватель недоступен — пропускаем */
+            }
+          }
+        }
+
+        cards.value = mergedCards;
+
+        listViewerLastName.value = ln;
+        const pathMap: Record<number, string> = {};
+        const fioMap: Record<number, string> = {};
+        for (const c of cards.value) {
+          const pid = Number(c.planRowId ?? c.plan_row_id);
+          if (!Number.isFinite(pid) || pid <= 0) {
+            continue;
+          }
+          const a = byPlan.get(pid);
+          const apiL = (reportApiLastNameForPlanRow(a, ln).trim() || ln);
+          pathMap[pid] = apiL;
+          if (
+            a &&
+            normTeacherLast(apiL) !== normTeacherLast(ln)
+          ) {
+            const hint = planTeacherFioFromAssignment(a);
+            if (hint) {
+              fioMap[pid] = hint;
+            }
+          }
+        }
+        planRowApiPathLastName.value = pathMap;
+        planRowPlanTeacherFio.value = fioMap;
 
         const planIds = [
           ...new Set(
@@ -137,35 +240,35 @@ export function useDisciplines(
           ),
         ];
 
-        const [groupsRes, pairs] = await Promise.all([
-          getTeacherGroups(ln, year),
-          Promise.all(
-            planIds.map(async (id) => {
-              const [reports, students, groupsLocal, controlsRaw] =
-                await Promise.all([
-                  getDisciplineReports(ln, id, year).catch(() => []),
-                  getDisciplineStudents(ln, id, year).catch(() => []),
-                  getDisciplineGroups(ln, id, year).catch(() => []),
-                  getDisciplineControls(ln, id, year).catch(() => []),
-                ]);
-              const rawGroups = toArray(groupsLocal);
-              const groupNames = rawGroups
-                .map((g) => normalizeGroupLabel(g))
-                .filter((s): s is string => Boolean(s));
-              return [
-                id,
-                {
-                  reports: toArray(reports) as DisciplineReportRow[],
-                  students: toArray(students),
-                  groups: groupNames,
-                  controls: toArray(controlsRaw) as ControlScheduleDto[],
-                },
-              ] as const;
-            })
-          ),
-        ]);
-
-        groups.value = toArray(groupsRes);
+        const pairs = await Promise.all(
+          planIds.map(async (id) => {
+            const reportLn = reportApiLastNameForPlanRow(
+              byPlan.get(id),
+              ln
+            ).trim();
+            const apiLn = reportLn || ln;
+            const [reports, students, groupsLocal, controlsRaw] =
+              await Promise.all([
+                getDisciplineReports(apiLn, id, year).catch(() => []),
+                getDisciplineStudents(apiLn, id, year).catch(() => []),
+                getDisciplineGroups(apiLn, id, year).catch(() => []),
+                getDisciplineControls(apiLn, id, year).catch(() => []),
+              ]);
+            const rawGroups = toArray(groupsLocal);
+            const groupNames = rawGroups
+              .map((g) => normalizeGroupLabel(g))
+              .filter((s): s is string => Boolean(s));
+            return [
+              id,
+              {
+                reports: toArray(reports) as DisciplineReportRow[],
+                students: toArray(students),
+                groups: groupNames,
+                controls: toArray(controlsRaw) as ControlScheduleDto[],
+              },
+            ] as const;
+          })
+        );
 
         reportsByPlanRowId.value = Object.fromEntries(
           pairs.map(([id, v]) => [id, v.reports])
@@ -361,6 +464,15 @@ export function useDisciplines(
         ...new Set(ids.flatMap((id) => groupsByPlanRowId.value?.[id] ?? [])),
       ].sort((a, b) => String(a).localeCompare(String(b), 'ru'));
 
+      const repPid =
+        ids.length > 0 ? ids[0]! : planId > 0 ? planId : 0;
+      const apiLn =
+        repPid > 0
+          ? planRowApiPathLastName.value[repPid] ?? listViewerLastName.value
+          : listViewerLastName.value;
+      const planFioHint =
+        repPid > 0 ? planRowPlanTeacherFio.value[repPid] ?? '' : '';
+
       return {
         CodeRow: x.CodeRow,
         _key: `${x.Discipline}__${x.Course}__${x.Semester}`,
@@ -384,6 +496,8 @@ export function useDisciplines(
         progress,
         educationForm: x.educationForm ?? null,
         educationLevel: x.educationLevel ?? null,
+        planTeacherLastNameForApi: apiLn,
+        planTeacherFromPlanFio: planFioHint,
       };
     });
   });
@@ -392,9 +506,17 @@ export function useDisciplines(
     ...new Set(uniqueDisciplines.value.map((d) => d.Semester).filter(Boolean)),
   ]);
 
-  const totalGroups = computed(() =>
-    Array.isArray(groups.value) ? groups.value.length : 0
-  );
+  /** По выбранному семестру / курсам / поиску — сумма `groupsCount` по видимым дисциплинам (как на карточках). */
+  const totalGroups = computed(() => {
+    const list = unref(filteredDisciplines);
+    const rows = Array.isArray(list) ? list : [];
+    let n = 0;
+    for (const d of rows) {
+      const gc = Number((d as { groupsCount?: number }).groupsCount ?? 0);
+      if (gc > 0) n += gc;
+    }
+    return n;
+  });
 
   const totalWorksStats = computed(() => {
     const list = unref(filteredDisciplines);

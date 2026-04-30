@@ -54,4 +54,8 @@ export interface DisciplineListRow {
   educationForm: string | null;
   educationLevel: string | null;
   teacherFio?: string;
+  /** Фамилия для GET /teachers/{ln}/discipline/{id}/… (нагрузка по плану) */
+  planTeacherLastNameForApi?: string;
+  /** ФИО по рабочей программе, если фактический преподаватель — вы, а в плане другой */
+  planTeacherFromPlanFio?: string;
 }

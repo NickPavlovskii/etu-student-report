@@ -14,6 +14,8 @@ export type AdminDisciplineCardItem = {
   groups: string[];
   teacherFio?: string;
   teacherLastName?: string;
+  /** Фамилия для GET /teachers/{ln}/discipline/{planRowId}/… при переданной нагрузке из плана */
+  reportApiLastName?: string;
 };
 
 /** Поля ФИО из ответа API преподавателя (разрешение имён в аудите) */
@@ -34,4 +36,10 @@ export type UserTableColumn = TableColumn & {
 /** Колонки таблицы журнала событий (admin / audit) */
 export type AuditTableColumn = TableColumn & {
   title: string;
+};
+
+/** Колонки таблицы «Назначения» (план / факт преподаватель) */
+export type AssignmentsTableColumn = TableColumn & {
+  class: string;
+  headerClass: string;
 };

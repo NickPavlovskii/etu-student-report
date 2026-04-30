@@ -163,10 +163,154 @@ function sentenceForField(key: string, value: string, action?: string): string {
   return `${label} — ${value}.`;
 }
 
+function pickFirstNonEmpty(
+  map: Record<string, string>,
+  keys: string[]
+): string {
+  for (const k of keys) {
+    const v = (map[k] ?? '').trim();
+    if (v) {
+      return v;
+    }
+  }
+  return '';
+}
+
+function teacherFioFromMapByPrefix(
+  map: Record<string, string>,
+  prefix: string
+): string {
+  const ln = pickFirstNonEmpty(map, [
+    `${prefix}LastName`,
+    `${prefix}_last_name`,
+    `${prefix}TeacherLastName`,
+    `${prefix}_teacher_last_name`,
+  ]);
+  const fn = pickFirstNonEmpty(map, [
+    `${prefix}FirstName`,
+    `${prefix}_first_name`,
+    `${prefix}TeacherFirstName`,
+    `${prefix}_teacher_first_name`,
+  ]);
+  const pt = pickFirstNonEmpty(map, [
+    `${prefix}Patronymic`,
+    `${prefix}_patronymic`,
+    `${prefix}TeacherPatronymic`,
+    `${prefix}_teacher_patronymic`,
+  ]);
+  const full = [ln, fn, pt].filter(Boolean).join(' ').trim();
+  if (full) {
+    return full;
+  }
+  return pickFirstNonEmpty(map, [
+    `${prefix}TeacherFio`,
+    `${prefix}_teacher_fio`,
+    `${prefix}Fio`,
+    `${prefix}_fio`,
+    `${prefix}Teacher`,
+    `${prefix}_teacher`,
+  ]);
+}
+
+function formatDisciplineHead(discipline: string, planRowId: string): string {
+  const d = discipline.trim();
+  const id = planRowId.trim();
+  if (d && id) {
+    return `По дисциплине ${quoteIfNeeded(d)}, учебного плана № ${id}, `;
+  }
+  if (d) {
+    return `По дисциплине ${quoteIfNeeded(d)}, `;
+  }
+  if (id) {
+    return `По строке учебного плана № ${id}, `;
+  }
+  return '';
+}
+
 function buildNarrativeFromMap(
   map: Record<string, string>,
-  action?: string
+  action?: string,
+  context?: AuditDetailsContext
 ): string {
+  if (action === 'DISCIPLINE_TEACHER_SET') {
+    const disciplineFromMap = pickFirstNonEmpty(map, [
+      'disciplineName',
+      'discipline_name',
+      'discipline',
+    ]);
+    const planRowIdFromMap = pickFirstNonEmpty(map, ['planRowId', 'plan_row_id']);
+    const fromEntityLabel = String(context?.entityLabel ?? '')
+      .replace(/\s*—\s*«.*$/, '')
+      .trim();
+    const discipline =
+      disciplineFromMap &&
+      !/строка\s+рабочей\s+программы/i.test(disciplineFromMap)
+        ? disciplineFromMap
+        : '';
+    const planRowId = planRowIdFromMap || String(context?.entityId ?? '').trim();
+    const fromTeacher =
+      teacherFioFromMapByPrefix(map, 'previous') ||
+      teacherFioFromMapByPrefix(map, 'before') ||
+      teacherFioFromMapByPrefix(map, 'old') ||
+      teacherFioFromMapByPrefix(map, 'from');
+    const toTeacher =
+      teacherFioFromMapByPrefix(map, 'actual') ||
+      teacherFioFromMapByPrefix(map, 'after') ||
+      teacherFioFromMapByPrefix(map, 'new') ||
+      teacherFioFromMapByPrefix(map, 'to');
+    const head = formatDisciplineHead(discipline || fromEntityLabel, planRowId);
+
+    if (fromTeacher && toTeacher) {
+      return `${head}фактический преподаватель изменён с ${quoteIfNeeded(fromTeacher)} на ${quoteIfNeeded(toTeacher)}.`.trim();
+    }
+    if (toTeacher) {
+      return `${head}назначен фактический преподаватель ${quoteIfNeeded(toTeacher)}.`.trim();
+    }
+    if (fromTeacher) {
+      return `${head}изменение фактического преподавателя: ${quoteIfNeeded(fromTeacher)} -> (не указано).`.trim();
+    }
+    if (head) {
+      return `${head}изменён фактический преподаватель.`.trim();
+    }
+    return 'Изменение фактического преподавателя.';
+  }
+  if (action === 'DISCIPLINE_TEACHER_RESET') {
+    const disciplineFromMap = pickFirstNonEmpty(map, [
+      'disciplineName',
+      'discipline_name',
+      'discipline',
+    ]);
+    const planRowIdFromMap = pickFirstNonEmpty(map, ['planRowId', 'plan_row_id']);
+    const fromEntityLabel = String(context?.entityLabel ?? '')
+      .replace(/\s*—\s*«.*$/, '')
+      .trim();
+    const discipline =
+      disciplineFromMap &&
+      !/строка\s+рабочей\s+программы/i.test(disciplineFromMap)
+        ? disciplineFromMap
+        : '';
+    const planRowId = planRowIdFromMap || String(context?.entityId ?? '').trim();
+    const fromTeacher =
+      teacherFioFromMapByPrefix(map, 'actual') ||
+      teacherFioFromMapByPrefix(map, 'before') ||
+      teacherFioFromMapByPrefix(map, 'old') ||
+      teacherFioFromMapByPrefix(map, 'from');
+    const toTeacher =
+      teacherFioFromMapByPrefix(map, 'plan') ||
+      teacherFioFromMapByPrefix(map, 'after') ||
+      teacherFioFromMapByPrefix(map, 'new') ||
+      teacherFioFromMapByPrefix(map, 'to');
+    const head = formatDisciplineHead(discipline || fromEntityLabel, planRowId);
+
+    if (fromTeacher && toTeacher) {
+      return `${head}Переопределение преподавателя снято: с ${quoteIfNeeded(fromTeacher)} на ${quoteIfNeeded(toTeacher)} согласно рабочей программе.`.trim();
+    }
+    if (head) {
+      return `${head}Переопределение преподавателя снято; применяется преподаватель согласно рабочей программе.`.trim();
+    }
+    return 'Сброшено переопределение преподавателя; отображается нагрузка по плану.';
+  }
+
   const keys = Object.keys(map);
   if (keys.length === 0) {
     return '';
@@ -229,6 +373,49 @@ function formatRolledBackText(s: string): string | null {
   return ROLLBACK_ACTION_RU[actionPart] ?? `Отменено: ${actionPart}.`;
 }
 
+function rephraseLegacyDisciplineTeacherText(
+  raw: string,
+  action?: string
+): string | null {
+  if (
+    action !== 'DISCIPLINE_TEACHER_SET' &&
+    action !== 'DISCIPLINE_TEACHER_RESET'
+  ) {
+    return null;
+  }
+
+  const s = raw.trim();
+  if (!s) return null;
+
+  const disciplineMatch = s.match(/Дисциплина:\s*([^.(]+?)(?:\s*\(|\.)/i);
+  const planMatch = s.match(/planRowId\s*=\s*(\d+)/i);
+  const fromToMatch = s.match(/["«]([^"»]+)["»]\s*(?:->|→)\s*["«]([^"»]+)["»]/);
+  const toOnlyMatch = s.match(/(?:преподаватель[^:]*:)\s*["«]?([^"».]+)["»]?/i);
+
+  const discipline = disciplineMatch?.[1]?.trim() ?? '';
+  const planRowId = planMatch?.[1]?.trim() ?? '';
+  const head = formatDisciplineHead(discipline, planRowId);
+
+  if (fromToMatch?.[1] && fromToMatch?.[2]) {
+    const from = fromToMatch[1].trim();
+    const to = fromToMatch[2].trim();
+    if (action === 'DISCIPLINE_TEACHER_RESET') {
+      return `${head}переопределение преподавателя снято: с ${quoteIfNeeded(from)} на ${quoteIfNeeded(to)} согласно рабочей программе.`.trim();
+    }
+    return `${head}фактический преподаватель изменён с ${quoteIfNeeded(from)} на ${quoteIfNeeded(to)}.`.trim();
+  }
+
+  if (toOnlyMatch?.[1]) {
+    const to = toOnlyMatch[1].trim();
+    if (action === 'DISCIPLINE_TEACHER_RESET') {
+      return `${head}переопределение преподавателя снято; применяется преподаватель согласно рабочей программе (${quoteIfNeeded(to)}).`.trim();
+    }
+    return `${head}назначен фактический преподаватель ${quoteIfNeeded(to)}.`.trim();
+  }
+
+  return null;
+}
+
 function tryFormatJsonArray(raw: string): string | null {
   const t = raw.trim();
   if (!t.startsWith('[')) {
@@ -264,6 +451,25 @@ function tryFormatJsonArray(raw: string): string | null {
   }
 }
 
+/** `key=value, key2=value2` из бэкенда → формат с двоеточием для разбора */
+function normalizeDetailEqualsSyntax(input: string): string {
+  const t = input.trim();
+  if (!t || !t.includes('=')) {
+    return t;
+  }
+  if (/[a-zA-Z_][\w]*\s*:/.test(t)) {
+    return t;
+  }
+  return t
+    .split(',')
+    .map((part) => {
+      const p = part.trim();
+      const m = p.match(/^([a-zA-Z_][\w]*)\s*=\s*(.+)$/);
+      return m?.[1] && m?.[2] ? `${m[1]}: ${m[2].trim()}` : p;
+    })
+    .join(', ');
+}
+
 export function formatAuditDetails(
   raw: string | undefined | null,
   context?: AuditDetailsContext
@@ -271,12 +477,17 @@ export function formatAuditDetails(
   if (raw == null) {
     return '';
   }
-  const s = String(raw).trim();
+  const s = normalizeDetailEqualsSyntax(String(raw).trim());
   if (!s) {
     return '';
   }
 
   const action = normalizeAuditAction(context?.action);
+
+  const legacy = rephraseLegacyDisciplineTeacherText(s, action);
+  if (legacy) {
+    return legacy;
+  }
 
   const rolledBack = formatRolledBackText(s);
   if (rolledBack) {
@@ -290,7 +501,7 @@ export function formatAuditDetails(
 
   const map = parseToStringMap(s);
   if (Object.keys(map).length > 0) {
-    const narrative = buildNarrativeFromMap(map, action);
+    const narrative = buildNarrativeFromMap(map, action, context);
     if (narrative) {
       return narrative;
     }

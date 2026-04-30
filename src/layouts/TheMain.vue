@@ -14,13 +14,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import NavMenu from '@/views/NavMenu.vue';
 import AppHeader from '@/components/sideBar/AppHeader.vue';
+import { refreshStoredUserRolesFromAuth } from '@/composables/refreshStoredUserRoles';
 
 defineOptions({ inheritAttrs: false });
 
 const drawer = ref(false);
+
+onMounted(() => {
+  void refreshStoredUserRolesFromAuth();
+});
 </script>
 
 <style scoped>

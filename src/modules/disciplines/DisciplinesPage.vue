@@ -100,6 +100,7 @@
     matchesStudyPeriod,
     parsePlanSemester,
   } from '@/modules/analytics/utils/analyticsScope';
+  import { normTeacherLast } from '@/modules/disciplines/utils/disciplineTeacherAssignments';
   import type { StudyPeriod } from '@/api/types';
   import type { DisciplineListRow } from './modal/disciplineCard';
 
@@ -206,8 +207,31 @@
     }
   });
 
-  function openDiscipline(planRowId: string | number) {
-    router.push({ name: 'discipline', params: { id: String(planRowId) } });
+  function openDiscipline(payload: {
+    codeRow: string | number;
+    planTeacherLastNameForApi?: string;
+    planTeacherFromPlanFio?: string;
+  }) {
+    const id = String(payload.codeRow);
+    const viewer = (user.value?.lastName ?? '').trim();
+    const apiLn = (payload.planTeacherLastNameForApi ?? '').trim();
+    const query: Record<string, string> = {};
+    if (
+      apiLn &&
+      viewer &&
+      normTeacherLast(apiLn) !== normTeacherLast(viewer)
+    ) {
+      query.planTeacherLastName = apiLn;
+      const fio = (payload.planTeacherFromPlanFio ?? '').trim();
+      if (fio) {
+        query.planTeacherFio = fio;
+      }
+    }
+    router.push({
+      name: 'discipline',
+      params: { id },
+      ...(Object.keys(query).length ? { query } : {}),
+    });
   }
 </script>
 
