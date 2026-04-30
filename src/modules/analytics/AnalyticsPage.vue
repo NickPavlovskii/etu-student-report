@@ -340,7 +340,12 @@
     academicYear.value.replace(/\//g, '-').replace(/-/g, '–').trim()
   );
 
-  const scopeMode = ref<ScopeMode>('personal');
+  const scopeMode = ref<ScopeMode>(canSeeAll.value ? 'department' : 'personal');
+  watch(canSeeAll, (v, prev) => {
+    if (v && prev === false) {
+      scopeMode.value = 'department';
+    }
+  });
   const viewTeacherTree = ref<AnalyticsViewMode>('table');
   const teacherChartRoot = ref<HTMLElement | null>(null);
   const { exportToExcel, exportChartToPng } = useAnalyticsExport();

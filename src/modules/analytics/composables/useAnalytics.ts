@@ -173,6 +173,7 @@ export function useAnalytics(filters: {
       () => filters.studyPeriod.value,
       () => (filters.scopeMode?.value ?? 'department'),
       () => fetchEnabled.value,
+      () => canSeeAll.value,
     ],
     () => {
       if (!fetchEnabled.value) {

@@ -24,7 +24,12 @@
 
   const isAdminRole = computed(() => {
     const role = String(user.value?.role ?? '').toUpperCase();
-    return role.split(',').map((r) => r.trim()).includes('ADMIN');
+    const roles = role.split(',').map((r) => r.trim());
+    return (
+      roles.includes('ADMIN') ||
+      roles.includes('HEAD_DEPARTMENT') ||
+      roles.includes('HEAD')
+    );
   });
 
   const baseItems: SideBarItem[] = [
