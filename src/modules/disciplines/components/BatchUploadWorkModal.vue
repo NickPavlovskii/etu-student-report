@@ -287,7 +287,7 @@
               ? 'Проверка…'
               : sourceMode === 'file'
                 ? 'Загрузить все'
-                : 'Сохранено в Moodle'
+                : 'Moodle'
           }}
         </v-btn>
       </v-card-actions>

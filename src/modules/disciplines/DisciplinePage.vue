@@ -143,12 +143,7 @@
           icon="mdi-file-upload-outline"
           color="green"
           :value="`${disciplineWorksStats.uploaded} / ${disciplineWorksStats.total}`"
-        />
-        <etu-info-card
-          title="Работы в Moodle"
-          icon="mdi-google-classroom"
-          color="blue"
-          :value="String(disciplineWorksStats.moodleUploaded)"
+          :subtitle="worksUploadSubtitle"
         />
       </div>
     </v-card>
@@ -409,6 +404,12 @@
     visibleControlTypes,
     displayedTopicsByControlType
   );
+
+  const worksUploadSubtitle = computed(() => {
+    const s = disciplineWorksStats.value;
+    if (s.uploaded <= 0 || s.moodleUploaded <= 0) return '';
+    return `Из них в Moodle: ${s.moodleUploaded} из ${s.uploaded}`;
+  });
 
   const hasStudents = computed(
     () => Object.keys(studentsByGroup.value).length > 0

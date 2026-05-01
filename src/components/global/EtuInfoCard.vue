@@ -9,6 +9,12 @@
       <div class="info-text">
         <div class="info-title">{{ title }}</div>
         <div class="info-value">{{ displayValue }}</div>
+        <div
+          v-if="subtitle"
+          class="info-subtitle"
+        >
+          {{ subtitle }}
+        </div>
       </div>
     </div>
   </v-card>
@@ -23,8 +29,9 @@ const props = withDefaults(
     value: string | number;
     icon: string;
     color?: 'blue' | 'green' | 'purple' | 'orange';
+    subtitle?: string;
   }>(),
-  { color: 'blue' }
+  { color: 'blue', subtitle: '' }
 );
 
 const displayValue = computed(() => String(props.value));
@@ -85,5 +92,12 @@ const displayValue = computed(() => String(props.value));
   font-size: 22px;
   font-weight: 700;
   color: #111827;
+}
+
+.info-subtitle {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #6b7280;
 }
 </style>

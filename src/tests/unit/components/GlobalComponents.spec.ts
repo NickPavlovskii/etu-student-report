@@ -38,6 +38,19 @@ describe('Global components smoke tests', () => {
     expect(wrapper.text()).toContain('12')
   })
 
+  it('renders EtuInfoCard subtitle when passed', () => {
+    const wrapper = shallowMount(EtuInfoCard, {
+      props: {
+        title: 'Загружено',
+        value: '20 / 54',
+        icon: 'mdi-file-upload-outline',
+        subtitle: 'Из них в Moodle: 18 из 20',
+      },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Из них в Moodle: 18 из 20')
+  })
+
   it('renders EtuLabelChip and emits click', async () => {
     const wrapper = shallowMount(EtuLabelChip, {
       props: { label: 'Тег', clickable: true },
