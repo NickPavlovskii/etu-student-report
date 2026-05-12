@@ -5,10 +5,9 @@ import type { StudentInGroupRow } from '../modal/uploadWorkModal';
 import {
   buildTopicRowCountByGroup,
   computeExpectedWorksTotal,
+  computeUploadedMoodleWorkSlots,
   computeUploadedWorkSlots,
 } from '../utils/disciplineWorksPlan';
-import { isMoodleReport } from '../utils/reportSource';
-
 export type DisciplineWorksStats = { uploaded: number; total: number; moodleUploaded: number };
 
 export function useDisciplineWorksStats(
@@ -32,7 +31,7 @@ export function useDisciplineWorksStats(
       topicRowCountByGroup.value
     );
     const uploaded = computeUploadedWorkSlots(reports.value ?? []);
-    const moodleUploaded = (reports.value ?? []).filter((r) => isMoodleReport(r)).length;
+    const moodleUploaded = computeUploadedMoodleWorkSlots(reports.value ?? []);
     return { uploaded, total, moodleUploaded };
   });
 

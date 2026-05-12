@@ -283,6 +283,7 @@
     UploadDisciplineModalProps,
     UploadWorkPayload,
   } from '../modal/uploadWorkModal';
+  import { computeSingleUploadAutofillPatch } from '../utils/singleUploadFilenameAutofill';
 
   const { academicYear } = useAcademicYear();
   const { downloadAnnotatedFile } = useDownload();
@@ -508,54 +509,22 @@
     return hasFile && hasGroup && hasStudent && hasTitle && hasWorkType;
   });
 
-  function normalizeAcademicYearForStorage(raw: string): string {
-    return raw.replace(/\//g, '-').trim();
-  }
-
-  function bestMatchOption(input: string, options: string[]): string | null {
-    const q = (input ?? '').toLowerCase().trim();
-    if (!q) return null;
-    const exact = options.find((o) => o.toLowerCase() === q);
-    if (exact) return exact;
-    const contains = options.find((o) => o.toLowerCase().includes(q) || q.includes(o.toLowerCase()));
-    return contains ?? null;
-  }
-
   function maybeAutofillFromFilename(fileName: string) {
-    const base = String(fileName ?? '')
-      .replace(/\.[^.]+$/, '')
-      .trim();
-    if (!base) return;
-
-    const yearMatch = base.match(/\b(20\d{2})\s*[-/]\s*(20\d{2})\b/);
-    if (yearMatch) {
-      const y = `${yearMatch[1]}-${yearMatch[2]}`;
-      academicYear.value = normalizeAcademicYearForStorage(y);
-    }
-
-    const parts = base.split('_').map((p) => p.trim()).filter(Boolean);
-    if (parts.length >= 3) {
-      const maybeWorkType = parts[2];
-      if (maybeWorkType) {
-        const opt = bestMatchOption(maybeWorkType, controlTypesOptions.value);
-        if (opt && !workType.value) {
-          workType.value = opt;
-        }
+    const patch = computeSingleUploadAutofillPatch(
+      fileName,
+      controlTypesOptions.value,
+      filteredTopicsList.value,
+      {
+        academicYear: academicYear.value,
+        workType: workType.value,
+        workTitle: workTitle.value,
+        topic: topic.value,
       }
-      // если есть 4-я часть — пробуем как название
-      if (parts[3] && !workTitle.value.trim()) {
-        workTitle.value = parts[3];
-      }
-    }
-
-    const topicMatch = base.match(/тема\s*[:№#-]?\s*(.+)$/i);
-    if (topicMatch && topicMatch[1]) {
-      const t = topicMatch[1].trim();
-      const opt = bestMatchOption(t, filteredTopicsList.value);
-      if (opt && !topic.value) {
-        topic.value = opt;
-      }
-    }
+    );
+    if (patch.academicYear !== undefined) academicYear.value = patch.academicYear;
+    if (patch.workType !== undefined) workType.value = patch.workType;
+    if (patch.workTitle !== undefined) workTitle.value = patch.workTitle;
+    if (patch.topic !== undefined) topic.value = patch.topic;
   }
 
   type StoredUserLite = { fioShort?: string; lastName?: string };

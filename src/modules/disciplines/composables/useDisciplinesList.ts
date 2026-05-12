@@ -25,6 +25,7 @@ import type { ControlScheduleDto, ReportDto } from '../modal/reports';
 import {
   buildTopicRowCountByGroup,
   computeExpectedWorksTotal,
+  computeUploadedMoodleWorkSlots,
   computeUploadedWorkSlots,
   mergeControlSchedules,
   mergeStudentsByGroupDedupe,
@@ -528,6 +529,9 @@ export function useDisciplines(
       const uploadedWorks = computeUploadedWorkSlots(
         latestReports as unknown as ReportDto[]
       );
+      const uploadedMoodleWorks = computeUploadedMoodleWorkSlots(
+        latestReports as unknown as ReportDto[]
+      );
 
       const progress =
         expectedWorksTotal > 0
@@ -574,6 +578,7 @@ export function useDisciplines(
         loadedCount,
         totalStudents,
         uploadedWorks,
+        uploadedMoodleWorks,
         expectedWorksTotal,
         loaded: loadedDisplay,
         progress,

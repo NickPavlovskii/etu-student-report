@@ -136,4 +136,39 @@ describe('useDisciplineControlTypes (настройки видов контро�
       Зачёт: 'tpl-1',
     })
   })
+
+  it('getVisibleControlTitles для неизвестной дисциплины — undefined', () => {
+    expect(getVisibleControlTitles('нет-такого-id')).toBeUndefined()
+  })
+
+  it('saveControlTypesForDiscipline не затирает другую дисциплину', () => {
+    saveControlTypesForDiscipline('disc-a', [
+      {
+        id: '1',
+        title: 'А',
+        description: '',
+        active: true,
+        showInTable: true,
+        templateId: null,
+      },
+    ])
+    saveControlTypesForDiscipline('disc-b', [
+      {
+        id: '2',
+        title: 'Б',
+        description: '',
+        active: false,
+        showInTable: false,
+        templateId: null,
+      },
+    ])
+
+    expect(getVisibleControlTitles('disc-a')).toEqual(['А'])
+    expect(getVisibleControlTitles('disc-b')).toEqual([])
+  })
+
+  it('mergeControlTypesWithSettings: порядок как в API', () => {
+    const merged = mergeControlTypesWithSettings('d1', ['Вторая', 'Первая'], null)
+    expect(merged.map((x) => x.title)).toEqual(['Вторая', 'Первая'])
+  })
 })

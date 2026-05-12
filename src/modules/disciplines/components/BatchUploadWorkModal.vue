@@ -121,11 +121,15 @@
             class="empty"
           >
             <template v-if="sourceMode === 'file'">
-              Добавьте несколько файлов студентов.
-              Рекомендуемый формат имени: <br />
-              <code>Группа_НомерЗачётки_описание_работы_2024-2025.docx</code>
-              (части через <code>_</code>; группа — как в списке или код вроде
-              <code>0370</code>; номер зачётки — 5–9 цифр; в конце учебный год из списка)
+              <p class="empty-file-hint">
+                Добавьте файлы работ студентов. Поля заполнятся автоматически, если имя файла собрано по схеме:
+                <br />
+                <code>группа_номер_видКонтроля_тема_годУчебный.docx</code>
+                <br />
+                Например:
+                <code>2372_374285_Практическая_работа_Задача_классификации_Линейные_классификаторы_2024-2025.docx</code>
+                <br />
+              </p>
             </template>
             <template v-else>
               Добавьте строки студентов и оставьте ссылку Moodle.
@@ -168,19 +172,23 @@
                   variant="outlined"
                   density="compact"
                   hide-details
-                  :items="studentsForSelect"
+                  :items="getStudentSelectItemsForRow(r)"
                   :disabled="!selectedGroup"
                 />
               </div>
 
               <div>
-                <v-text-field
+                <v-textarea
+                  :key="`wt-${r.id}-${r.file?.name ?? ''}`"
                   v-model="r.workTitle"
-                  class="field"
+                  class="field work-title-field"
                   label="Название"
                   variant="outlined"
                   density="compact"
                   hide-details
+                  rows="1"
+                  auto-grow
+                  row-height="22"
                 />
               </div>
 
@@ -374,7 +382,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, nextTick, ref, watch } from 'vue';
+  import { computed, ref, watch } from 'vue';
   import { useDisplay } from 'vuetify';
   import { useAcademicYear } from '@/composables/useAcademicYear';
   import { useDownload } from '@/composables/useDownload';
@@ -386,8 +394,15 @@
     validateBatch,
     type ValidationResult,
   } from '@/api/info';
-  import type { BatchValidationResult } from '@/api/types';
+  import { applyBatchValidationToRowsMutable } from '../utils/batchValidationMap';
   import ValidationReportModal from './ValidationReportModal.vue';
+  import {
+    type AutofillContext,
+    controlTextsForGroup,
+    extractFullStemTitle,
+    parseFilename,
+    topicsForGroupAndWorkTypePure,
+  } from './filenameAutofill';
   import type { StudentInGroupRow, UploadDisciplineModalProps, UploadWorkPayload } from '../modal/uploadWorkModal';
 
   const props = defineProps<
@@ -448,53 +463,28 @@
 
   const groups = computed(() => props.groups ?? []);
 
-  const controlTypesOptions = computed(() => {
-    const group = String(selectedGroup.value ?? '').trim();
-    const list: string[] = [];
-    const seen = new Set<string>();
-    for (const c of props.controls ?? []) {
-      const controlGroup = String(c?.groupName ?? '').trim();
-      const controlText = String(c?.controlText ?? '').trim();
-      if (controlText && (group === '' || controlGroup === group)) {
-        if (!seen.has(controlText)) {
-          seen.add(controlText);
-          list.push(controlText);
-        }
-      }
-    }
-    return list.sort();
-  });
+  const controlTypesOptions = computed(() =>
+    controlTextsForGroup(props.controls ?? [], String(selectedGroup.value ?? '').trim())
+  );
 
-  function normalizeTopics(t: unknown): string[] {
-    if (Array.isArray(t)) return t.map((x) => String(x).trim()).filter(Boolean);
-    if (typeof t === 'string') {
-      try {
-        const parsed = JSON.parse(t);
-        if (Array.isArray(parsed)) return parsed.map((x) => String(x).trim()).filter(Boolean);
-      } catch {}
-      return t.split(',').map((x) => x.trim()).filter(Boolean);
-    }
-    return [];
-  }
+  const academicYearWhitelist = computed(
+    () => new Set(ACADEMIC_YEAR_SELECT_ITEMS.map((i) => String(i.value)))
+  );
 
-  function topicsForGroupAndWorkType(group: string, ct: string): string[] {
-    const controlType = String(ct ?? '').trim();
-    if (!controlType) return props.topics ?? [];
-    const groupName = String(group ?? '').trim();
-    const set = new Set<string>();
-    for (const c of props.controls ?? []) {
-      const controlGroup = String(c?.groupName ?? '').trim();
-      const controlText = String(c?.controlText ?? '').trim();
-      if (controlText !== controlType) continue;
-      if (groupName && controlGroup && controlGroup !== groupName) continue;
-      normalizeTopics(c?.topics).forEach((t) => set.add(t));
-    }
-    const arr = [...set].filter(Boolean).sort((a, b) => a.localeCompare(b));
-    return arr.length ? arr : props.topics ?? [];
-  }
+  const autofillContext = computed<AutofillContext>(() => ({
+    groups: groups.value,
+    controls: props.controls ?? [],
+    studentsByGroup: props.studentsByGroup ?? {},
+    academicYearWhitelist: academicYearWhitelist.value,
+  }));
 
   const filteredTopicsList = computed(() =>
-    topicsForGroupAndWorkType(String(selectedGroup.value ?? '').trim(), String(workType.value ?? '').trim())
+    topicsForGroupAndWorkTypePure(
+      props.controls ?? [],
+      String(selectedGroup.value ?? '').trim(),
+      String(workType.value ?? '').trim(),
+      props.topics ?? []
+    )
   );
 
   watch([selectedGroup, workType], () => {
@@ -513,25 +503,6 @@
     return Number.isFinite(n) ? n : 0;
   }
 
-  /** Номер в имени файла может совпадать с зачёткой, а в списке — id студента. */
-  function resolveStudentIdFromFileToken(raw: string): number | null {
-    const n = Number(raw);
-    if (!Number.isFinite(n) || n <= 0) return null;
-    const map = props.studentsByGroup ?? {};
-    for (const list of Object.values(map)) {
-      for (const s of list ?? []) {
-        const sid = getStudentIdRaw(s);
-        if (sid === n) return sid;
-        const book =
-          s.recordBook ?? s.record_book ?? s.gradebook ?? s.Зачетка;
-        if (book == null || book === '') continue;
-        const digits = String(book).replace(/\D/g, '');
-        if (digits && Number(digits) === n) return sid;
-      }
-    }
-    return null;
-  }
-
   const studentsForSelect = computed(() => {
     const group = selectedGroup.value;
     if (!group) return [];
@@ -543,6 +514,15 @@
       })
       .filter((x) => x.id !== 0 && !seen.has(x.id) && (seen.add(x.id), true));
   });
+
+  /** Иначе Vuetify v-select сбрасывает model, если id нет в items. */
+  function getStudentSelectItemsForRow(row: Row): { id: number; name: string }[] {
+    const items = studentsForSelect.value;
+    const nid = Number(row.studentId);
+    if (!Number.isFinite(nid) || nid <= 0) return items;
+    if (items.some((x) => x.id === nid)) return items;
+    return [...items, { id: nid, name: `ID ${nid} (нет в списке группы)` }];
+  }
 
   const canSubmit = computed(() => {
     const g = selectedGroup.value.trim();
@@ -566,22 +546,72 @@
     const input = e.target as HTMLInputElement;
     const fs = [...(input.files ?? [])].filter((f) => f instanceof File);
     if (!fs.length) return;
-    void addFiles(fs);
+    addFiles(fs);
     input.value = '';
   }
 
-  async function addFiles(fs: File[]) {
-    for (const f of fs) {
-      const r: Row = {
-        id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
-        file: f,
-        studentId: null,
-        workTitle: '',
-        validation: null,
-      };
-      rows.value.push(r);
-      await applyFilenameAutofill(r, f.name);
+  function buildRowFromFile(file: File): Row {
+    const parsed = parseFilename(file.name, autofillContext.value);
+    return {
+      id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      file,
+      studentId: parsed.studentId ?? null,
+      workTitle: parsed.workTitle || extractFullStemTitle(file.name),
+      validation: null,
+    };
+  }
+
+  /**
+   * Общие поля (группа / вид / тема / год) из первого файла пачки.
+   * Группа из имени перезаписывает выбранную, если отличается (как при поочерёдном автозаполнении).
+   */
+  function applyShared(newRows: Row[]) {
+    const first = newRows[0]?.file;
+    if (!first) return;
+    const firstParsed = parseFilename(first.name, autofillContext.value);
+
+    if (firstParsed.group) {
+      const nextG = String(firstParsed.group).trim();
+      const curG = String(selectedGroup.value ?? '').trim();
+      if (!curG || curG !== nextG) {
+        selectedGroup.value = firstParsed.group;
+      }
     }
+
+    const sg = String(selectedGroup.value ?? '').trim() || String(firstParsed.group ?? '').trim();
+
+    if (!workType.value.trim() && firstParsed.workType) {
+      const allowed = controlTextsForGroup(props.controls ?? [], sg);
+      if (!allowed.length || allowed.includes(firstParsed.workType)) {
+        workType.value = firstParsed.workType;
+      }
+    }
+
+    if (!topic.value.trim() && firstParsed.topic) {
+      const topicsAllowed = topicsForGroupAndWorkTypePure(
+        props.controls ?? [],
+        sg,
+        String(workType.value ?? '').trim(),
+        props.topics ?? []
+      );
+      if (!topicsAllowed.length || topicsAllowed.includes(firstParsed.topic)) {
+        topic.value = firstParsed.topic;
+      }
+    }
+
+    if (
+      firstParsed.academicYear &&
+      academicYearWhitelist.value.has(firstParsed.academicYear)
+    ) {
+      academicYear.value = firstParsed.academicYear;
+    }
+  }
+
+  /** Добавление строк синхронно — без await/nextTick между строками (нет гонки с workTitle). */
+  function addFiles(fs: File[]) {
+    const newRows = fs.map((f) => buildRowFromFile(f));
+    rows.value.push(...newRows);
+    applyShared(newRows);
   }
 
   function clearAll() {
@@ -591,252 +621,6 @@
 
   function removeRow(id: string) {
     rows.value = rows.value.filter((r) => r.id !== id);
-  }
-
-  function normalizeForMatch(s: string): string {
-    return String(s ?? '')
-      .toLowerCase()
-      .trim()
-      .replace(/_/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  function bestMatchOption(input: string, options: string[]): string | null {
-    const q = normalizeForMatch(input);
-    if (!q) return null;
-    const exact = options.find((o) => normalizeForMatch(o) === q);
-    if (exact) return exact;
-    let bestPrefix: string | null = null;
-    let bestLen = -1;
-    for (const o of options) {
-      const n = normalizeForMatch(o);
-      if (!n) continue;
-      if (q.startsWith(n) && n.length > bestLen) {
-        bestPrefix = o;
-        bestLen = n.length;
-      }
-      if (n.startsWith(q) && q.length > bestLen) {
-        bestPrefix = o;
-        bestLen = q.length;
-      }
-    }
-    if (bestPrefix) return bestPrefix;
-    const contains = options.find((o) => {
-      const n = normalizeForMatch(o);
-      return n.includes(q) || q.includes(n);
-    });
-    return contains ?? null;
-  }
-
-  function resolveGroupFromToken(token: string): string | null {
-    const t = String(token ?? '').trim();
-    if (!t) return null;
-    const gs = groups.value ?? [];
-    const exact = gs.find((g) => String(g).trim() === t);
-    if (exact != null) return String(exact);
-    const tl = t.toLowerCase();
-    const sub = gs.find((g) => {
-      const s = String(g).trim().toLowerCase();
-      return s.includes(tl) || tl.includes(s);
-    });
-    if (sub != null) return String(sub);
-    // Код группы только цифрами (напр. 0370): вхождение в название или хвост цифр в названии
-    if (/^\d{3,6}$/.test(t)) {
-      const byCode = gs.find((g) => {
-        const s = String(g).trim();
-        if (s.includes(t)) return true;
-        const digits = s.replace(/\D/g, '');
-        return digits.endsWith(t) || digits === t || t.endsWith(digits);
-      });
-      if (byCode != null) return String(byCode);
-    }
-    return null;
-  }
-
-  /** Если в имени файла указан номер зачётки — находим группу по списку студентов. */
-  function resolveGroupFromStudentRecordId(studentId: number): string | null {
-    if (!Number.isFinite(studentId) || studentId <= 0) return null;
-    const map = props.studentsByGroup ?? {};
-    for (const g of Object.keys(map)) {
-      const list = map[g] ?? [];
-      for (const s of list) {
-        if (getStudentIdRaw(s) === studentId) return g;
-      }
-    }
-    return null;
-  }
-
-  function distinctControlTextsAll(): string[] {
-    const seen = new Set<string>();
-    const list: string[] = [];
-    for (const c of props.controls ?? []) {
-      const controlText = String(c?.controlText ?? '').trim();
-      if (controlText && !seen.has(controlText)) {
-        seen.add(controlText);
-        list.push(controlText);
-      }
-    }
-    return list.sort((a, b) => a.localeCompare(b));
-  }
-
-  function controlTextsForWorkTypeMatch(): string[] {
-    const fromOptions = controlTypesOptions.value;
-    return fromOptions.length ? fromOptions : distinctControlTextsAll();
-  }
-
-  function findLongestPrefixMatch(parts: string[], options: string[]): { hit: string; k: number } | null {
-    for (let k = parts.length; k >= 1; k--) {
-      for (const sep of [' ', '_'] as const) {
-        const cand = parts.slice(0, k).join(sep);
-        const m = bestMatchOption(cand, options);
-        if (m) return { hit: m, k };
-      }
-    }
-    return null;
-  }
-
-  function consumedWordsForTopic(remainderParts: string[], topicTitle: string): number {
-    const tn = normalizeForMatch(topicTitle);
-    if (!tn || !remainderParts.length) return 0;
-    for (let m = remainderParts.length; m >= 1; m--) {
-      for (const sep of [' ', '_'] as const) {
-        const cand = normalizeForMatch(remainderParts.slice(0, m).join(sep));
-        if (cand === tn || tn.startsWith(cand) || cand.startsWith(tn)) {
-          return m;
-        }
-      }
-    }
-    return 0;
-  }
-
-  /** Подбор вида контроля по всей «середине» имени (не только с начала токенов). */
-  function matchWorkTypeFromMiddle(
-    middleParts: string[],
-    controlOpts: string[]
-  ): { hit: string; consumedTokens: number } | null {
-    if (!middleParts.length || !controlOpts.length) return null;
-    const prefixHit = findLongestPrefixMatch(middleParts, controlOpts);
-    if (prefixHit) {
-      return { hit: prefixHit.hit, consumedTokens: prefixHit.k };
-    }
-    const joined = middleParts.join(' ');
-    const whole = bestMatchOption(joined, controlOpts);
-    if (whole) return { hit: whole, consumedTokens: middleParts.length };
-    for (let start = 0; start < middleParts.length; start++) {
-      const slice = middleParts.slice(start);
-      const hit = findLongestPrefixMatch(slice, controlOpts);
-      if (hit) {
-        return { hit: hit.hit, consumedTokens: start + hit.k };
-      }
-    }
-    return null;
-  }
-
-  async function applyFilenameAutofill(row: Row, fileName: string) {
-    const base = String(fileName ?? '').replace(/\.[^.]+$/, '').trim();
-    if (!base) return;
-
-    let parts = base.split('_').map((p) => p.trim()).filter(Boolean);
-    if (!parts.length) return;
-
-    const last = parts[parts.length - 1];
-    if (
-      last &&
-      (/^\d{4}-\d{4}$/.test(last) || /^\d{4}\/\d{4}$/.test(last))
-    ) {
-      const norm = last.replace(/\//g, '-');
-      const allowed = new Set<string>(
-        ACADEMIC_YEAR_SELECT_ITEMS.map((i) => String(i.value))
-      );
-      if (allowed.has(norm)) {
-        academicYear.value = norm;
-      }
-      parts = parts.slice(0, -1);
-    }
-    if (!parts.length) return;
-
-    const second = parts[1] ?? '';
-    const secondIsStudentId = /^\d{5,9}$/.test(second);
-    if (secondIsStudentId) {
-      const sid = resolveStudentIdFromFileToken(second);
-      row.studentId = sid ?? Number(second);
-    }
-
-    const gFromToken = resolveGroupFromToken(parts[0] ?? '');
-    if (gFromToken && !selectedGroup.value) {
-      selectedGroup.value = gFromToken;
-      await nextTick();
-    }
-
-    if (!selectedGroup.value && secondIsStudentId) {
-      const sid = Number(row.studentId);
-      if (Number.isFinite(sid) && sid > 0) {
-        const gFromStudent = resolveGroupFromStudentRecordId(sid);
-        if (gFromStudent) {
-          selectedGroup.value = gFromStudent;
-          await nextTick();
-        }
-      }
-    }
-
-    const middleStart = secondIsStudentId ? 2 : 1;
-    const middleParts = parts.slice(middleStart);
-    if (!middleParts.length) return;
-
-    const controlOpts = controlTextsForWorkTypeMatch();
-    const wtHit = matchWorkTypeFromMiddle(middleParts, controlOpts);
-    let typeK = 0;
-    if (!wtHit) {
-      row.workTitle = middleParts.join(' ').replace(/\s+/g, ' ').trim();
-      return;
-    }
-    const curWt = String(workType.value ?? '').trim();
-    if (!curWt) {
-      workType.value = wtHit.hit;
-      typeK = wtHit.consumedTokens;
-    } else if (normalizeForMatch(curWt) === normalizeForMatch(wtHit.hit)) {
-      typeK = wtHit.consumedTokens;
-    } else {
-      const locked = findLongestPrefixMatch(middleParts, [curWt]);
-      typeK = locked?.k ?? 0;
-    }
-
-    await nextTick();
-
-    const remainderParts = middleParts.slice(typeK);
-    const topics = topicsForGroupAndWorkType(
-      String(selectedGroup.value ?? '').trim(),
-      String(workType.value ?? '').trim()
-    );
-
-    let topicWordCount = 0;
-    if (remainderParts.length && topics.length) {
-      if (!topic.value) {
-        const topicHit = findLongestPrefixMatch(remainderParts, topics);
-        if (topicHit) {
-          topic.value = topicHit.hit;
-          topicWordCount = topicHit.k;
-        } else {
-          const joinedRem = remainderParts.join(' ');
-          const topicWhole = bestMatchOption(joinedRem, topics);
-          if (topicWhole) {
-            topic.value = topicWhole;
-            topicWordCount = remainderParts.length;
-          }
-        }
-      } else {
-        topicWordCount = consumedWordsForTopic(remainderParts, topic.value);
-      }
-    }
-
-    const titleParts = remainderParts.slice(topicWordCount);
-    row.workTitle = titleParts.length
-      ? titleParts.join(' ').replace(/\s+/g, ' ').trim()
-      : remainderParts.join(' ').replace(/\s+/g, ' ').trim();
-    if (!String(row.workTitle ?? '').trim()) {
-      row.workTitle = middleParts.join(' ').replace(/\s+/g, ' ').trim();
-    }
   }
 
   function formatBytes(n: number): string {
@@ -876,30 +660,6 @@
     };
   }
 
-  function normalizeBatchFileKey(name: string): string {
-    const s = String(name ?? '').trim();
-    const base = (s.split(/[/\\]/).pop() ?? s).trim();
-    return base.toLowerCase();
-  }
-
-  /** Сопоставление ответа /validate/batch со строками: имя файла (без учёта регистра) или порядок. */
-  function applyBatchValidationToRows(res: BatchValidationResult, fileRows: Row[]) {
-    const items = res.results ?? [];
-    const byKey = new Map<string, ValidationResult>();
-    for (const x of items) {
-      const k = normalizeBatchFileKey(x.filename);
-      if (k) byKey.set(k, x.result);
-    }
-    fileRows.forEach((r, i) => {
-      const k = normalizeBatchFileKey(r.file?.name ?? '');
-      let val = k ? byKey.get(k) : undefined;
-      if (!val && items[i]?.result) {
-        val = items[i].result;
-      }
-      r.validation = val ?? null;
-    });
-  }
-
   async function executeBatchValidation(): Promise<void> {
     const fileRows = rows.value.filter((r) => r.file instanceof File);
     if (!fileRows.length) return;
@@ -912,7 +672,7 @@
       fileRows.map((r) => r.file as File),
       { templateId: tid, annotate: annotate.value }
     );
-    applyBatchValidationToRows(res, fileRows);
+    applyBatchValidationToRowsMutable(res, fileRows);
   }
 
   async function uploadAllRows(): Promise<void> {
@@ -984,11 +744,7 @@
     }
     busy.value = true;
     try {
-      if (autoCheck.value) {
-        if (sourceMode.value === 'moodle') {
-          await uploadAllRows();
-          return;
-        }
+      if (autoCheck.value && sourceMode.value === 'file') {
         phase.value = 'validate';
         await executeBatchValidation();
         showBatchReviewDialog.value = true;
@@ -1071,6 +827,14 @@
     border-radius: 10px;
     background: #f8fafc;
   }
+  .work-title-field :deep(.v-field__input),
+  .work-title-field :deep(textarea) {
+    min-height: 40px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
   .files-block {
     border: 1px solid #e2e8f0;
     border-radius: 14px;
@@ -1108,6 +872,26 @@
     background: #f8fafc;
     border-radius: 12px;
   }
+  .empty-lead {
+    margin: 0 0 8px;
+  }
+  .empty-lead:last-child {
+    margin-bottom: 0;
+  }
+  .empty code {
+    font-size: 12px;
+    padding: 1px 5px;
+    border-radius: 6px;
+    background: #e2e8f0;
+    color: #0f172a;
+    word-break: break-all;
+  }
+  .empty-file-hint {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #475569;
+  }
   .table {
     display: flex;
     flex-direction: column;
@@ -1131,6 +915,9 @@
     border-radius: 12px;
     background: #f8fafc;
     align-items: start;
+  }
+  .trow > div {
+    min-width: 0;
   }
   .file-name {
     font-weight: 600;

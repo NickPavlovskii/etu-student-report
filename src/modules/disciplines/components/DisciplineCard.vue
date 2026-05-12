@@ -81,14 +81,14 @@
         variant="tonal"
         size="small"
       >
-        <v-icon
-          start
-          size="16"
-        >
-          mdi-file-outline
-        </v-icon>
         Загружено: {{ card.loaded }}
       </v-chip>
+      <span
+        v-if="card.showMoodleNote"
+        class="card-moodle-note"
+      >
+        · Из них в Moodle: {{ card.uploadedMoodleWorks }} из {{ card.uploadedWorks }}
+      </span>
     </div>
 
     <div class="progress">
@@ -163,6 +163,11 @@
       progress: Number(i.progress ?? 0),
       groupsCount: Number(i.groupsCount ?? 0),
       groups: (Array.isArray(i.groups) ? i.groups : []) as string[],
+      uploadedWorks: Number(i.uploadedWorks ?? 0),
+      uploadedMoodleWorks: Number(
+        (i as { uploadedMoodleWorks?: unknown }).uploadedMoodleWorks ?? 0
+      ),
+      showMoodleNote: Number(i.uploadedWorks ?? 0) > 0,
     };
   });
 
@@ -312,9 +317,26 @@
   }
   .card-stats {
     display: flex;
-    gap: 8px;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0;
     margin-bottom: 12px;
+    min-width: 0;
   }
+  .card-stats :deep(.v-chip) {
+    flex-shrink: 0;
+  }
+  .card-moodle-note {
+    margin-left: 6px;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
   .progress {
     margin-bottom: 12px;
   }

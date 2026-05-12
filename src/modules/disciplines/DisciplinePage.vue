@@ -122,7 +122,7 @@
       class="block"
       elevation="0"
     >
-      <h3 class="section-title">Статистика</h3>
+      <h3 class="section-title">Данные по дисциплине</h3>
       <div class="stats">
         <etu-stat-card
           icon="mdi-book-open-outline"

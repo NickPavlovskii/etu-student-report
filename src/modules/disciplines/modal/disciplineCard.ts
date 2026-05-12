@@ -48,6 +48,8 @@ export interface DisciplineListRow {
   loadedCount: number;
   totalStudents: number;
   uploadedWorks: number;
+  /** Уникальные загруженные работы с типом Moodle (из числа uploadedWorks). */
+  uploadedMoodleWorks: number;
   expectedWorksTotal: number;
   loaded: string;
   progress: number;

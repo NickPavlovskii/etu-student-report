@@ -1,5 +1,6 @@
 import { getStudentRecordId } from '@/utils/studentRecordId';
 import type { ControlScheduleDto, ReportDto } from '../modal/reports';
+import { isMoodleReport } from './reportSource';
 
 export function normalizeTopics(topics: unknown): string[] {
   if (Array.isArray(topics)) {
@@ -94,6 +95,16 @@ export function computeUploadedWorkSlots(reports: ReportDto[]): number {
     uploadedSet.add(`${r.studentId}_${r.topic ?? ''}`);
   }
   return uploadedSet.size;
+}
+
+/** Уникальные «ячейки» работ, отмеченные как Moodle (тот же ключ, что у computeUploadedWorkSlots). */
+export function computeUploadedMoodleWorkSlots(reports: ReportDto[]): number {
+  const set = new Set<string>();
+  for (const r of reports ?? []) {
+    if (!isMoodleReport(r)) continue;
+    set.add(`${r.studentId}_${r.topic ?? ''}`);
+  }
+  return set.size;
 }
 
 export function mergeStudentsByGroupDedupe(lists: unknown[][]): Record<string, unknown[]> {
