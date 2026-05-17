@@ -6,6 +6,7 @@ import EtuLoadingPage from '@/components/global/EtuLoadingPage.vue'
 import EtuPageHeader from '@/components/global/EtuPageHeader.vue'
 import EtuPillSearchSelect from '@/components/global/EtuPillSearchSelect.vue'
 import EtuSearchableSelect from '@/components/global/EtuSearchableSelect.vue'
+import EtuSegmentSwitcher from '@/components/global/EtuSegmentSwitcher.vue'
 import EtuStatCard from '@/components/global/EtuStatCard.vue'
 import EtuTeaLoader from '@/components/global/EtuTeaLoader.vue'
 
@@ -66,6 +67,23 @@ describe('Global components smoke tests', () => {
       global: { stubs },
     })
     expect(wrapper.text()).toContain('Подождите')
+  })
+
+  it('renders EtuSegmentSwitcher and emits update:modelValue', async () => {
+    const wrapper = shallowMount(EtuSegmentSwitcher, {
+      props: {
+        modelValue: 'a',
+        options: [
+          { value: 'a', label: 'Вариант A' },
+          { value: 'b', label: 'Вариант B' },
+        ],
+      },
+    })
+    expect(wrapper.text()).toContain('Вариант A')
+    expect(wrapper.text()).toContain('Вариант B')
+    const second = wrapper.findAll('button').find((b) => b.text().includes('Вариант B'))
+    await second?.trigger('click')
+    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['b'])
   })
 
   it('renders EtuPageHeader with slots', () => {

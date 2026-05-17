@@ -290,7 +290,7 @@ export function parseFilename(fileName: string, ctx: AutofillContext): FilenameP
   if (!parts.length) return empty;
 
   let academicYear: string | null = null;
-  const lastRaw = parts[parts.length - 1];
+  const lastRaw = parts[parts.length - 1] ?? '';
   const lastNorm = normalizeAcademicYearToken(lastRaw);
   if (
     lastRaw &&

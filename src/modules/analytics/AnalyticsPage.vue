@@ -48,7 +48,12 @@
       :subtitle="headerSubtitle"
     >
       <template #right>
-        <analytics-study-period-switcher v-model="studyPeriod" />
+        <etu-segment-switcher
+          v-model="studyPeriod"
+          :options="studyPeriodOptions"
+          compact
+          aria-label="Период: учебный год или семестр"
+        />
       </template>
     </etu-page-header>
 
@@ -330,7 +335,6 @@
   import GroupsWidget from './components/widgets/GroupsWidget.vue';
   import TeachersWidget from './components/widgets/TeachersWidget.vue';
   import SemestersWidget from './components/widgets/SemestersWidget.vue';
-  import AnalyticsStudyPeriodSwitcher from './components/AnalyticsStudyPeriodSwitcher.vue';
   import AnalyticsHorizontalBarChart from './components/charts/AnalyticsHorizontalBarChart.vue';
   import AnalyticsTablePagination from './components/AnalyticsTablePagination.vue';
   import AnalyticsWidgetExportActions from './components/AnalyticsWidgetExportActions.vue';
@@ -366,6 +370,12 @@
   const expandedTeachers = ref<Set<string>>(new Set());
 
   const studyPeriod = ref<StudyPeriod>('academic_year');
+
+  const studyPeriodOptions: { value: StudyPeriod; label: string }[] = [
+    { value: 'academic_year', label: 'Учебный год' },
+    { value: 'autumn_semester', label: 'Осенний семестр' },
+    { value: 'spring_semester', label: 'Весенний семестр' },
+  ];
 
   function studyPeriodShortLabel(p: StudyPeriod): string {
     switch (p) {

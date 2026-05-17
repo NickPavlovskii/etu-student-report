@@ -41,8 +41,8 @@ describe('batchValidationMap', () => {
         ],
       };
       applyBatchValidationToRowsMutable(res, rows);
-      expect(rows[0].validation?.percent).toBe(90);
-      expect(rows[1].validation?.percent).toBe(10);
+      expect(rows[0]!.validation?.percent).toBe(90);
+      expect(rows[1]!.validation?.percent).toBe(10);
     });
 
     it('fallback по индексу, если имя не совпало', () => {
@@ -52,14 +52,14 @@ describe('batchValidationMap', () => {
         results: [{ filename: 'unknown.docx', result: vr({ percent: 55 }) }],
       };
       applyBatchValidationToRowsMutable(res, rows);
-      expect(rows[0].validation?.percent).toBe(55);
+      expect(rows[0]!.validation?.percent).toBe(55);
     });
 
     it('пустой results — validation null', () => {
       const f = new File([], 'x.docx');
       const rows = [{ file: f, validation: vr({ percent: 1 }) }];
       applyBatchValidationToRowsMutable({ results: [] }, rows);
-      expect(rows[0].validation).toBeNull();
+      expect(rows[0]!.validation).toBeNull();
     });
   });
 });

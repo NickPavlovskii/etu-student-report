@@ -11,7 +11,11 @@
       subtitle="Обзор учебных дисциплин и текущего статуса работ"
     >
       <template #right>
-        <semester-half-switcher v-model="semesterHalf" />
+        <etu-segment-switcher
+          v-model="semesterHalf"
+          :options="semesterHalfOptions"
+          aria-label="Полугодие семестра"
+        />
       </template>
     </etu-page-header>
 
@@ -91,7 +95,6 @@
   import { useRouter } from 'vue-router';
   import DisciplinesFilters from './components/Disciplinesfilters.vue';
   import DisciplineCard from './components/DisciplineCard.vue';
-  import SemesterHalfSwitcher from './components/SemesterHalfSwitcher.vue';
   import { useDisciplines } from './composables/useDisciplinesList';
   import { useCourseFilter } from './composables/UseCourseFilter';
   import { useAcademicYear } from '@/composables/useAcademicYear';
@@ -109,6 +112,11 @@
   const { user } = useUser();
   const search = ref('');
   const semesterHalf = ref<'autumn' | 'spring'>(currentCalendarSemesterHalf());
+
+  const semesterHalfOptions = [
+    { value: 'autumn', label: 'Осенний семестр' },
+    { value: 'spring', label: 'Весенний семестр' },
+  ] as const;
 
   function currentCalendarSemesterHalf(): 'autumn' | 'spring' {
     const m = new Date().getMonth() + 1;

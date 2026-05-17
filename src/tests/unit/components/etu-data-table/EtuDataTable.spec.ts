@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import EtuDataTable from '@/components/global/etu-data-table/EtuDataTable.vue'
+import type { TableColumn } from '@/components/global/etu-data-table/types'
 import { columns, type EtuDataTableRow } from './EtuDataTable.spec.constants'
+
+const tableColumns = columns as TableColumn[]
 
 type Row = EtuDataTableRow
 
@@ -11,7 +14,7 @@ describe('EtuDataTable', () => {
   it('renders rows data', () => {
     const wrapper = mount(EtuDataTable, {
       props: {
-        columns,
+        columns: tableColumns,
         rows,
         rowKey: 'id',
       },
@@ -29,7 +32,7 @@ describe('EtuDataTable', () => {
   it('emits sort events when sortable header clicked', async () => {
     const wrapper = mount(EtuDataTable, {
       props: {
-        columns,
+        columns: tableColumns,
         rows,
       },
       global: {
@@ -52,7 +55,7 @@ describe('EtuDataTable', () => {
   it('shows empty message when rows are empty and not loading', () => {
     const wrapper = mount(EtuDataTable, {
       props: {
-        columns,
+        columns: tableColumns,
         rows: [],
         loading: false,
         emptyText: 'Нет данных',

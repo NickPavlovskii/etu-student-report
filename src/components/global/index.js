@@ -8,6 +8,7 @@ import EtuInfoCard from './EtuInfoCard.vue'
 import EtuLabelChip from './EtuLabelChip.vue'
 import EtuDataTable from './etu-data-table/EtuDataTable.vue'
 import EtuPillSearchSelect from './EtuPillSearchSelect.vue'
+import EtuSegmentSwitcher from './EtuSegmentSwitcher.vue'
 
 const components = [
   { name: 'etu-stat-card', component: EtuStatCard },
@@ -20,6 +21,7 @@ const components = [
   { name: 'etu-label-chip', component: EtuLabelChip },
   { name: 'etu-data-table', component: EtuDataTable },
   { name: 'etu-pill-search-select', component: EtuPillSearchSelect },
+  { name: 'etu-segment-switcher', component: EtuSegmentSwitcher },
 ]
 
 export default {

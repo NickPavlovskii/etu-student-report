@@ -98,9 +98,9 @@ describe('AddTemplateModal (создание / редактирование ша
       global: { stubs: vuetifyLikeStubs },
     });
 
-    const nameInput = w.findAll('.v-text-field-stub').at(0);
+    const nameInput = w.findAll('.v-text-field-stub')[0];
     expect(nameInput?.exists()).toBe(true);
-    await nameInput?.setValue('Курсовая 2025');
+    await nameInput!.setValue('Курсовая 2025');
 
     expect((w.find('.btn-submit').element as HTMLButtonElement).disabled).toBe(false);
     await w.find('.btn-submit').trigger('click');

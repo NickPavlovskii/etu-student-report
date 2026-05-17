@@ -503,6 +503,12 @@
     return Number.isFinite(n) ? n : 0;
   }
 
+  function studentSelectName(s: StudentInGroupRow, id: number): string {
+    const label = s.fio ?? s['ФИО'] ?? s['Фамилия И.О.'];
+    const text = label != null ? String(label).trim() : '';
+    return text || String(id || '—');
+  }
+
   const studentsForSelect = computed(() => {
     const group = selectedGroup.value;
     if (!group) return [];
@@ -510,7 +516,7 @@
     return (props.studentsByGroup[group] ?? [])
       .map((s) => {
         const id = getStudentIdRaw(s);
-        return { id, name: s.fio ?? s['ФИО'] ?? s['Фамилия И.О.'] ?? String(id || '—') };
+        return { id, name: studentSelectName(s, id) };
       })
       .filter((x) => x.id !== 0 && !seen.has(x.id) && (seen.add(x.id), true));
   });

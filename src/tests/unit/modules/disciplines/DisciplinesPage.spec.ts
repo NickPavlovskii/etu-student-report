@@ -16,6 +16,7 @@ import DisciplinesPage from '@/modules/disciplines/DisciplinesPage.vue'
 import type { DisciplineListRow } from '@/modules/disciplines/modal/disciplineCard'
 import EtuInfoCard from '@/components/global/EtuInfoCard.vue'
 import EtuPageHeader from '@/components/global/EtuPageHeader.vue'
+import EtuSegmentSwitcher from '@/components/global/EtuSegmentSwitcher.vue'
 
 vi.mock('@/api/axiosLoading', () => ({
   beginGlobalAxiosOverlaySuppression: vi.fn(),
@@ -231,6 +232,7 @@ function mountDisciplinesPage() {
       components: {
         'etu-info-card': EtuInfoCard,
         'etu-page-header': EtuPageHeader,
+        'etu-segment-switcher': EtuSegmentSwitcher,
       },
       stubs: defaultStubs,
     },
@@ -266,14 +268,14 @@ describe('DisciplinesPage: семестр, поиск, курс и данные 
     expect(wrapper.text()).toContain('Весенняя семинарская')
     expect(wrapper.text()).not.toContain('Осенняя теория')
 
-    const switcherBtns = wrapper.find('.semester-switcher').findAll('button')
+    const switcherBtns = wrapper.find('.etu-segment-switcher').findAll('button')
     await switcherBtns[0]!.trigger('click')
     await flushPromises()
 
     expect(wrapper.text()).toContain('Осенняя теория')
     expect(wrapper.text()).not.toContain('Весенняя практика')
 
-    const springBtn = wrapper.find('.semester-switcher').findAll('button').filter((b) =>
+    const springBtn = wrapper.find('.etu-segment-switcher').findAll('button').filter((b) =>
       b.text().includes('Весенний')
     )
     expect(springBtn.length).toBe(1)
