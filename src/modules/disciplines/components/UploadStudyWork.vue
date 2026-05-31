@@ -268,7 +268,6 @@
   import { validateDocument, type ValidationResult } from '@/api/info';
   import { ACADEMIC_YEAR_SELECT_ITEMS } from '@/constants/academicYearSelectItems';
   import {
-    filterDisplayedValidationCriteria,
     mergeValidationResultItems,
     validationCriterionDisplayTitle,
     validationCriterionShowExpectedActualWhenPassed,
@@ -286,7 +285,7 @@
   import { computeSingleUploadAutofillPatch } from '../utils/singleUploadFilenameAutofill';
 
   const { academicYear } = useAcademicYear();
-  const { downloadAnnotatedFile } = useDownload();
+  const { downloadAnnotatedFileWithRemarks } = useDownload();
 
   const props = defineProps<UploadDisciplineModalProps>();
 
@@ -357,9 +356,7 @@
   );
 
   const visibleCriteria = computed(() =>
-    filterDisplayedValidationCriteria(
-      mergeValidationResultItems(validationResult.value)
-    )
+    mergeValidationResultItems(validationResult.value)
   );
 
   const displayCompliancePercent = computed<number | null>(() => {
@@ -367,10 +364,8 @@
     if (!r) return null;
     const merged = mergeValidationResultItems(r);
     if (merged.length) {
-      const vis = filterDisplayedValidationCriteria(merged);
-      if (!vis.length) return r.percent ?? null;
-      const passed = vis.filter((c) => c.passed).length;
-      return Math.round((100 * passed) / vis.length);
+      const passed = merged.filter((c) => c.passed).length;
+      return Math.round((100 * passed) / merged.length);
     }
     return r.percent ?? null;
   });
@@ -657,7 +652,12 @@
     const name = r?.annotatedFileName ?? 'document_замечания.docx';
     if (!b64) return;
     try {
-      downloadAnnotatedFile(b64, name);
+      downloadAnnotatedFileWithRemarks(
+        b64,
+        name,
+        validationResult.value ?? undefined,
+        file.value?.name ?? name
+      );
     } catch (e) {
       console.error('Ошибка открытия файла:', e);
     }

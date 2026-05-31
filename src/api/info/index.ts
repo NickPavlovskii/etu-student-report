@@ -64,6 +64,8 @@ export type {
   UpdateDisciplineTeacherAssignmentRequest,
   TemplateDto,
   TemplateCriteriaDto,
+  TemplateKeywordMatch,
+  TemplateKeywordSearchResult,
   DownloadFormat,
   ValidationErrorItem,
   ValidationResult,
@@ -130,6 +132,7 @@ export const {
   updateTemplate,
   deleteTemplate,
   uploadTitlePageTemplate,
+  searchTemplateKeywords,
 } = infoApi.templates;
 
 export const {

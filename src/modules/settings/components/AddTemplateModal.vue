@@ -68,10 +68,18 @@
           </div>
           <div class="section-content">
             <div class="criteria-row">
+              <v-checkbox
+                v-model="form.checkFont"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
               <span class="criteria-label">Шрифт</span>
               <v-select
                 v-model="form.font"
                 :items="fontItems"
+                :disabled="!form.checkFont"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -79,10 +87,18 @@
               />
             </div>
             <div class="criteria-row">
+              <v-checkbox
+                v-model="form.checkFontSize"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
               <span class="criteria-label">Размер шрифта</span>
               <v-select
                 v-model="form.fontSize"
                 :items="fontSizeItems"
+                :disabled="!form.checkFontSize"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -104,9 +120,17 @@
           </div>
           <div class="section-content criteria-grid">
             <div class="criteria-row">
+              <v-checkbox
+                v-model="form.checkMinPages"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
               <span class="criteria-label">Мин. страниц</span>
               <v-text-field
                 v-model="form.minPages"
+                :disabled="!form.checkMinPages"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -114,13 +138,21 @@
               />
             </div>
             <div class="criteria-row">
+              <v-checkbox
+                v-model="form.checkMinSources"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
               <span class="criteria-label">Мин. источников</span>
               <v-text-field
                 v-model="form.minSources"
+                class="criteria-control criteria-input-narrow"
                 variant="outlined"
                 density="compact"
                 hide-details
-                class="criteria-control criteria-input-narrow"
+                :disabled="!form.checkMinSources"
               />
             </div>
           </div>
@@ -151,10 +183,18 @@
           </div>
           <div class="section-content">
             <div class="criteria-row">
+              <v-checkbox
+                v-model="form.checkIllNumbering"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
               <span class="criteria-label">Нумерация иллюстраций</span>
               <v-select
                 v-model="form.illNumbering"
                 :items="illNumberingItems"
+                :disabled="!form.checkIllNumbering"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -162,6 +202,13 @@
               />
             </div>
             <div class="criteria-row">
+              <v-checkbox
+                v-model="form.checkFigurePosition"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
               <span class="criteria-label">
                 Позиция рисунка
                 <v-tooltip location="top" max-width="300">
@@ -184,6 +231,7 @@
               <v-select
                 v-model="form.figurePosition"
                 :items="figurePositionItems"
+                :disabled="!form.checkFigurePosition"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -191,6 +239,13 @@
               />
             </div>
             <div class="criteria-row">
+              <v-checkbox
+                v-model="form.checkFigureCaption"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
               <span class="criteria-label">
                 Подпись рисунка
                 <v-tooltip location="top" max-width="300">
@@ -210,6 +265,7 @@
               <v-select
                 v-model="form.figureCaption"
                 :items="figureCaptionItems"
+                :disabled="!form.checkFigureCaption"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -217,10 +273,18 @@
               />
             </div>
             <div class="criteria-row">
+              <v-checkbox
+                v-model="form.checkTableTitle"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
               <span class="criteria-label">Заголовок таблицы</span>
               <v-select
                 v-model="form.tableTitle"
                 :items="tableTitleItems"
+                :disabled="!form.checkTableTitle"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -228,10 +292,18 @@
               />
             </div>
             <div class="criteria-row">
+              <v-checkbox
+                v-model="form.checkTableTitlePlacement"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
               <span class="criteria-label">Расположение названия таблицы</span>
               <v-select
                 v-model="form.tableTitlePlacement"
                 :items="tableTitlePlacementItems"
+                :disabled="!form.checkTableTitlePlacement"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -239,6 +311,13 @@
               />
             </div>
             <div class="criteria-row">
+              <v-checkbox
+                v-model="form.checkTablePosition"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
               <span class="criteria-label">
                 Позиция таблицы
                 <v-tooltip location="top">
@@ -258,6 +337,7 @@
               <v-select
                 v-model="form.tablePosition"
                 :items="tablePositionItems"
+                :disabled="!form.checkTablePosition"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -273,59 +353,128 @@
               size="20"
               class="section-icon"
             >
+              mdi-format-text
+            </v-icon>
+            <span>Ключевые фразы</span>
+          </div>
+          <div class="section-content title-page-block">
+            <p class="section-hint">
+              Добавьте фразы, которые должны встречаться в документе. После
+              сохранения шаблона они попадут в проверку; в отчёте строка называется
+              «Ключевые фразы».
+            </p>
+            <v-text-field
+              v-model="manualRequiredString"
+              label="Добавить фразу"
+              variant="outlined"
+              density="compact"
+              hide-details
+              @keyup.enter="addManualRequiredString"
+            >
+              <template #append-inner>
+                <v-btn
+                  icon
+                  size="small"
+                  variant="text"
+                  :disabled="!manualRequiredString.trim()"
+                  @click="addManualRequiredString"
+                >
+                  <v-icon>mdi-plus</v-icon>
+                </v-btn>
+              </template>
+            </v-text-field>
+            <div
+              v-if="requiredStringChips.length"
+              class="required-chips"
+            >
+              <v-chip
+                v-for="s in requiredStringChips"
+                :key="s"
+                closable
+                size="small"
+                class="required-chip"
+                @click:close="removeRequiredString(s)"
+              >
+                {{ s }}
+              </v-chip>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <v-icon
+              size="20"
+              class="section-icon"
+            >
               mdi-format-list-bulleted
             </v-icon>
             <span>Структура документа</span>
           </div>
-          <div class="structure-grid">
-            <v-checkbox
-              v-model="form.hasToc"
-              label="Оглавление"
-              hide-details
-              density="compact"
-              color="primary"
-              class="structure-check"
-            />
-            <v-checkbox
-              v-model="form.hasIntroduction"
-              label="Введение"
-              hide-details
-              density="compact"
-              color="primary"
-              class="structure-check"
-            />
-            <v-checkbox
-              v-model="form.hasMainPart"
-              label="Основная часть"
-              hide-details
-              density="compact"
-              color="primary"
-              class="structure-check"
-            />
-            <v-checkbox
-              v-model="form.hasConclusion"
-              label="Заключение"
-              hide-details
-              density="compact"
-              color="primary"
-              class="structure-check"
-            />
-            <v-checkbox
-              v-model="form.hasBibliography"
-              label="Список литературы"
-              hide-details
-              density="compact"
-              color="primary"
-              class="structure-check"
-            />
-            <v-checkbox
-              v-model="form.hasAppendices"
-              label="Приложения"
-              hide-details
-              density="compact"
-              color="primary"
-              class="structure-check"
-            />
+          <p class="section-hint">
+            Отметьте чекбоксом только те разделы, которые должны быть в работе.
+          </p>
+          <div class="section-content structure-rows">
+            <div class="criteria-row criteria-row--structure">
+              <v-checkbox
+                v-model="form.checkHasToc"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
+              <span class="criteria-label">Оглавление</span>
+            </div>
+            <div class="criteria-row criteria-row--structure">
+              <v-checkbox
+                v-model="form.checkHasIntroduction"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
+              <span class="criteria-label">Введение</span>
+            </div>
+            <div class="criteria-row criteria-row--structure">
+              <v-checkbox
+                v-model="form.checkHasMainPart"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
+              <span class="criteria-label">Основная часть</span>
+            </div>
+            <div class="criteria-row criteria-row--structure">
+              <v-checkbox
+                v-model="form.checkHasConclusion"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
+              <span class="criteria-label">Заключение</span>
+            </div>
+            <div class="criteria-row criteria-row--structure">
+              <v-checkbox
+                v-model="form.checkHasBibliography"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
+              <span class="criteria-label">Список литературы</span>
+            </div>
+            <div class="criteria-row criteria-row--structure">
+              <v-checkbox
+                v-model="form.checkHasAppendices"
+                hide-details
+                density="compact"
+                color="primary"
+                class="criteria-check"
+              />
+              <span class="criteria-label">Приложения</span>
+            </div>
           </div>
         </div>
       </v-card-text>
@@ -356,6 +505,7 @@
   import { ref, watch, computed } from 'vue';
   import { JAVA_TEMPLATE_CRITERIA_DEFAULTS as J } from '@/api/info';
   import type { AddTemplateForm } from '../modal';
+  import { defaultTemplateCriterionFlags } from '@/utils/templateCriteriaPayload';
   import {
     ADD_TEMPLATE_FONT_OPTIONS as fontOptions,
     ADD_TEMPLATE_FONT_SIZE_OPTIONS as fontSizeOptions,
@@ -425,18 +575,52 @@
     hasConclusion: J.hasConclusion ?? true,
     hasBibliography: J.hasBibliography ?? true,
     hasAppendices: J.hasAppendices ?? false,
+    titlePageRequiredStrings: [],
+    ...defaultTemplateCriterionFlags(),
   };
 
   const form = ref<AddTemplateForm>({ ...defaultForm });
+
+  const manualRequiredString = ref('');
+
+  const requiredStringChips = computed(
+    () => form.value.titlePageRequiredStrings ?? []
+  );
+
+  function addRequiredString(text: string) {
+    const s = text.trim();
+    if (!s) return;
+    const list = [...(form.value.titlePageRequiredStrings ?? [])];
+    if (list.includes(s)) return;
+    list.push(s);
+    form.value.titlePageRequiredStrings = list;
+    form.value.checkTitlePagePhrases = true;
+  }
+
+  function addManualRequiredString() {
+    addRequiredString(manualRequiredString.value);
+    manualRequiredString.value = '';
+  }
+
+  function removeRequiredString(s: string) {
+    form.value.titlePageRequiredStrings = (
+      form.value.titlePageRequiredStrings ?? []
+    ).filter((x) => x !== s);
+  }
 
   watch(
     () => props.initialForm,
     (val) => {
       if (val) {
-        form.value = { ...defaultForm, ...val };
+        form.value = {
+          ...defaultForm,
+          ...val,
+          titlePageRequiredStrings: [...(val.titlePageRequiredStrings ?? [])],
+        };
       } else {
-        form.value = { ...defaultForm };
+        form.value = { ...defaultForm, titlePageRequiredStrings: [] };
       }
+      manualRequiredString.value = '';
     },
     { immediate: true }
   );
@@ -445,11 +629,18 @@
     () => props.modelValue,
     (val) => {
       if (val && props.initialForm) {
-        form.value = { ...defaultForm, ...props.initialForm };
+        form.value = {
+          ...defaultForm,
+          ...props.initialForm,
+          titlePageRequiredStrings: [
+            ...(props.initialForm.titlePageRequiredStrings ?? []),
+          ],
+        };
       }
       if (val && !props.initialForm) {
-        form.value = { ...defaultForm };
+        form.value = { ...defaultForm, titlePageRequiredStrings: [] };
       }
+      if (val) manualRequiredString.value = '';
     }
   );
 
@@ -553,6 +744,28 @@
     margin-bottom: 16px;
   }
 
+  .section-hint {
+    margin: -8px 0 12px;
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.45;
+  }
+
+  .title-page-block {
+    gap: 14px;
+  }
+
+  .required-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .required-chip {
+    max-width: 100%;
+  }
+
   .section-icon {
     color: #6366f1;
   }
@@ -572,7 +785,39 @@
   .criteria-row {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+  }
+
+  .criteria-check {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  .criteria-check :deep(.v-selection-control) {
+    min-height: 28px;
+  }
+
+  .structure-rows {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 24px;
+  }
+
+  .criteria-row--structure {
+    min-height: 36px;
+  }
+
+  @media (max-width: 600px) {
+    .structure-rows {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .title-page-phrases-block {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
 
   .criteria-label {
@@ -595,16 +840,6 @@
 
   .criteria-input-narrow {
     max-width: 140px;
-  }
-
-  .structure-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px 32px;
-  }
-
-  .structure-check {
-    margin: 0;
   }
 
   .modal-actions {

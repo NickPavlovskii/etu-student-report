@@ -22,6 +22,7 @@
     "axios": "^1.13.4",
     "element-plus": "^2.13.0",
     "html2canvas": "^1.4.1",
+    "jszip": "^3.10.1",
     "vue": "^3.5.24",
     "vue-router": "^4.6.4",
     "vuetify": "^3.11.3",
@@ -35,14 +36,15 @@
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/test-utils": "^2.4.6",
     "@vue/eslint-config-airbnb-with-typescript": "^8.0.0",
+    "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.8.1",
     "autoprefixer": "^10.4.23",
     "eslint": "^8.57.0",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-sonarjs": "^0.25.0",
     "eslint-plugin-vue": "^9.0.0",
+    "jsdom": "^26.1.0",
     "postcss": "^8.5.6",
     "sass": "^1.97.1",
     "storybook": "^10.3.5",
@@ -50,7 +52,6 @@
     "vite": "^7.2.4",
     "vitest": "^3.2.4",
     "vue-eslint-parser": "^9.0.0",
-    "vue-tsc": "^3.1.4",
-    "jsdom": "^26.1.0"
+    "vue-tsc": "^3.1.4"
   }
 }

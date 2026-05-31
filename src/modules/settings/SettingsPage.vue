@@ -88,6 +88,10 @@
     saveControlTypesForDiscipline,
   } from './composables/useDisciplineControlTypes';
   import type { TemplateItem, ControlTypeItem, AddTemplateForm } from './modal';
+  import {
+    buildTemplateCriteriaFromForm,
+    defaultTemplateCriterionFlags,
+  } from '@/utils/templateCriteriaPayload';
 
   const router = useRouter();
   const { user } = useUser();
@@ -121,6 +125,43 @@
   const controlTypes = ref<ControlTypeItem[]>([]);
   const topicsByControlType = ref<Record<string, string[]>>({});
   const saveSuccessVisible = ref(false);
+
+  function normalizeTeacherLastName(value: unknown): string {
+    const raw = String(value ?? '').trim();
+    if (!raw) return '';
+    return raw.split(/\s+/)[0]?.trim().toLowerCase() ?? '';
+  }
+
+  function resolveTemplateOwnerLastName(
+    dto: TemplateDto | Record<string, unknown>
+  ): string {
+    const raw = dto as Record<string, unknown>;
+    const candidates = [
+      raw.createdByLastName,
+      raw.teacherLastName,
+      raw.authorLastName,
+      raw.ownerLastName,
+      raw.createdBy,
+      raw.author,
+      raw.owner,
+      raw.updatedBy,
+    ];
+    for (const candidate of candidates) {
+      const normalized = normalizeTeacherLastName(candidate);
+      if (normalized) return normalized;
+    }
+    return '';
+  }
+
+  function templateBelongsToTeacher(
+    dto: TemplateDto | Record<string, unknown>,
+    teacherLastName: string
+  ): boolean {
+    if (!teacherLastName) {
+      return false;
+    }
+    return resolveTemplateOwnerLastName(dto) === teacherLastName;
+  }
 
   function dtoToItem(dto: TemplateDto): TemplateItem {
     const sections = [
@@ -341,40 +382,43 @@
       hasConclusion: Boolean(t.hasConclusion ?? J.hasConclusion),
       hasBibliography: Boolean(t.hasBibliography ?? J.hasBibliography),
       hasAppendices: Boolean(t.hasAppendices ?? J.hasAppendices),
+      ...defaultTemplateCriterionFlags(),
+      checkTitlePagePhrases:
+        Array.isArray(t.titlePageRequiredStrings) &&
+        (t.titlePageRequiredStrings as string[]).length > 0,
+      checkHasToc: Boolean(t.hasToc ?? J.hasToc),
+      checkHasIntroduction: Boolean(t.hasIntroduction ?? J.hasIntroduction),
+      checkHasMainPart: Boolean(t.hasMainPart ?? J.hasMainPart),
+      checkHasConclusion: Boolean(t.hasConclusion ?? J.hasConclusion),
+      checkHasBibliography: Boolean(t.hasBibliography ?? J.hasBibliography),
+      checkHasAppendices: Boolean(t.hasAppendices ?? J.hasAppendices),
     };
   }
 
   function criteriaFromForm(form: AddTemplateForm): TemplateCriteriaDto {
-    return {
-      fileFormat: form.fileFormat,
-      font: form.font,
-      fontSize: form.fontSize,
-      lineSpacing: form.lineSpacing,
-      minPages: form.minPages,
-      minSources: form.minSources,
-      illNumbering: form.illNumbering,
+    return buildTemplateCriteriaFromForm({
+      ...form,
       figurePosition: normalizeFigurePositionUi(form.figurePosition),
-      figureCaption: form.figureCaption,
-      tableTitle: form.tableTitle,
-      tableTitlePlacement: form.tableTitlePlacement,
       tablePosition: normalizeTablePositionUi(form.tablePosition),
-      submissionFormat: form.submissionFormat,
-      titlePageRequiredStrings: form.titlePageRequiredStrings,
-      hasTitlePage: form.hasTitlePage,
-      hasToc: form.hasToc,
-      hasIntroduction: form.hasIntroduction,
-      hasMainPart: form.hasMainPart,
-      hasConclusion: form.hasConclusion,
-      hasBibliography: form.hasBibliography,
-      hasAppendices: form.hasAppendices,
-    };
+    });
   }
 
   function formToDto(form: AddTemplateForm): TemplateDto {
+    const actorLastName = String(user.value?.lastName ?? '').trim();
+    const criteria = criteriaFromForm(form);
+    const phrases = criteria.titlePageRequiredStrings ?? [];
     return {
       name: form.name,
       description: form.description,
-      criteria: criteriaFromForm(form),
+      criteria,
+      ...(phrases.length
+        ? {
+            titlePageRequiredStrings: [...phrases],
+            hasTitlePage: true,
+          }
+        : {}),
+      createdBy: actorLastName || undefined,
+      updatedBy: actorLastName || undefined,
     };
   }
 
@@ -383,7 +427,11 @@
     templatesError.value = null;
     try {
       const list = await getTemplates();
-      templates.value = list.map(dtoToItem);
+      const actorLastName = normalizeTeacherLastName(user.value?.lastName);
+      const visibleTemplates = isAdminRole.value
+        ? list
+        : list.filter((dto) => templateBelongsToTeacher(dto, actorLastName));
+      templates.value = visibleTemplates.map(dtoToItem);
     } catch (e: unknown) {
       templatesError.value =
         e instanceof Error ? e.message : 'Не удалось загрузить шаблоны';

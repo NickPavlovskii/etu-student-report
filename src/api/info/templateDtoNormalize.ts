@@ -109,6 +109,80 @@ export function extractIllustrationTableFieldsDeep(root: unknown): Record<string
   return acc;
 }
 
+export function extractTitlePageRequiredStringsDeep(root: unknown): string[] {
+  const acc = new Set<string>();
+
+  function collect(val: unknown) {
+    if (Array.isArray(val)) {
+      val.forEach(collect);
+      return;
+    }
+    if (typeof val === 'string') {
+      const t = val.trim();
+      if (!t) return;
+      if (t.startsWith('[')) {
+        try {
+          collect(JSON.parse(t));
+          return;
+        } catch {
+          /* not JSON */
+        }
+      }
+      t.split(/[,;\n]/).forEach((s) => {
+        const x = s.trim();
+        if (x) acc.add(x);
+      });
+      return;
+    }
+    if (!isPlainObject(val)) return;
+    for (const [k, v] of Object.entries(val)) {
+      const low = k.toLowerCase();
+      if (
+        low === 'titlepagerequiredstrings' ||
+        low === 'title_page_required_strings'
+      ) {
+        collect(v);
+        continue;
+      }
+      collect(v);
+    }
+  }
+
+  function visit(node: unknown, depth: number) {
+    if (depth > 14) return;
+    if (node == null) return;
+    if (typeof node === 'string') {
+      const t = node.trim();
+      if (t.startsWith('{') || t.startsWith('[')) {
+        try {
+          visit(JSON.parse(t), depth + 1);
+        } catch {
+          /* ignore */
+        }
+      }
+      return;
+    }
+    if (Array.isArray(node)) {
+      for (const x of node) visit(x, depth + 1);
+      return;
+    }
+    if (!isPlainObject(node)) return;
+    for (const [k, v] of Object.entries(node)) {
+      const low = k.toLowerCase();
+      if (
+        low === 'titlepagerequiredstrings' ||
+        low === 'title_page_required_strings'
+      ) {
+        collect(v);
+      }
+      visit(v, depth + 1);
+    }
+  }
+
+  visit(root, 0);
+  return [...acc];
+}
+
 export function normalizeTemplateFromApi(data: unknown): TemplateDto {
   const unwrapped = unwrapTemplateEnvelope(data);
   if (!isPlainObject(unwrapped)) {
@@ -151,6 +225,14 @@ export function normalizeTemplateFromApi(data: unknown): TemplateDto {
     if (isBlankCriteriaValue(merged[k]) && !isBlankCriteriaValue(deep[k])) {
       merged[k] = deep[k];
     }
+  }
+  const titlePhrases = extractTitlePageRequiredStringsDeep(data);
+  if (
+    titlePhrases.length &&
+    isBlankCriteriaValue(merged.titlePageRequiredStrings)
+  ) {
+    merged.titlePageRequiredStrings = titlePhrases;
+    merged.hasTitlePage = true;
   }
   return merged as TemplateDto;
 }

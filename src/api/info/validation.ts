@@ -11,6 +11,12 @@ import {
   JAVA_TEMPLATE_CRITERIA_DEFAULTS,
 } from './javaTemplateCriteriaDefaults';
 import { normalizeTemplateFromApi } from './templateDtoNormalize';
+import {
+  buildTemplateCriteriaFromForm,
+  ensureTitlePageKeywordsInCriteria,
+  normalizeTitlePageRequiredStrings,
+} from '@/utils/templateCriteriaPayload';
+import { mergeValidationResultItems } from '@/utils/validationCriteriaDisplay';
 
 const TEMPLATE_ENTITY_ROOT_KEYS = new Set([
   'id',
@@ -32,7 +38,9 @@ function flatCriteriaFromTemplateResponse(data: unknown): Record<string, unknown
 }
 
 function criteriaPayloadFromTemplateResponse(data: unknown): Record<string, unknown> {
-  return ensureIllustrationTableCriteria(flatCriteriaFromTemplateResponse(data));
+  const flat = flatCriteriaFromTemplateResponse(data);
+  const withIllustrations = ensureIllustrationTableCriteria(flat);
+  return ensureTitlePageKeywordsInCriteria(withIllustrations);
 }
 
 function isIllustrationCriterionEmpty(value: unknown): boolean {
@@ -75,30 +83,7 @@ function pickIllustrationTableDefaults(): Record<string, string> {
 function toTemplateCriteriaDto(
   form: Partial<AddTemplateForm>
 ): Record<string, unknown> {
-  const d = JAVA_TEMPLATE_CRITERIA_DEFAULTS;
-  return {
-    fileFormat: form.fileFormat ?? d.fileFormat,
-    font: form.font ?? d.font,
-    fontSize: form.fontSize ?? d.fontSize,
-    lineSpacing: form.lineSpacing ?? d.lineSpacing,
-    minPages: form.minPages ?? d.minPages,
-    minSources: form.minSources ?? d.minSources,
-    illNumbering: form.illNumbering ?? d.illNumbering,
-    figurePosition: form.figurePosition ?? d.figurePosition,
-    figureCaption: form.figureCaption ?? d.figureCaption,
-    tableTitle: form.tableTitle ?? d.tableTitle,
-    tableTitlePlacement: form.tableTitlePlacement ?? d.tableTitlePlacement,
-    tablePosition: form.tablePosition ?? d.tablePosition,
-    submissionFormat: form.submissionFormat ?? 'Электронный вид',
-    titlePageRequiredStrings: form.titlePageRequiredStrings,
-    hasTitlePage: false,
-    hasToc: form.hasToc ?? d.hasToc,
-    hasIntroduction: form.hasIntroduction ?? d.hasIntroduction,
-    hasMainPart: form.hasMainPart ?? d.hasMainPart,
-    hasConclusion: form.hasConclusion ?? d.hasConclusion,
-    hasBibliography: form.hasBibliography ?? d.hasBibliography,
-    hasAppendices: form.hasAppendices ?? d.hasAppendices,
-  };
+  return buildTemplateCriteriaFromForm(form) as Record<string, unknown>;
 }
 
 const defaultTemplate: Partial<AddTemplateForm> = {
@@ -123,6 +108,45 @@ const defaultTemplate: Partial<AddTemplateForm> = {
   hasBibliography: JAVA_TEMPLATE_CRITERIA_DEFAULTS.hasBibliography,
   hasAppendices: JAVA_TEMPLATE_CRITERIA_DEFAULTS.hasAppendices,
 };
+
+function resultHasKeywordCriterion(result: ValidationResult): boolean {
+  return mergeValidationResultItems(result).some((c) => {
+    const code = (c.code ?? '').toUpperCase();
+    if (
+      code.includes('TITLE_PAGE') ||
+      code.includes('REQUIRED_STRING') ||
+      code.includes('KEYWORD') ||
+      code === 'HAS_TITLE_PAGE'
+    ) {
+      return true;
+    }
+    const blob = `${c.title ?? ''} ${c.message ?? ''}`.toLowerCase();
+    return blob.includes('ключев') && blob.includes('фраз');
+  });
+}
+
+function augmentMissingKeywordCriterion(
+  result: ValidationResult,
+  criteriaPayload: Record<string, unknown>
+): ValidationResult {
+  const phrases = normalizeTitlePageRequiredStrings(
+    criteriaPayload.titlePageRequiredStrings
+  );
+  if (!phrases.length || resultHasKeywordCriterion(result)) {
+    return result;
+  }
+  const notice = {
+    code: 'TITLE_PAGE_REQUIRED_STRINGS',
+    title: 'Ключевые фразы',
+    message: `В шаблоне заданы фразы: ${phrases.join(', ')}. Сервер проверки не вернул результат по этому критерию — пересохраните шаблон и убедитесь, что на сервере включена проверка HAS_TITLE_PAGE.`,
+    passed: false,
+  };
+  return {
+    ...result,
+    valid: false,
+    criteria: [...(result.criteria ?? []), notice],
+  };
+}
 
 export default function validationModule(api: AxiosInstance): ValidationModule {
   return {
@@ -165,7 +189,6 @@ export default function validationModule(api: AxiosInstance): ValidationModule {
           : (opts as Partial<AddTemplateForm> | undefined);
       const annotate =
         opts && 'annotate' in opts ? opts.annotate : (annotateFlag ?? false);
-
       const form = new FormData();
       form.append('file', file);
 
@@ -173,13 +196,14 @@ export default function validationModule(api: AxiosInstance): ValidationModule {
       if (annotate) {
         params.annotate = true;
       }
+      let criteriaPayloadSent: Record<string, unknown> | null = null;
       if (templateId != null && templateId !== '') {
         form.append('templateId', String(templateId));
         params.templateId = String(templateId);
         try {
           const tplRes = await api.get<unknown>(`/templates/${templateId}`);
-          const beforeEnsure = flatCriteriaFromTemplateResponse(tplRes.data);
-          const payload = ensureIllustrationTableCriteria(beforeEnsure);
+          const payload = criteriaPayloadFromTemplateResponse(tplRes.data);
+          criteriaPayloadSent = payload;
           form.append(
             'template',
             new Blob([JSON.stringify(payload)], { type: 'application/json' }),
@@ -190,7 +214,10 @@ export default function validationModule(api: AxiosInstance): ValidationModule {
         }
       } else {
         const raw = toTemplateCriteriaDto({ ...defaultTemplate, ...template });
-        const criteria = ensureIllustrationTableCriteria(raw);
+        const criteria = ensureTitlePageKeywordsInCriteria(
+          ensureIllustrationTableCriteria(raw)
+        );
+        criteriaPayloadSent = criteria;
         const templateBlob = new Blob([JSON.stringify(criteria)], {
           type: 'application/json',
         });
@@ -224,12 +251,15 @@ export default function validationModule(api: AxiosInstance): ValidationModule {
         };
       }
 
-      return {
+      const base: ValidationResult = {
         ...data,
         percent,
         errors: data.errors ?? [],
         warnings: data.warnings ?? [],
       };
+      return criteriaPayloadSent
+        ? augmentMissingKeywordCriterion(base, criteriaPayloadSent)
+        : base;
     },
 
     async validateBatch(

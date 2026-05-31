@@ -1,3 +1,9 @@
+import type { ValidationResult } from '@/api/types';
+import {
+  buildValidationRemarksSummary,
+  remarksSummaryFileName,
+} from '@/utils/validationRemarksSummary';
+
 export function useDownload() {
   function downloadBlob(blob: Blob, filename = 'file') {
     const url = URL.createObjectURL(blob);
@@ -35,5 +41,25 @@ export function useDownload() {
     }
   }
 
-  return { downloadBlob, downloadAnnotatedFile };
+  function downloadAnnotatedFileWithRemarks(
+    base64: string,
+    fileName: string,
+    validationResult?: ValidationResult | null,
+    sourceDocumentName?: string
+  ) {
+    downloadAnnotatedFile(base64, fileName);
+    const summary = buildValidationRemarksSummary(
+      validationResult,
+      sourceDocumentName ?? fileName
+    );
+    if (!summary.trim()) {
+      return;
+    }
+    const remarksBlob = new Blob([summary], {
+      type: 'text/plain;charset=utf-8',
+    });
+    downloadBlob(remarksBlob, remarksSummaryFileName(fileName));
+  }
+
+  return { downloadBlob, downloadAnnotatedFile, downloadAnnotatedFileWithRemarks };
 }

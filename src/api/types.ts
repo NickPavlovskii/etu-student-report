@@ -395,6 +395,18 @@ export type TemplateDto = {
   [key: string]: unknown;
 };
 
+export type TemplateKeywordMatch = {
+  text: string;
+  excerpt: string;
+  lineNumber: number;
+};
+
+export type TemplateKeywordSearchResult = {
+  filename: string;
+  query: string;
+  matches: TemplateKeywordMatch[];
+};
+
 export interface TemplatesModule {
   getTemplates(): Promise<TemplateDto[]>;
   getTemplate(id: string | number): Promise<TemplateDto | null>;
@@ -402,6 +414,11 @@ export interface TemplatesModule {
   updateTemplate(id: string | number, body: TemplateDto): Promise<TemplateDto>;
   deleteTemplate(id: string | number): Promise<void>;
   uploadTitlePageTemplate(id: string | number, file: File): Promise<TemplateDto>;
+  searchTemplateKeywords(
+    file: File,
+    query: string,
+    maxMatches?: number
+  ): Promise<TemplateKeywordSearchResult>;
 }
 
 // ——— archive ———

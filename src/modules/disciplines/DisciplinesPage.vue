@@ -57,6 +57,7 @@
           icon="mdi-file-upload-outline"
           color="green"
           :value="`${totalWorksStats.uploaded} / ${totalWorksStats.total}`"
+          :subtitle="worksMoodleSubtitle"
         />
       </v-col>
     </v-row>
@@ -195,6 +196,12 @@
   const visibleDisciplines = computed(() =>
     filteredDisciplines.value.filter((d) => (d.groupsCount ?? 0) > 0)
   );
+
+  const worksMoodleSubtitle = computed(() => {
+    const { uploaded, moodleUploaded } = totalWorksStats.value;
+    if (uploaded <= 0) return '';
+    return `Из них в Moodle: ${moodleUploaded} из ${uploaded}`;
+  });
 
   function disciplineCardItem(item: DisciplineListRow) {
     const { teacherFio: _omit, ...rest } = item;

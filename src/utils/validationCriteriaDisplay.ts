@@ -33,19 +33,8 @@ export function isHiddenValidationCriterion(item: {
   if (code === 'LINE_SPACING' || code.includes('LINE_SPACING')) {
     return true;
   }
-  if (
-    code === 'HASTITLEPAGE' ||
-    code === 'HAS_TITLE_PAGE' ||
-    code.includes('TITLE_PAGE') ||
-    code.includes('TITUL')
-  ) {
-    return true;
-  }
   const blob = `${item.message ?? ''} ${item.title ?? ''}`.toLowerCase();
   if (blob.includes('межстрочн')) {
-    return true;
-  }
-  if (blob.includes('титульн')) {
     return true;
   }
   if (
@@ -98,6 +87,18 @@ export function validationCriterionDisplayTitle(item: {
   }
   if (code.includes('PDF_LAYOUT')) {
     return 'Ограничения проверки PDF';
+  }
+  if (
+    code.includes('TITLE_PAGE') ||
+    code.includes('REQUIRED_STRING') ||
+    code.includes('KEYWORD') ||
+    code === 'HAS_TITLE_PAGE'
+  ) {
+    return 'Ключевые фразы';
+  }
+  const blob = `${item.title ?? ''} ${(item as { message?: string }).message ?? ''}`.toLowerCase();
+  if (blob.includes('ключев') && blob.includes('фраз')) {
+    return 'Ключевые фразы';
   }
   return (item.title ?? '').trim() || (item.code ?? '');
 }

@@ -57,7 +57,7 @@ export const ASSIGNMENTS_TABLE_COLUMNS: AssignmentsTableColumn[] = [
   {
     key: 'planTeacher',
     class: 'col-plan',
-    header: 'По РПД',
+    header: 'Автор РПД',
     headerClass: 'th-filled th-sep',
   },
   {

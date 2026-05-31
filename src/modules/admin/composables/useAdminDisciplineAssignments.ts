@@ -27,6 +27,16 @@ function messageFromError(e: unknown): string {
   return 'Не удалось выполнить запрос';
 }
 
+function hasPlanAuthor(row: DisciplineTeacherAssignmentDto): boolean {
+  const planTeacherFio = String(row.planTeacherFio ?? '').trim();
+  const planLastName = String(row.planLastName ?? '').trim();
+  const planFirstName = String(row.planFirstName ?? '').trim();
+  const planPatronymic = String(row.planPatronymic ?? '').trim();
+  return Boolean(
+    planTeacherFio || planLastName || planFirstName || planPatronymic
+  );
+}
+
 export function useAdminDisciplineAssignments() {
   const assignments = ref<DisciplineTeacherAssignmentDto[]>([]);
   const teachers = ref<TeacherDto[]>([]);
@@ -51,9 +61,10 @@ export function useAdminDisciplineAssignments() {
     assignmentsLoading.value = true;
     error.value = null;
     try {
-      assignments.value = await getDisciplineTeacherAssignments(
+      const loaded = await getDisciplineTeacherAssignments(
         assignmentsSearch.value.trim() || undefined
       );
+      assignments.value = loaded.filter(hasPlanAuthor);
     } catch (e: unknown) {
       error.value = messageFromError(e);
       assignments.value = [];

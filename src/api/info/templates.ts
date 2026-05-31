@@ -3,7 +3,11 @@
  * GET, POST, PUT, DELETE /api/templates
  */
 import type { AxiosInstance } from 'axios';
-import type { TemplateDto, TemplatesModule } from '../types';
+import type {
+  TemplateDto,
+  TemplateKeywordSearchResult,
+  TemplatesModule,
+} from '../types';
 import { normalizeTemplateFromApi } from './templateDtoNormalize';
 
 export default function templatesModule(api: AxiosInstance): TemplatesModule {
@@ -43,6 +47,34 @@ export default function templatesModule(api: AxiosInstance): TemplatesModule {
         { headers: { 'Content-Type': undefined } as any }
       );
       return normalizeTemplateFromApi(data ?? {});
+    },
+    async searchTemplateKeywords(
+      file: File,
+      query: string,
+      maxMatches = 30
+    ): Promise<TemplateKeywordSearchResult> {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('query', query.trim());
+      form.append('maxMatches', String(Math.min(100, Math.max(1, maxMatches))));
+      const { data } = await api.post<unknown>('/templates/keyword-search', form, {
+        headers: { 'Content-Type': undefined } as any,
+      });
+      const row = (data ?? {}) as Record<string, unknown>;
+      const rawMatches = Array.isArray(row.matches) ? row.matches : [];
+      const matches = rawMatches.map((m, idx) => {
+        const item = (m ?? {}) as Record<string, unknown>;
+        return {
+          text: String(item.text ?? ''),
+          excerpt: String(item.excerpt ?? item.text ?? ''),
+          lineNumber: Number(item.lineNumber ?? idx + 1),
+        };
+      });
+      return {
+        filename: String(row.filename ?? file.name),
+        query: String(row.query ?? query.trim()),
+        matches,
+      };
     },
   };
 }

@@ -420,7 +420,7 @@
 
   const { academicYear } = useAcademicYear();
   const { uploadedBy } = useUser();
-  const { downloadAnnotatedFile } = useDownload();
+  const { downloadAnnotatedFileWithRemarks } = useDownload();
   const { mdAndDown } = useDisplay();
   const isCompactScreen = computed(() => mdAndDown.value);
 
@@ -644,7 +644,12 @@
     const fallbackName = r.file?.name ?? 'отчет';
     const name = r.validation?.annotatedFileName ?? `${fallbackName}_замечания.docx`;
     if (!b64) return;
-    downloadAnnotatedFile(b64, name);
+    downloadAnnotatedFileWithRemarks(
+      b64,
+      name,
+      r.validation ?? undefined,
+      r.file?.name ?? fallbackName
+    );
   }
 
   function buildUploadPayload(r: Row): UploadWorkPayload {

@@ -52,4 +52,32 @@ describe('useDownload', () => {
     expect(createObjectURL).not.toHaveBeenCalled()
     expect(openSpy).not.toHaveBeenCalled()
   })
+
+  it('downloadAnnotatedFileWithRemarks also downloads remarks summary', () => {
+    const { downloadAnnotatedFileWithRemarks } = useDownload()
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:url')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    const clickMock = vi.fn()
+    const removeMock = vi.fn()
+    const originalCreateElement = document.createElement.bind(document)
+    vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+      const el = originalCreateElement(tagName) as HTMLAnchorElement
+      el.click = clickMock
+      el.remove = removeMock
+      return el
+    })
+    vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node)
+
+    downloadAnnotatedFileWithRemarks(
+      btoa('doc'),
+      'work_замечания.docx',
+      {
+        valid: false,
+        errors: [{ code: 'FONT', message: 'Неверный шрифт', passed: false }],
+        warnings: [],
+      }
+    )
+
+    expect(clickMock).toHaveBeenCalledTimes(2)
+  })
 })

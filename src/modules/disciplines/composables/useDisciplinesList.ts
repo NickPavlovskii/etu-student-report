@@ -610,23 +610,26 @@ export function useDisciplines(
     const list = unref(filteredDisciplines);
     const rows = Array.isArray(list) ? list : [];
     let uploaded = 0;
+    let moodleUploaded = 0;
     let total = 0;
     for (const d of rows) {
       const row = d as {
         uploadedWorks?: number;
+        uploadedMoodleWorks?: number;
         expectedWorksTotal?: number;
         loadedCount?: number;
         totalStudents?: number;
       };
       if ((row.expectedWorksTotal ?? 0) > 0) {
         uploaded += row.uploadedWorks ?? 0;
+        moodleUploaded += row.uploadedMoodleWorks ?? 0;
         total += row.expectedWorksTotal ?? 0;
       } else {
         uploaded += row.loadedCount ?? 0;
         total += row.totalStudents ?? 0;
       }
     }
-    return { uploaded, total };
+    return { uploaded, moodleUploaded, total };
   });
 
   return {

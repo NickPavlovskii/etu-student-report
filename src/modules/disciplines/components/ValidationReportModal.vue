@@ -40,76 +40,32 @@
               />
             </div>
           </div>
-          <div class="errors-count">Всего ошибок {{ errorItems.length }}</div>
-        </div>
-
-        <div
-          v-if="structureCriteriaFromBackend.length"
-          class="backend-structure-block"
-        >
-          <div class="backend-structure-title">
-            Ответ сервера: таблицы, рисунки, нумерация
-          </div>
-          <div
-            v-for="(item, idx) in structureCriteriaFromBackend"
-            :key="'struct-' + item.code + '-' + idx"
-            :class="[
-              'structure-criterion-card',
-              item.passed ? 'structure-passed' : 'structure-failed',
-            ]"
-          >
-            <v-icon
-              size="22"
-              :color="validationCriterionIconColor(item)"
-            >
-              {{ validationCriterionIconName(item) }}
-            </v-icon>
-            <div class="structure-criterion-body">
-              <div class="structure-criterion-title-row">
-                <span class="structure-criterion-title">{{
-                  validationCriterionDisplayTitle(item)
-                }}</span>
-                <span
-                  v-if="item.code"
-                  class="structure-code-chip"
-                >{{ item.code }}</span>
-              </div>
-              <div class="structure-criterion-message">{{ item.message }}</div>
-              <div
-                v-if="
-                  (item.expected || item.actual) &&
-                  (!item.passed || validationCriterionShowExpectedActualWhenPassed(item))
-                "
-                class="structure-criterion-details"
-              >
-                <span v-if="item.expected">Ожидалось: {{ item.expected }}</span>
-                <span v-if="item.actual"> · Фактически: {{ item.actual }}</span>
-              </div>
-            </div>
+          <div class="errors-count">
+            Критериев: {{ allCriteriaItems.length }} · замечаний:
+            {{ failedCriteriaCount }}
           </div>
         </div>
 
         <div
-          v-if="errorItems.length"
-          class="other-errors-heading"
+          v-if="!allCriteriaItems.length"
+          class="validation-empty"
         >
-          Другие замечания
+          Нет данных по критериям проверки
         </div>
         <div
-          v-for="(item, idx) in errorItems"
-          :key="item.code + '-' + idx"
-          :class="['error-card', cardClass(item)]"
+          v-for="(item, idx) in allCriteriaItems"
+          :key="(item.code || 'c') + '-' + idx"
+          :class="[
+            'error-card',
+            item.passed ? 'error-card--passed' : cardClass(item),
+          ]"
         >
           <v-icon
             size="24"
             class="error-icon"
-            :color="item.level === 'warning' ? 'warning' : 'info'"
+            :color="validationCriterionIconColor(item)"
           >
-            {{
-              item.level === 'warning'
-                ? 'mdi-alert-circle-outline'
-                : 'mdi-information-outline'
-            }}
+            {{ validationCriterionIconName(item) }}
           </v-icon>
           <div class="error-content">
             <div class="error-title-row">
@@ -150,9 +106,9 @@
             </div>
           </div>
           <span
-            :class="['level-chip', levelChipClass(item)]"
+            :class="['level-chip', item.passed ? 'level-chip--passed' : levelChipClass(item)]"
           >
-            {{ levelLabel(item) }}
+            {{ item.passed ? 'Выполнено' : levelLabel(item) }}
           </span>
         </div>
       </v-card-text>
@@ -184,11 +140,8 @@ import { computed } from 'vue';
 import type { ValidationResult, ValidationErrorItem } from '@/api/info';
 import { useDownload } from '@/composables/useDownload';
 import {
-  filterDisplayedValidationCriteria,
-  filterStructureIllustrationTableCriteria,
   mergeValidationResultItems,
   validationCriterionDisplayTitle,
-  validationCriterionShowExpectedActualWhenPassed,
 } from '@/utils/validationCriteriaDisplay';
 import {
   validationCriterionIconColor,
@@ -205,16 +158,23 @@ defineEmits<{
   (e: 'update:modelValue', v: boolean): void;
 }>();
 
-const { downloadAnnotatedFile } = useDownload();
+const { downloadAnnotatedFileWithRemarks } = useDownload();
+
+const allCriteriaItems = computed<ValidationErrorItem[]>(() =>
+  mergeValidationResultItems(props.result)
+);
+
+const failedCriteriaCount = computed(
+  () => allCriteriaItems.value.filter((c) => !c.passed).length
+);
 
 const percent = computed(() => {
   const r = props.result;
   if (!r) return 0;
-  if (r.criteria?.length) {
-    const vis = filterDisplayedValidationCriteria(r.criteria);
-    if (!vis.length) return r.percent ?? 0;
-    const passed = vis.filter((c) => c.passed).length;
-    return Math.round((100 * passed) / vis.length);
+  const items = allCriteriaItems.value;
+  if (items.length) {
+    const passed = items.filter((c) => c.passed).length;
+    return Math.round((100 * passed) / items.length);
   }
   return r.percent ?? 0;
 });
@@ -236,35 +196,11 @@ function openAnnotatedFile() {
   const name = props.result?.annotatedFileName ?? 'document_замечания.docx';
   if (!b64) return;
   try {
-    downloadAnnotatedFile(b64, name);
+    downloadAnnotatedFileWithRemarks(b64, name, props.result ?? undefined, name);
   } catch (e) {
     console.error('Ошибка открытия файла:', e);
   }
 }
-
-const structureCriteriaFromBackend = computed(() => {
-  const r = props.result;
-  if (!r) return [];
-  const merged = filterDisplayedValidationCriteria(mergeValidationResultItems(r));
-  return filterStructureIllustrationTableCriteria(merged);
-});
-
-const errorItems = computed<ValidationErrorItem[]>(() => {
-  const r = props.result;
-  if (!r) return [];
-  const merged = filterDisplayedValidationCriteria(mergeValidationResultItems(r));
-  const structCodes = new Set(
-    filterStructureIllustrationTableCriteria(merged)
-      .map((c) => (c.code ?? '').trim())
-      .filter(Boolean)
-  );
-  return merged.filter((c) => {
-    if (c.passed) return false;
-    const code = (c.code ?? '').trim();
-    if (code && structCodes.has(code)) return false;
-    return true;
-  });
-});
 
 function categoryLabel(item: ValidationErrorItem): string {
   if (item.category) return item.category;
@@ -435,6 +371,12 @@ function cardClass(item: ValidationErrorItem): string {
   margin: 8px 0 12px;
 }
 
+.validation-empty {
+  font-size: 14px;
+  color: #64748b;
+  padding: 12px 0;
+}
+
 .error-card {
   display: flex;
   align-items: flex-start;
@@ -444,6 +386,11 @@ function cardClass(item: ValidationErrorItem): string {
   border: 1px solid #e5e7eb;
   margin-bottom: 12px;
   background: #fafafa;
+}
+
+.error-card--passed {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
 }
 
 .card-warning {
@@ -535,6 +482,11 @@ function cardClass(item: ValidationErrorItem): string {
 .level-info {
   background: #dbeafe;
   color: #1d4ed8;
+}
+
+.level-chip--passed {
+  background: #dcfce7;
+  color: #166534;
 }
 
 .modal-actions {

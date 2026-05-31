@@ -45,12 +45,13 @@ function normalizeStatus(check: number | null): ArchiveReportRow['status'] {
 function mapReport(r: Record<string, unknown>): ArchiveReportRow {
   const check = (r.check ?? r.checkPercent ?? null) as number | null;
   const topic = String(r.topic ?? '').trim() || '—';
+  const workControl = String(r.controlType ?? '').trim();
   return {
     id: Number(r.id),
     studentName: String(r.studentName ?? '—'),
     groupName: String(r.groupName ?? '—'),
     disciplineName: String(r.disciplineName ?? '—'),
-    workControl: String(r.controlType ?? '—'),
+    workControl,
     topic,
     uploadDate: (r.uploadDate as string) ?? null,
     uploadedBy: String(r.uploadedBy ?? r.teacherLastName ?? '—'),
@@ -62,6 +63,10 @@ function mapReport(r: Record<string, unknown>): ArchiveReportRow {
 
 function uniqSorted(arr: string[]) {
   return Array.from(new Set(arr.filter(Boolean))).sort();
+}
+
+function hasWorkType(r: Record<string, unknown>): boolean {
+  return String(r.controlType ?? '').trim().length > 0;
 }
 
 export function useArchive(filters: {
@@ -97,7 +102,9 @@ export function useArchive(filters: {
           });
         }
         const raw = Array.isArray(data) ? data : [];
-        rows.value = raw.map((r) => mapReport(r as Record<string, unknown>));
+        rows.value = raw
+          .filter((r) => hasWorkType(r as Record<string, unknown>))
+          .map((r) => mapReport(r as Record<string, unknown>));
       } finally {
         loading.value = false;
       }
