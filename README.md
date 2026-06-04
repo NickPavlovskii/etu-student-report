@@ -27,6 +27,22 @@
 
 ---
 
+## Документы и материалы проекта
+
+| # | Материал | Ссылка |
+|---|----------|--------|
+| 1 | 🎨 Макеты интерфейса (Figma) | [открыть →](https://www.figma.com/design/PrjP3KfCcN75dqbui7dXxv/ИС-%22Хранения-отчетов%22?node-id=0-1&p=f&t=E0ahp0hEarQElY6G-0) |
+| 2 | 📋 Техническое задание (ТЗ) | [открыть →](#) |
+| 3 | 📖 Руководство пользователя | [открыть →](https://drive.google.com/file/d/1mLg8U7OABEI-qzc_d-pGqNCTDx7Ud1H7/view?usp=drive_link) |
+| 4 | ✅ Акт внедрения | [открыть →](https://drive.google.com/file/d/1sH_75bRLwjyn3f6H9XWFb90_JjrqEc1w/view?usp=drive_link) |
+| 5 | 🎓 ВКР (PDF) | [открыть →](https://drive.google.com/file/d/10YqBOmn8-5bQlKkcoBK4dzecQnSnbWQy/view?usp=drive_link) |
+| 6 | 📄 Статья | [открыть →](https://drive.google.com/file/d/1-8N_WGgyaZuHD8EGF5LhBDxWms3EX4cE/view?usp=drive_link) |
+| 7 | 📊 Презентация к защите | [открыть →](https://docs.google.com/presentation/d/1pU6WyQsEZWTusmJ_zry6T_g5bf-HA6Fj/edit?usp=drive_link&ouid=107322948642047659645&rtpof=true&sd=true) |
+| 8 | 🔷 Диаграмма прецедентов (Use Case) | [открыть →](https://drive.google.com/file/d/1zGYmhjedD3JOsEQSM-w7pD-1qzdxd6HE/view?usp=drive_link) |
+| 9 | 🏆 Диплом участника конференции | [открыть →](https://drive.google.com/file/d/18s-J5TAuWR45ScMVKw8UcnaogIT3-eZF/view?usp=drive_link) |
+
+---
+
 ## Технологический стек
 
 | Слой | Технологии |
@@ -121,35 +137,6 @@ npm run build
 
 Путь задан под раздачу статики бэкендом; при необходимости измените `build.outDir` в `vite.config.ts`.
 
-### Просмотр собранного приложения
 
-```bash
-npm run preview
-```
 
----
 
-## Скрипты npm
-
-| Команда | Описание |
-|---------|----------|
-| `npm run dev` | Запуск dev-сервера Vite с HMR |
-| `npm run build` | Проверка типов + production-сборка |
-| `npm run preview` | Локальный просмотр билда |
-| `npm run lint` | ESLint для `.ts` и `.vue` |
-| `npm run lint:fix` | То же + автоисправления |
-| `npm run docker:build` | Сборка Docker-образа |
-| `npm run docker:run` | Запуск контейнера на порту 8080 |
-
----
-
-## Разработка и API
-
-- **Прокси:** в `vite.config.ts` настроен `server.proxy` для префикса `/api` → бэкенд (по умолчанию порт `8081`).
-- **Алиас `@/`** указывает на каталог `src/` (удобно для импортов).
-
----
-
-## Лицензия
-
-Проект **`private`** (см. `package.json`), распространение ограничено.
