@@ -32,7 +32,7 @@
 | # | Материал | Ссылка |
 |---|----------|--------|
 | 1 | 🎨 Макеты интерфейса (Figma) | [открыть →](https://www.figma.com/design/PrjP3KfCcN75dqbui7dXxv/ИС-%22Хранения-отчетов%22?node-id=0-1&p=f&t=E0ahp0hEarQElY6G-0) |
-| 2 | 📋 Техническое задание (ТЗ) | [открыть →](#) |
+| 2 | 📋 Техническое задание (ТЗ) | [открыть →](https://drive.google.com/file/d/1ihtUTZQSWKKoW0C1yoj3QHlrE__pAQtM/view?usp=drive_link) |
 | 3 | 📖 Руководство пользователя | [открыть →](https://drive.google.com/file/d/1mLg8U7OABEI-qzc_d-pGqNCTDx7Ud1H7/view?usp=drive_link) |
 | 4 | ✅ Акт внедрения | [открыть →](https://drive.google.com/file/d/1sH_75bRLwjyn3f6H9XWFb90_JjrqEc1w/view?usp=drive_link) |
 | 5 | 🎓 ВКР (PDF) | [открыть →](https://drive.google.com/file/d/10YqBOmn8-5bQlKkcoBK4dzecQnSnbWQy/view?usp=drive_link) |
