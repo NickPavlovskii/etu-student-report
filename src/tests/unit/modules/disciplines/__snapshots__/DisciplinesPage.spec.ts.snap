@@ -1,0 +1,80 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DisciplinesPage: семестр, поиск, курс и данные по дисциплине > snapshot: просмотр дисциплин фиксирует видимый список и статистику 1`] = `
+"<div data-v-0320a0cb="" class="v-container page" fluid="">
+  <div data-v-5a2fddce="" data-v-0320a0cb="" class="v-card header-card" elevation="0">
+    <div data-v-5a2fddce="" class="header-top">
+      <div data-v-5a2fddce="" class="head-inner">
+        <div data-v-5a2fddce="" class="head-icon-wrap" style="background: rgb(239, 246, 255); color: rgb(37, 99, 235);">
+          <v-icon-stub data-v-5a2fddce="" size="40" color="#2563eb" icon="mdi-view-grid-outline"></v-icon-stub>
+        </div>
+        <div data-v-5a2fddce="">
+          <h2 data-v-5a2fddce="" class="page-title">Мои дисциплины</h2>
+          <p data-v-5a2fddce="" class="subtitle">Обзор учебных дисциплин и текущего статуса работ</p>
+        </div>
+      </div>
+      <div data-v-5a2fddce="" class="header-right">
+        <div data-v-3ef41c72="" data-v-0320a0cb="" role="group" class="etu-segment-switcher" aria-label="Полугодие семестра"><button data-v-3ef41c72="" type="button" class="etu-segment-switcher__option">Осенний семестр</button><button data-v-3ef41c72="" type="button" class="etu-segment-switcher__option etu-segment-switcher__option--active">Весенний семестр</button></div>
+      </div>
+    </div>
+    <!--v-if-->
+  </div>
+  <div data-v-0320a0cb="" class="v-row info-cards-row" dense="">
+    <div data-v-0320a0cb="" class="v-col" cols="12" sm="6" md="4">
+      <div data-v-fbf25fa2="" data-v-0320a0cb="" class="v-card etu-info-card" elevation="0">
+        <div data-v-fbf25fa2="" class="info-inner">
+          <div data-v-fbf25fa2="" class="info-icon-wrap blue">
+            <v-icon-stub data-v-fbf25fa2="" size="28" icon="mdi-book-outline"></v-icon-stub>
+          </div>
+          <div data-v-fbf25fa2="" class="info-text">
+            <div data-v-fbf25fa2="" class="info-title">Дисциплины</div>
+            <div data-v-fbf25fa2="" class="info-value">2</div>
+            <!--v-if-->
+          </div>
+        </div>
+      </div>
+    </div>
+    <div data-v-0320a0cb="" class="v-col" cols="12" sm="6" md="4">
+      <div data-v-fbf25fa2="" data-v-0320a0cb="" class="v-card etu-info-card" elevation="0">
+        <div data-v-fbf25fa2="" class="info-inner">
+          <div data-v-fbf25fa2="" class="info-icon-wrap purple">
+            <v-icon-stub data-v-fbf25fa2="" size="28" icon="mdi-account-group-outline"></v-icon-stub>
+          </div>
+          <div data-v-fbf25fa2="" class="info-text">
+            <div data-v-fbf25fa2="" class="info-title">Группы</div>
+            <div data-v-fbf25fa2="" class="info-value">3</div>
+            <!--v-if-->
+          </div>
+        </div>
+      </div>
+    </div>
+    <div data-v-0320a0cb="" class="v-col" cols="12" sm="6" md="4">
+      <div data-v-fbf25fa2="" data-v-0320a0cb="" class="v-card etu-info-card" elevation="0">
+        <div data-v-fbf25fa2="" class="info-inner">
+          <div data-v-fbf25fa2="" class="info-icon-wrap green">
+            <v-icon-stub data-v-fbf25fa2="" size="28" icon="mdi-file-upload-outline"></v-icon-stub>
+          </div>
+          <div data-v-fbf25fa2="" class="info-text">
+            <div data-v-fbf25fa2="" class="info-title">Учебных работ загружено</div>
+            <div data-v-fbf25fa2="" class="info-value">20 / 70</div>
+            <div data-v-fbf25fa2="" class="info-subtitle">Из них в Moodle: 0 из 20</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div data-v-af24f10c="" data-v-0320a0cb="" class="v-card filters" elevation="0">
+    <div data-v-af24f10c="" class="filters-row"><input data-v-af24f10c="" role="searchbox" class="v-text-field-stub disciplines-search pill-input" variant="outlined" density="compact" hide-details="" clearable="" placeholder="Поиск по названию дисциплины…" prepend-inner-icon="mdi-magnify" value=""><span data-v-af24f10c="" class="course-filter-stub course-pill" multiple="" placeholder="Все курсы" prepend-icon="mdi-school-outline" search-placeholder="Поиск…" empty-text="Не найдено" location="bottom start" clearable="true" show-null-option="false" close-on-content-click="false" menu-width="300" max-list-height="280"></span></div>
+  </div>
+  <div data-v-0320a0cb="" class="v-card cards-wrap" elevation="0">
+    <div data-v-0320a0cb="" class="v-row" dense="">
+      <div data-v-0320a0cb="" class="v-col" cols="12" md="4">
+        <div data-v-0320a0cb="" class="discipline-card-stub">Весенняя практика</div>
+      </div>
+      <div data-v-0320a0cb="" class="v-col" cols="12" md="4">
+        <div data-v-0320a0cb="" class="discipline-card-stub">Весенняя семинарская</div>
+      </div>
+    </div>
+  </div>
+</div>"
+`;

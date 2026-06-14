@@ -343,4 +343,13 @@ describe('DisciplinesPage: семестр, поиск, курс и данные 
     expect(cardProp('Группы')).toBe(1)
     expect(cardProp('Учебных работ загружено')).toBe('10 / 40')
   })
+
+  it('snapshot: просмотр дисциплин фиксирует видимый список и статистику', async () => {
+    const wrapper = mountDisciplinesPage()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Весенняя практика')
+    expect(wrapper.text()).toContain('Весенняя семинарская')
+    expect(wrapper.html()).toMatchSnapshot()
+  })
 })

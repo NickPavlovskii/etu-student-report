@@ -297,4 +297,123 @@ describe('useAnalytics', () => {
       totalTeachers: 3,
     })
   })
+
+  it('snapshot: просмотр аналитики фиксирует кафедральные KPI и таблицы', async () => {
+    userState.canSeeAll.value = true
+    getAdminAnalyticsMock.mockResolvedValue({
+      expectedCount: 120,
+      totalWorks: 74,
+      totalTeachers: 4,
+    })
+    getAdminAnalyticsTeachersSummaryMock.mockResolvedValue([
+      { teacherFio: 'Иванов И.И.', expectedCount: 40, uploadedCount: 30 },
+      { teacherFio: 'Петров П.П.', expectedCount: 20, uploadedCount: 12 },
+    ])
+    getAdminAnalyticsDisciplinesTableMock.mockResolvedValue([
+      {
+        disciplineName: 'Программирование',
+        expectedCount: 40,
+        uploadedCount: 30,
+        moodleLinksCount: 5,
+        groupsCount: 2,
+        studentsCount: 50,
+      },
+      {
+        disciplineName: 'Базы данных',
+        expectedCount: 20,
+        uploadedCount: 12,
+        moodleLinksCount: 2,
+        groupsCount: 1,
+        studentsCount: 24,
+      },
+    ])
+    getAdminAnalyticsBySemesterMock.mockResolvedValue([
+      { semester: 1, expectedCount: 40, uploadedCount: 30 },
+      { semester: 2, expectedCount: 20, uploadedCount: 12 },
+    ])
+    getDepartmentDisciplinesWithTeachersMock.mockResolvedValue([
+      {
+        disciplineName: 'Программирование',
+        teacherFio: 'Иванов И.И.',
+        expectedCount: 40,
+        uploadedCount: 30,
+      },
+    ])
+
+    const vm = useAnalytics({
+      academicYear: ref('2024/2025'),
+      studyPeriod: ref('academic_year'),
+      scopeMode: ref('department'),
+    })
+    await vm.loadAll()
+
+    expect({
+      showDepartmentStats: vm.showDepartmentStats.value,
+      kpi: vm.kpi.value,
+      disciplinesTable: vm.disciplinesTable.value,
+      bySemester: vm.bySemester.value,
+      teachersSummary: vm.teachersSummary.value,
+      disciplinesWithTeachers: vm.disciplinesWithTeachers.value,
+    }).toMatchInlineSnapshot(`
+      {
+        "bySemester": [
+          {
+            "expectedCount": 40,
+            "semester": 1,
+            "uploadedCount": 30,
+          },
+          {
+            "expectedCount": 20,
+            "semester": 2,
+            "uploadedCount": 12,
+          },
+        ],
+        "disciplinesTable": [
+          {
+            "disciplineName": "Программирование",
+            "expectedCount": 40,
+            "groupsCount": 2,
+            "moodleLinksCount": 5,
+            "studentsCount": 50,
+            "uploadedCount": 30,
+          },
+          {
+            "disciplineName": "Базы данных",
+            "expectedCount": 20,
+            "groupsCount": 1,
+            "moodleLinksCount": 2,
+            "studentsCount": 24,
+            "uploadedCount": 12,
+          },
+        ],
+        "disciplinesWithTeachers": [
+          {
+            "disciplineName": "Программирование",
+            "expectedCount": 40,
+            "teacherFio": "Иванов И.И.",
+            "uploadedCount": 30,
+          },
+        ],
+        "kpi": {
+          "expectedCount": 60,
+          "moodleWorks": 7,
+          "totalTeachers": 4,
+          "totalWorks": 42,
+        },
+        "showDepartmentStats": true,
+        "teachersSummary": [
+          {
+            "expectedCount": 40,
+            "teacherFio": "Иванов И.И.",
+            "uploadedCount": 30,
+          },
+          {
+            "expectedCount": 20,
+            "teacherFio": "Петров П.П.",
+            "uploadedCount": 12,
+          },
+        ],
+      }
+    `)
+  })
 })

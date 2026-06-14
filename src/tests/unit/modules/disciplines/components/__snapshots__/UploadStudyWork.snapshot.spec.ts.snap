@@ -1,0 +1,69 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`UploadStudyWork snapshot: загрузка учебной работы > собирает payload, показывает результат проверки и эмитит submit 1`] = `
+"<div data-v-f4f7b15e="" class="v-dialog-stub" max-width="760" persistent="">
+  <div data-v-f4f7b15e="" class="v-card-stub upload-card" elevation="1">
+    <div data-v-f4f7b15e="" class="header">
+      <h3 data-v-f4f7b15e="">Загрузить учебную работу</h3><button data-v-f4f7b15e="" type="button" icon="" variant="text"><span data-v-f4f7b15e="" class="v-icon-stub">mdi-close</span></button>
+    </div>
+    <div data-v-f4f7b15e="" class="v-card-text-stub">
+      <div data-v-f4f7b15e="" class="file-dropzone"><span data-v-f4f7b15e="" class="v-icon-stub" size="36">mdi-upload</span>
+        <div data-v-f4f7b15e="" class="drop-title">ПетровПП_Программирование_Лабораторная.docx</div>
+        <div data-v-f4f7b15e="" class="drop-sub">PDF, DOC, DOCX до 50 МБ</div>
+        <div data-v-f4f7b15e="" class="drop-hint">💡 ФамилияИО_Дисциплина_ТипРаботы</div><input data-v-f4f7b15e="" type="file" accept=".pdf,.doc,.docx" hidden="">
+      </div>
+      <div data-v-f4f7b15e="" class="v-row-stub form-row" dense="">
+        <div data-v-f4f7b15e="" class="v-col-stub" cols="6"><select data-v-f4f7b15e="" class="v-select-stub upload-form-field" data-label="Учебная группа *" variant="outlined" density="compact" hide-details="" value="4381">
+            <option value=""></option>
+            <option value="4381">4381</option>
+          </select></div>
+        <div data-v-f4f7b15e="" class="v-col-stub" cols="6"><select data-v-f4f7b15e="" class="v-select-stub upload-form-field" data-label="Студент *" variant="outlined" density="compact" hide-details="" value="10">
+            <option value=""></option>
+            <option value="10">Петров П.П.</option>
+          </select></div>
+        <div data-v-f4f7b15e="" class="v-col-stub" cols="6"><input data-v-f4f7b15e="" class="v-text-field-stub upload-form-field upload-form-field--readonly" data-label="Дисциплина" readonly="" variant="outlined" density="compact" hide-details="" tabindex="-1" value="Программирование"></div>
+        <div data-v-f4f7b15e="" class="v-col-stub" cols="6"><select data-v-f4f7b15e="" class="v-select-stub upload-form-field" data-label="Вид контроля *" variant="outlined" density="compact" hide-details="" value="Курсовая работа">
+            <option value=""></option>
+            <option value="Курсовая работа">Курсовая работа</option>
+          </select></div>
+        <div data-v-f4f7b15e="" class="v-col-stub" cols="12"><input data-v-f4f7b15e="" class="v-text-field-stub upload-form-field" data-label="Название работы *" variant="outlined" density="compact" hide-details="" value="Лабораторная работа 1"></div>
+        <div data-v-f4f7b15e="" class="v-col-stub" cols="12"><select data-v-f4f7b15e="" class="v-select-stub upload-form-field" data-label="Тема" variant="outlined" density="compact" hide-details="" value="">
+            <option value=""></option>
+            <option value="Тема 1. Классы">Тема 1. Классы</option>
+          </select></div>
+        <div data-v-f4f7b15e="" class="v-col-stub" cols="12"><select data-v-f4f7b15e="" class="v-select-stub upload-form-field" data-label="Учебный год" variant="outlined" density="compact" hide-details="" value="[object Object]">
+            <option value=""></option>
+            <option value="2023-2024">2023/2024</option>
+            <option value="2024-2025">2024/2025</option>
+            <option value="2025-2026">2025/2026</option>
+          </select></div>
+      </div>
+      <div data-v-f4f7b15e="" class="auto-check-block"><label data-v-f4f7b15e="" class="v-checkbox-stub" color="primary" density="comfortable" hide-details=""><input type="checkbox" checked=""><span data-v-f4f7b15e="" class="auto-check-label">Проверить оформление по шаблону перед загрузкой</span></label></div>
+    </div>
+    <div data-v-f4f7b15e="" class="v-card-actions-stub actions"><button data-v-f4f7b15e="" type="button" class="upload-actions-cancel" variant="text"> Отмена </button><span data-v-f4f7b15e="" class="v-spacer-stub"></span><button data-v-f4f7b15e="" type="button" class="upload-actions-submit" color="#111827"><span data-v-f4f7b15e="" class="v-icon-stub" start="">mdi-upload</span> Загрузить</button></div>
+    <div data-v-f4f7b15e="" class="v-dialog-stub" max-width="820" persistent="">
+      <div data-v-f4f7b15e="" class="v-card-stub validation-result-card">
+        <div data-v-f4f7b15e="" class="validation-header"><span data-v-f4f7b15e="" class="v-icon-stub" color="success" size="28">mdi-check-circle</span>
+          <div data-v-f4f7b15e="">
+            <h3 data-v-f4f7b15e="" class="validation-title">Проверка пройдена</h3>
+            <div data-v-f4f7b15e="" class="validation-percent"> Соответствие: 100% </div>
+          </div>
+        </div>
+        <div data-v-f4f7b15e="" class="v-card-text-stub">
+          <div data-v-f4f7b15e="" class="validation-criteria-list">
+            <div data-v-f4f7b15e="" class="validation-item passed"><span data-v-f4f7b15e="" class="v-icon-stub" size="18" color="success">mdi-check-circle</span>
+              <div data-v-f4f7b15e="" class="criteria-content"><span data-v-f4f7b15e="" class="criteria-title">Шрифт:</span><span data-v-f4f7b15e="" class="criteria-message">Требование выполнено</span>
+                <!--v-if-->
+              </div>
+            </div>
+          </div>
+        </div>
+        <div data-v-f4f7b15e="" class="v-card-actions-stub validation-result-actions">
+          <!--v-if--><span data-v-f4f7b15e="" class="v-spacer-stub validation-actions-spacer"></span>
+          <div data-v-f4f7b15e="" class="validation-actions-right"><button data-v-f4f7b15e="" type="button" variant="text"> Отмена </button><button data-v-f4f7b15e="" type="button" color="primary">Загрузить</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>"
+`;
