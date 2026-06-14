@@ -25,11 +25,19 @@
 
 Этот репозиторий — **фронтенд (SPA/PWA)**: интерфейс в браузере, данные приходят с **бэкенд-API** (отдельный сервер).
 
----
+## Документы и материалы проекта
 
-## Тестирование
-
-- [Тестирование, снапшоты и проверка сценариев](docs/08-testing.md)
+| # | Материал | Ссылка |
+|---|----------|--------|
+| 1 | 🎨 Макеты интерфейса (Figma) | [открыть →](https://www.figma.com/design/PrjP3KfCcN75dqbui7dXxv/ИС-%22Хранения-отчетов%22?node-id=0-1&p=f&t=E0ahp0hEarQElY6G-0) |
+| 2 | 📋 Техническое задание (ТЗ) | [открыть →](https://drive.google.com/file/d/1ihtUTZQSWKKoW0C1yoj3QHlrE__pAQtM/view?usp=drive_link) |
+| 3 | 📖 Руководство пользователя | [открыть →](https://drive.google.com/file/d/1mLg8U7OABEI-qzc_d-pGqNCTDx7Ud1H7/view?usp=drive_link) |
+| 4 | ✅ Акт внедрения | [открыть →](https://drive.google.com/file/d/1sH_75bRLwjyn3f6H9XWFb90_JjrqEc1w/view?usp=drive_link) |
+| 5 | 🎓 ВКР (PDF) | [открыть →](https://drive.google.com/file/d/10YqBOmn8-5bQlKkcoBK4dzecQnSnbWQy/view?usp=drive_link) |
+| 6 | 📄 Статья | [открыть →](https://drive.google.com/file/d/1-8N_WGgyaZuHD8EGF5LhBDxWms3EX4cE/view?usp=drive_link) |
+| 7 | 📊 Презентация к защите | [открыть →](https://docs.google.com/presentation/d/1pU6WyQsEZWTusmJ_zry6T_g5bf-HA6Fj/edit?usp=drive_link&ouid=107322948642047659645&rtpof=true&sd=true) |
+| 8 | 🔷 Диаграмма прецедентов (Use Case) | [открыть →](https://drive.google.com/file/d/1zGYmhjedD3JOsEQSM-w7pD-1qzdxd6HE/view?usp=drive_link) |
+| 9 | 🏆 Диплом участника конференции | [открыть →](https://drive.google.com/file/d/18s-J5TAuWR45ScMVKw8UcnaogIT3-eZF/view?usp=drive_link) |
 
 ---
 
@@ -59,6 +67,8 @@
 | **Unit-тесты** | Проверка утилит, composables и ключевых компонентов (планируется, например, Vitest + Vue Test Utils). В `package.json` появится скрипт вроде `npm run test`. | *команда — после настройки* |
 | **Figma** | Макеты интерфейса, сетки и согласованность с дизайн-системой. | *ссылка на файл Figma — будет добавлена* |
 | **Storybook** | Документация и изолированная разработка глобальных компонентов в [`src/components/global/`](src/components/global/) (префикс `Etu*`: кнопки, таблицы, селекты и т.д.). | *локально: `npm run storybook` или ссылка на деплой — после настройки* |
+
+- [Тестирование, снапшоты и проверка сценариев](docs/08-testing.md)
 
 > **Примечание.** Пока Storybook и тестовый раннер не подключены в сборке — обновите таблицу выше реальными URL и командами, когда они появятся.
 
@@ -127,35 +137,6 @@ npm run build
 
 Путь задан под раздачу статики бэкендом; при необходимости измените `build.outDir` в `vite.config.ts`.
 
-### Просмотр собранного приложения
 
-```bash
-npm run preview
-```
 
----
 
-## Скрипты npm
-
-| Команда | Описание |
-|---------|----------|
-| `npm run dev` | Запуск dev-сервера Vite с HMR |
-| `npm run build` | Проверка типов + production-сборка |
-| `npm run preview` | Локальный просмотр билда |
-| `npm run lint` | ESLint для `.ts` и `.vue` |
-| `npm run lint:fix` | То же + автоисправления |
-| `npm run docker:build` | Сборка Docker-образа |
-| `npm run docker:run` | Запуск контейнера на порту 8080 |
-
----
-
-## Разработка и API
-
-- **Прокси:** в `vite.config.ts` настроен `server.proxy` для префикса `/api` → бэкенд (по умолчанию порт `8081`).
-- **Алиас `@/`** указывает на каталог `src/` (удобно для импортов).
-
----
-
-## Лицензия
-
-Проект **`private`** (см. `package.json`), распространение ограничено.
