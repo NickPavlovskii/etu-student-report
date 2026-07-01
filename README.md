@@ -106,24 +106,24 @@
 | **Стили** | SCSS, [Tailwind CSS](https://tailwindcss.com/) (через Vite) |
 | **HTTP** | [Axios](https://axios-http.com/) |
 | **Таблицы / Excel** | [SheetJS (xlsx)](https://sheetjs.com/) |
+| **Тесты** | [Vitest](https://vitest.dev/), [Vue Test Utils](https://test-utils.vuejs.org/), jsdom |
+| **UI-документация** | [Storybook 10](https://storybook.js.org/) |
 
 Инструменты разработки: ESLint, `vue-tsc` для проверки типов перед сборкой.
 
 ---
 
-## Тесты, макеты и Storybook
+## Тесты и Storybook
 
-В проекте **заложены** (и будут отражены в репозитории после настройки): юнит-тесты, Figma и Storybook для глобального UI-kit.
+### Unit-тесты (Vitest)
+
+В проекте настроены **Vitest** + **Vue Test Utils** + **jsdom**. Тесты лежат в `src/tests/unit/` (27 файлов `*.spec.ts`).
 
 | Направление | Назначение | Ссылка / команда |
 |-------------|------------|------------------|
 | **Unit-тесты** | Проверка утилит, composables и ключевых компонентов (планируется, например, Vitest + Vue Test Utils). В `package.json` появится скрипт вроде `npm run test`. | *команда — после настройки* |
 | **Figma** | Макеты интерфейса, сетки и согласованность с дизайн-системой. | *ссылка на файл Figma — будет добавлена* |
 | **Storybook** | Документация и изолированная разработка глобальных компонентов в [`src/components/global/`](src/components/global/) (префикс `Etu*`: кнопки, таблицы, селекты и т.д.). | *локально: `npm run storybook` или ссылка на деплой — после настройки* |
-
-- [Тестирование, снапшоты и проверка сценариев](docs/08-testing.md)
-
-> **Примечание.** Пока Storybook и тестовый раннер не подключены в сборке — обновите таблицу выше реальными URL и командами, когда они появятся.
 
 ---
 
@@ -190,6 +190,18 @@ npm run build
 
 Путь задан под раздачу статики бэкендом; при необходимости измените `build.outDir` в `vite.config.ts`.
 
+### Тесты
 
+```bash
+npm run test
+```
 
+Режим разработки с автоперезапуском: `npm run test:watch`. Подробности — в разделе [Тесты и Storybook](#тесты-и-storybook).
 
+### Storybook
+
+```bash
+npm run storybook
+```
+
+Интерфейс откроется на **http://localhost:6006**.
