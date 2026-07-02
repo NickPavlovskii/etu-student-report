@@ -1,8 +1,9 @@
-# Сборка фронта: см. package.json → "build": "vue-tsc -b && vite build"
-# Выход Vite задаётся в vite.config.ts (outDir), не в корневом dist/
+# Сборка: scripts/netlify-build.mjs
+# PWA (по умолчанию) → dist/frontend/contents/panda/client
+# Storybook site: в Netlify UI задайте env NETLIFY_STORYBOOK=true
 [build]
-  command = "npm run build"
-  publish = "dist/frontend/contents/panda/client"
+  command = "node scripts/netlify-build.mjs"
+  publish = "dist/netlify-publish"
 
 # Vue Router (history): прямые заходы на /auth, /disciplines/... и обновление страницы
 # без этого Netlify отдаёт 404 — статика отдаётся по пути, остальное — index.html
