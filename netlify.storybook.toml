@@ -1,0 +1,12 @@
+# Конфиг только для Netlify site «etu-storybook».
+# В UI site → Build settings → Configuration file path: netlify.storybook.toml
+
+[build]
+  command = "npm run build-storybook"
+  publish = "storybook-static"
+
+# Storybook — SPA: прямые ссылки на story/docs
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
