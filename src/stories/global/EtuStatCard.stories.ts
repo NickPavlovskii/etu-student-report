@@ -5,12 +5,15 @@ import {
   etuStatCardWithIconArgs,
   etuStatCardWithUnitArgs,
 } from '../mocks/etu-stat-card';
+import { canvasLight, canvasLightMaxWidth, CANVAS_WIDTH } from '../helpers/decorators';
 
 const meta = {
   title: 'Глобальные компоненты/EtuStatCard',
   component: EtuStatCard,
   tags: ['autodocs'],
   parameters: {
+    layout: 'padded',
+    backgrounds: { default: 'app' },
     docs: {
       description: {
         component:
@@ -19,6 +22,7 @@ const meta = {
       },
     },
   },
+  decorators: [canvasLight],
 } satisfies Meta<typeof EtuStatCard>;
 
 export default meta;
@@ -36,6 +40,7 @@ export const WithUnit: Story = {
 
 export const AllColors: Story = {
   name: 'Все цвета',
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.section)],
   render: () => ({
     components: { EtuStatCard },
     setup() {

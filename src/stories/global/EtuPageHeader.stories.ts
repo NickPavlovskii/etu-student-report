@@ -6,12 +6,15 @@ import {
   etuPageHeaderBasicArgs,
   etuPageHeaderWithActionsContent,
 } from '../mocks/etu-page-header';
+import { canvasLightMaxWidth, CANVAS_WIDTH } from '../helpers/decorators';
 
 const meta = {
   title: 'Глобальные компоненты/EtuPageHeader',
   component: EtuPageHeader,
   tags: ['autodocs'],
   parameters: {
+    layout: 'padded',
+    backgrounds: { default: 'app' },
     docs: {
       description: {
         component:
@@ -20,6 +23,7 @@ const meta = {
       },
     },
   },
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.section)],
 } satisfies Meta<typeof EtuPageHeader>;
 
 export default meta;

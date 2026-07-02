@@ -2,12 +2,15 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 import { ref } from 'vue';
 import EtuPillSearchSelect from '@/components/global/EtuPillSearchSelect.vue';
 import { MOCK_STUDENT_PILL_ITEMS } from '../mocks/select-items';
+import { canvasLight, canvasLightMaxWidth, CANVAS_WIDTH } from '../helpers/decorators';
 
 const meta = {
   title: 'Глобальные компоненты/EtuPillSearchSelect',
   component: EtuPillSearchSelect,
   tags: ['autodocs'],
   parameters: {
+    layout: 'padded',
+    backgrounds: { default: 'app' },
     docs: {
       description: {
         component:
@@ -16,6 +19,7 @@ const meta = {
       },
     },
   },
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.row)],
 } satisfies Meta<typeof EtuPillSearchSelect>;
 
 export default meta;

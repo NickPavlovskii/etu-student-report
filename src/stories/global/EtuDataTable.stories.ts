@@ -5,12 +5,15 @@ import {
   ETU_DATA_TABLE_MOCK_COLUMNS,
   ETU_DATA_TABLE_MOCK_ROWS,
 } from '../mocks/etu-data-table';
+import { canvasLightMaxWidth, CANVAS_WIDTH } from '../helpers/decorators';
 
 const meta = {
   title: 'Глобальные компоненты/EtuDataTable',
   component: EtuDataTable,
   tags: ['autodocs'],
   parameters: {
+    layout: 'padded',
+    backgrounds: { default: 'app' },
     docs: {
       description: {
         component:
@@ -19,6 +22,7 @@ const meta = {
       },
     },
   },
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.table)],
 } satisfies Meta<typeof EtuDataTable>;
 
 export default meta;

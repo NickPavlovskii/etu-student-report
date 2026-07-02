@@ -9,7 +9,11 @@ import 'vuetify/styles';
 import '@mdi/font/css/materialdesignicons.css';
 import 'element-plus/dist/index.css';
 import '../src/scss/main.scss';
+import './tokens.css';
 import './preview-body.css';
+import './storybook.css';
+
+import { etuBrand, etuTheme } from './brand-theme';
 
 setup((app) => {
   const vuetify = createVuetify({
@@ -21,6 +25,24 @@ setup((app) => {
       fallback: 'en',
       messages: { ru },
     },
+    theme: {
+      defaultTheme: 'etuLight',
+      themes: {
+        etuLight: {
+          dark: false,
+          colors: {
+            primary: etuBrand.blue,
+            secondary: etuBrand.gold,
+            surface: etuBrand.surface,
+            background: etuBrand.bgApp,
+            error: '#dc2626',
+            info: etuBrand.blue,
+            success: '#16a34a',
+            warning: '#d97706',
+          },
+        },
+      },
+    },
   });
   app.use(vuetify);
   app.use(ElementPlus);
@@ -28,27 +50,45 @@ setup((app) => {
 
 const preview: Preview = {
   parameters: {
-    controls: { expanded: true },
+    layout: 'centered',
+    controls: {
+      expanded: true,
+      matchers: {
+        color: /(background|color)$/i,
+      },
+    },
     docs: {
-      toc: true,
+      toc: {
+        headingSelector: 'h2, h3',
+        title: 'На этой странице',
+      },
+      theme: etuTheme,
     },
     options: {
       storySort: {
         order: [
-          'Документация/Введение',
-          'Документация/Быстрый старт',
-          'Документация/Каталог компонентов',
-          'Документация/CSS-переменные (:root)',
-          'Документация/Токены компонентов',
-          'Глобальные компоненты/*',
+          'Документация',
+          [
+            'Введение',
+            'Быстрый старт',
+            'Каталог компонентов',
+            'CSS-переменные (:root)',
+            'Токены компонентов',
+            '*',
+          ],
+          'Глобальные компоненты',
+          '*',
         ],
       },
     },
     backgrounds: {
       default: 'app',
       values: [
-        { name: 'app', value: '#f4f6f9' },
-        { name: 'white', value: '#ffffff' },
+        { name: 'app', value: etuBrand.bgApp },
+        { name: 'page', value: etuBrand.bgPage },
+        { name: 'white', value: etuBrand.surface },
+        { name: 'navy', value: etuBrand.navy },
+        { name: 'dark', value: etuBrand.text },
       ],
     },
   },

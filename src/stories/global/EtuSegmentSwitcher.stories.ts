@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 import { ref } from 'vue';
 import EtuSegmentSwitcher from '@/components/global/EtuSegmentSwitcher.vue';
+import { canvasLight, canvasLightMaxWidth, CANVAS_WIDTH } from '../helpers/decorators';
 
 const semesterHalfOptions = [
   { value: 'autumn', label: 'Осенний семестр' },
@@ -18,6 +19,8 @@ const meta = {
   component: EtuSegmentSwitcher,
   tags: ['autodocs'],
   parameters: {
+    layout: 'padded',
+    backgrounds: { default: 'app' },
     docs: {
       description: {
         component:
@@ -30,6 +33,7 @@ const meta = {
     compact: { control: 'boolean' },
     ariaLabel: { control: 'text' },
   },
+  decorators: [canvasLight],
 } satisfies Meta<typeof EtuSegmentSwitcher>;
 
 export default meta;
@@ -58,6 +62,7 @@ export const TwoOptions: Story = {
 
 export const ThreeOptionsCompact: Story = {
   name: 'Три варианта (compact)',
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.compact)],
   render: () => ({
     components: { EtuSegmentSwitcher },
     setup() {

@@ -1,0 +1,19 @@
+:root {
+  --etu-navy: #05336e;
+  --etu-blue: #2563eb;
+  --etu-gold: #bb8d54;
+  --etu-bg-app: #f4f6f9;
+  --etu-bg-page: #f5f6f8;
+  --etu-surface: #ffffff;
+  --etu-border: #e5e7eb;
+  --etu-border-strong: #d1d5db;
+  --etu-text: #111827;
+  --etu-text-secondary: #6b7280;
+  --etu-text-muted: #9ca3af;
+  --etu-radius: 10px;
+  --etu-radius-lg: 12px;
+  --etu-font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --etu-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --etu-shadow-sm: 0 1px 3px rgb(17 24 39 / 6%);
+  --etu-shadow-md: 0 4px 12px rgb(17 24 39 / 8%);
+}

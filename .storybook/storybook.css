@@ -1,0 +1,418 @@
+@import './tokens.css';
+
+.sb-canvas {
+  box-sizing: border-box;
+  width: 100%;
+  font-family: var(--etu-font);
+}
+
+.sb-canvas--padded {
+  padding: 24px 28px;
+}
+
+.sb-canvas--card {
+  background: var(--etu-surface);
+  border: 1px solid var(--etu-border);
+  border-radius: var(--etu-radius-lg);
+  box-shadow: var(--etu-shadow-sm);
+}
+
+.sb-canvas--dark {
+  background: var(--etu-text);
+  border: 1px solid #374151;
+  border-radius: var(--etu-radius);
+  min-height: 96px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
+}
+
+.sb-canvas--light {
+  background: var(--etu-bg-app);
+  border: 1px solid var(--etu-border);
+  border-radius: var(--etu-radius-lg);
+  min-height: 96px;
+}
+
+.sb-canvas--inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sb-canvas--inline.sb-canvas--button-row {
+  align-items: flex-start;
+}
+
+.sb-canvas--full {
+  min-height: 280px;
+  padding: 32px 28px;
+}
+
+.sb-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.sb-stack--stretch {
+  align-items: stretch;
+  width: 100%;
+}
+
+.sb-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.sb-canvas--light .etu-btn {
+  min-width: 160px;
+}
+
+/* --- Vue-страницы документации (как карточка на странице приложения) --- */
+.etu-docs-panel {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 28px 48px;
+  border-radius: var(--etu-radius-lg);
+  background: var(--etu-surface);
+  color: var(--etu-text);
+  border: 1px solid var(--etu-border);
+  box-shadow: var(--etu-shadow-sm);
+  font-family: var(--etu-font);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.etu-docs-panel h1 {
+  margin: 0 0 12px;
+  color: var(--etu-text);
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.etu-docs-panel h2 {
+  margin: 36px 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--etu-border);
+  color: var(--etu-navy);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.etu-docs-panel h3 {
+  margin: 24px 0 10px;
+  color: var(--etu-text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.etu-docs-panel p,
+.etu-docs-panel li {
+  color: var(--etu-text-secondary);
+}
+
+.etu-docs-panel strong {
+  color: var(--etu-text);
+}
+
+.etu-docs-panel code,
+.etu-docs-panel td code {
+  color: var(--etu-gold);
+  font-size: 0.92em;
+  font-family: var(--etu-font-mono);
+}
+
+.etu-docs-panel a {
+  color: var(--etu-blue);
+  text-decoration: none;
+}
+
+.etu-docs-panel a:hover {
+  text-decoration: underline;
+}
+
+.etu-docs-panel pre {
+  margin: 12px 0;
+  padding: 16px 18px;
+  overflow-x: auto;
+  border: 1px solid var(--etu-border);
+  border-radius: var(--etu-radius);
+  background: var(--etu-bg-app);
+  color: var(--etu-text);
+  font-family: var(--etu-font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.etu-docs-panel blockquote {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border-left: 3px solid var(--etu-navy);
+  border-radius: 0 8px 8px 0;
+  background: var(--etu-bg-app);
+  color: var(--etu-text-secondary);
+}
+
+.etu-docs-panel table {
+  width: 100%;
+  margin: 16px 0;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.etu-docs-panel th,
+.etu-docs-panel td {
+  padding: 10px 12px;
+  border: 1px solid var(--etu-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.etu-docs-panel th {
+  background: var(--etu-bg-app);
+  color: var(--etu-navy);
+  font-weight: 600;
+}
+
+.etu-docs-panel td {
+  color: var(--etu-text-secondary);
+}
+
+.etu-docs-panel ul {
+  margin: 12px 0;
+  padding-left: 1.25rem;
+}
+
+.etu-docs-panel li + li {
+  margin-top: 8px;
+}
+
+/* --- Autodocs: светлая тема как в приложении --- */
+.sbdocs,
+.sbdocs-content,
+.sbdocs-wrapper {
+  font-family: var(--etu-font) !important;
+}
+
+.sbdocs h1,
+.sbdocs h2,
+.sbdocs h3,
+.sbdocs-content h1,
+.sbdocs-content h2,
+.sbdocs-content h3 {
+  color: var(--etu-text) !important;
+  letter-spacing: -0.02em;
+}
+
+.sbdocs h2,
+.sbdocs-content h2 {
+  color: var(--etu-navy) !important;
+  border-bottom-color: var(--etu-border) !important;
+}
+
+.sbdocs p,
+.sbdocs li,
+.sbdocs-content p,
+.sbdocs-content li {
+  color: var(--etu-text-secondary) !important;
+}
+
+.sbdocs a,
+.sbdocs-content a {
+  color: var(--etu-blue) !important;
+}
+
+.sbdocs code,
+.sbdocs-content code {
+  color: var(--etu-gold) !important;
+  background: var(--etu-bg-app) !important;
+  border-radius: 6px;
+}
+
+.sbdocs pre,
+.sbdocs-content pre {
+  background: var(--etu-bg-app) !important;
+  border: 1px solid var(--etu-border) !important;
+  border-radius: var(--etu-radius) !important;
+}
+
+.sbdocs table th,
+.sbdocs-content table th {
+  color: var(--etu-navy) !important;
+  background: var(--etu-bg-app) !important;
+}
+
+.sbdocs table td,
+.sbdocs-content table td {
+  color: var(--etu-text-secondary) !important;
+}
+
+.sbdocs table th,
+.sbdocs table td,
+.sbdocs-content table th,
+.sbdocs-content table td {
+  border-color: var(--etu-border) !important;
+}
+
+/* --- MDX: токены и каталог --- */
+.docs-tokens-page {
+  max-width: 900px;
+}
+
+.docs-tokens-lead {
+  margin: 0 0 1.5rem;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--etu-text-secondary);
+}
+
+.docs-tokens-section {
+  margin-bottom: 2.5rem;
+}
+
+.docs-tokens-h2 {
+  margin: 2rem 0 0.75rem;
+  padding-bottom: 0.5rem;
+  font-size: 1.28rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--etu-navy);
+  border-bottom: 1px solid var(--etu-border);
+}
+
+.docs-tokens-h3 {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--etu-text-muted);
+}
+
+.docs-tokens-hint {
+  margin: 0 0 1rem;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--etu-text-muted);
+}
+
+.docs-tokens-caption {
+  margin: 1rem 0 0.35rem;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--etu-text-secondary);
+}
+
+.docs-tokens-code-inline {
+  font-family: var(--etu-font-mono);
+  font-size: 0.88em;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--etu-bg-app);
+  color: var(--etu-gold);
+}
+
+.docs-tokens-wrap {
+  margin: 0.75rem 0 1.25rem;
+  overflow: hidden;
+  border: 1px solid var(--etu-border);
+  border-radius: var(--etu-radius-lg);
+  background: var(--etu-surface);
+  box-shadow: var(--etu-shadow-sm);
+}
+
+.docs-tokens-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.docs-tokens-table th {
+  padding: 11px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--etu-navy);
+  background: var(--etu-bg-app);
+  border-bottom: 1px solid var(--etu-border);
+}
+
+.docs-tokens-table td {
+  padding: 12px 16px;
+  vertical-align: top;
+  color: var(--etu-text-secondary);
+  border-bottom: 1px solid var(--etu-border);
+}
+
+.docs-tokens-table tr:last-child td {
+  border-bottom: none;
+}
+
+.docs-tokens-table code {
+  font-family: var(--etu-font-mono);
+  font-size: 12.5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--etu-bg-app);
+  color: var(--etu-gold);
+}
+
+.docs-tokens-table .docs-tokens-val {
+  font-family: var(--etu-font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--etu-text);
+  white-space: nowrap;
+}
+
+.docs-tokens-callout {
+  margin: 0.75rem 0 0;
+  padding: 16px 18px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--etu-text);
+  background: linear-gradient(135deg, #eff6ff 0%, #f4f6f9 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--etu-radius-lg);
+}
+
+.docs-tokens-callout .docs-tokens-code-inline {
+  background: var(--etu-surface);
+}
+
+.docs-tokens-callout--neutral {
+  color: var(--etu-text-secondary);
+  background: var(--etu-bg-app);
+  border-color: var(--etu-border);
+}
+
+.docs-tokens-links {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--etu-text-secondary);
+}
+
+.docs-tokens-table--catalog td:first-child {
+  white-space: nowrap;
+}
+
+.docs-tokens-table--catalog .docs-tokens-val code {
+  font-size: 12px;
+}
+
+.docs-tokens-table--corp td:last-child {
+  font-size: 12px;
+  color: var(--etu-text-muted);
+}

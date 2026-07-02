@@ -6,12 +6,15 @@ import {
   etuLabelChipPresetMocks,
   etuLabelChipVariantArgs,
 } from '../mocks/etu-label-chip';
+import { canvasLight, canvasLightMaxWidth, CANVAS_WIDTH } from '../helpers/decorators';
 
 const meta = {
   title: 'Глобальные компоненты/EtuLabelChip',
   component: EtuLabelChip,
   tags: ['autodocs'],
   parameters: {
+    layout: 'padded',
+    backgrounds: { default: 'app' },
     docs: {
       description: {
         component:
@@ -20,6 +23,7 @@ const meta = {
       },
     },
   },
+  decorators: [canvasLight],
 } satisfies Meta<typeof EtuLabelChip>;
 
 export default meta;
@@ -27,6 +31,7 @@ type Story = StoryObj<typeof meta>;
 
 export const PresetInline: Story = {
   name: 'Пресеты (inline)',
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.row)],
   render: () => ({
     components: { EtuLabelChip },
     setup() {

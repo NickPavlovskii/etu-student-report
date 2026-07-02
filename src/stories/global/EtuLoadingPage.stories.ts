@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 import EtuLoadingPage from '@/components/global/EtuLoadingPage.vue';
 import { ETU_LOADING_PAGE_DEFAULT_TEXT } from '../mocks/etu-loading-page';
+import { canvasFullBleed } from '../helpers/decorators';
 
 const meta = {
   title: 'Глобальные компоненты/EtuLoadingPage',
@@ -8,6 +9,7 @@ const meta = {
   tags: ['autodocs'],
   parameters: {
     layout: 'fullscreen',
+    backgrounds: { default: 'app' },
     docs: {
       description: {
         component:
@@ -16,6 +18,7 @@ const meta = {
       },
     },
   },
+  decorators: [canvasFullBleed],
 } satisfies Meta<typeof EtuLoadingPage>;
 
 export default meta;

@@ -11,7 +11,7 @@
     "lint:fix": "eslint . --ext .ts,.vue --fix",
     "test": "vitest run",
     "test:watch": "vitest",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "storybook dev -p 6006 --ci",
     "build-storybook": "storybook build -o storybook-static",
     "docker:build": "docker build -t student-works-pwa .",
     "docker:run": "docker run -p 8080:80 student-works-pwa"

@@ -4,23 +4,23 @@ import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/bloc
 
 <Title>Переменные внутри компонентов</Title>
 
-<div class="docs-tokens-page">
+<div className="docs-tokens-page">
 
-<p class="docs-tokens-lead">
+<div className="docs-tokens-lead">
   Некоторые глобальные компоненты задают собственные <strong>CSS custom properties</strong> — их можно переопределить на контейнере, не меняя разметку и логику компонента.
-</p>
+</div>
 
-<section class="docs-tokens-section">
+<section className="docs-tokens-section">
 
-<h2 class="docs-tokens-h2">
-  EtuDataTable <code class="docs-tokens-code-inline">.etu-dt-wrap</code>
+<h2 className="docs-tokens-h2">
+  EtuDataTable <code className="docs-tokens-code-inline">.etu-dt-wrap</code>
 </h2>
 
-<p class="docs-tokens-hint">
-  Значения по умолчанию заданы в <code class="docs-tokens-code-inline">EtuDataTable.vue</code>. Переопределение: задайте переменные на элементе с классом <code class="docs-tokens-code-inline">etu-dt-wrap</code> (или выше по дереву, если каскадом удобнее).
-</p>
+<div className="docs-tokens-hint">
+  Значения по умолчанию заданы в <code className="docs-tokens-code-inline">EtuDataTable.vue</code>. Переопределение: задайте переменные на элементе с классом <code className="docs-tokens-code-inline">etu-dt-wrap</code> (или выше по дереву, если каскадом удобнее).
+</div>
 
-<h3 class="docs-tokens-h3">Цветовые токены</h3>
+<h3 className="docs-tokens-h3">Цветовые токены</h3>
 
 <ColorPalette>
   <ColorItem
@@ -65,10 +65,10 @@ import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/bloc
   />
 </ColorPalette>
 
-<h3 class="docs-tokens-h3">Размеры и типографика</h3>
+<h3 className="docs-tokens-h3">Размеры и типографика</h3>
 
-<div class="docs-tokens-wrap">
-  <table class="docs-tokens-table">
+<div className="docs-tokens-wrap">
+  <table className="docs-tokens-table">
     <thead>
       <tr>
         <th>Переменная</th>
@@ -79,39 +79,39 @@ import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/bloc
     <tbody>
       <tr>
         <td><code>--etu-dt-font</code></td>
-        <td class="docs-tokens-val">14px</td>
+        <td className="docs-tokens-val">14px</td>
         <td>Размер шрифта ячеек</td>
       </tr>
       <tr>
         <td><code>--etu-dt-th-font</code></td>
-        <td class="docs-tokens-val">11px</td>
+        <td className="docs-tokens-val">11px</td>
         <td>Размер шрифта заголовков</td>
       </tr>
       <tr>
         <td><code>--etu-dt-th-weight</code></td>
-        <td class="docs-tokens-val">700</td>
+        <td className="docs-tokens-val">700</td>
         <td>Насыщенность заголовков</td>
       </tr>
       <tr>
         <td><code>--etu-dt-th-spacing</code></td>
-        <td class="docs-tokens-val">0.07em</td>
+        <td className="docs-tokens-val">0.07em</td>
         <td>Межбуквенный интервал заголовков</td>
       </tr>
       <tr>
         <td><code>--etu-dt-cell-pad-y</code></td>
-        <td class="docs-tokens-val">12px</td>
+        <td className="docs-tokens-val">12px</td>
         <td>Вертикальные отступы ячеек</td>
       </tr>
       <tr>
         <td><code>--etu-dt-cell-pad-x</code></td>
-        <td class="docs-tokens-val">16px</td>
+        <td className="docs-tokens-val">16px</td>
         <td>Горизонтальные отступы ячеек</td>
       </tr>
     </tbody>
   </table>
 </div>
 
-<p class="docs-tokens-caption">Пример переопределения на обёртке таблицы:</p>
+<div className="docs-tokens-caption">Пример переопределения на обёртке таблицы:</div>
 
 ```css
 .my-theme .etu-dt-wrap {
@@ -123,27 +123,27 @@ import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/bloc
 
 </section>
 
-<section class="docs-tokens-section">
+<section className="docs-tokens-section">
 
-<h2 class="docs-tokens-h2">
-  EtuLabelChip <code class="docs-tokens-code-inline">.etu-label-chip</code>
+<h2 className="docs-tokens-h2">
+  EtuLabelChip <code className="docs-tokens-code-inline">.etu-label-chip</code>
 </h2>
 
-<div class="docs-tokens-callout">
-  Размеры и отступы inline-варианта задаются через внутренние переменные <code class="docs-tokens-code-inline">--_etu-chip-*</code> (см. <code class="docs-tokens-code-inline">EtuLabelChip.vue</code>). Для варианта с точкой (<code class="docs-tokens-code-inline">dot</code>) цвет маркера задаётся пропом <code class="docs-tokens-code-inline">dotColor</code> → <code class="docs-tokens-code-inline">--_etu-chip-dot</code>.
+<div className="docs-tokens-callout">
+  Размеры и отступы inline-варианта задаются через внутренние переменные <code className="docs-tokens-code-inline">--_etu-chip-*</code> (см. <code className="docs-tokens-code-inline">EtuLabelChip.vue</code>). Для варианта с точкой (<code className="docs-tokens-code-inline">dot</code>) цвет маркера задаётся пропом <code className="docs-tokens-code-inline">dotColor</code> → <code className="docs-tokens-code-inline">--_etu-chip-dot</code>.
 </div>
 
 </section>
 
-<section class="docs-tokens-section">
+<section className="docs-tokens-section">
 
-<h2 class="docs-tokens-h2">
-  EtuTeaLoader <code class="docs-tokens-code-inline">.etu-tea-loader</code>
+<h2 className="docs-tokens-h2">
+  EtuTeaLoader <code className="docs-tokens-code-inline">.etu-tea-loader</code>
 </h2>
 
-<p class="docs-tokens-hint">
+<div className="docs-tokens-hint">
   Цвет SVG (чайник и пар) задаётся одной переменной на корне компонента.
-</p>
+</div>
 
 <ColorPalette>
   <ColorItem
@@ -153,8 +153,8 @@ import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/bloc
   />
 </ColorPalette>
 
-<div class="docs-tokens-wrap">
-  <table class="docs-tokens-table">
+<div className="docs-tokens-wrap">
+  <table className="docs-tokens-table">
     <thead>
       <tr>
         <th>Переменная</th>
@@ -165,7 +165,7 @@ import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/bloc
     <tbody>
       <tr>
         <td><code>--etu-tea-color</code></td>
-        <td class="docs-tokens-val">#334155</td>
+        <td className="docs-tokens-val">#334155</td>
         <td>Цвет SVG (чайник / пар)</td>
       </tr>
     </tbody>
