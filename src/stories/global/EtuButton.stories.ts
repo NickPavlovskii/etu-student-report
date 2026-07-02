@@ -1,12 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 import EtuButton from '@/components/global/EtuButton.vue';
 import { etuButtonStoryArgs } from '../mocks/etu-button';
+import { canvasLightMaxWidth, CANVAS_WIDTH } from '../helpers/decorators';
 
 const meta = {
   title: 'Глобальные компоненты/EtuButton',
   component: EtuButton,
   tags: ['autodocs'],
   parameters: {
+    layout: 'padded',
+    backgrounds: { default: 'app' },
     docs: {
       description: {
         component:
@@ -28,6 +31,7 @@ const meta = {
       description: 'URL картинки справа от текста',
     },
   },
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.compact)],
 } satisfies Meta<typeof EtuButton>;
 
 export default meta;

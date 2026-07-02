@@ -4,12 +4,15 @@ import {
   etuInfoCardColorMocks,
   etuInfoCardDefaultArgs,
 } from '../mocks/etu-info-card';
+import { canvasLightMaxWidth, CANVAS_WIDTH } from '../helpers/decorators';
 
 const meta = {
   title: 'Глобальные компоненты/EtuInfoCard',
   component: EtuInfoCard,
   tags: ['autodocs'],
   parameters: {
+    layout: 'padded',
+    backgrounds: { default: 'app' },
     docs: {
       description: {
         component:
@@ -18,6 +21,7 @@ const meta = {
       },
     },
   },
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.card)],
 } satisfies Meta<typeof EtuInfoCard>;
 
 export default meta;
@@ -30,6 +34,7 @@ export const Default: Story = {
 
 export const ColorVariants: Story = {
   name: 'Варианты цвета',
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.section)],
   render: () => ({
     components: { EtuInfoCard },
     setup() {

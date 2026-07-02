@@ -2,12 +2,15 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 import { ref } from 'vue';
 import EtuSearchableSelect from '@/components/global/EtuSearchableSelect.vue';
 import { MOCK_DISCIPLINE_SELECT_ITEMS } from '../mocks/select-items';
+import { canvasLight, canvasLightMaxWidth, CANVAS_WIDTH } from '../helpers/decorators';
 
 const meta = {
   title: 'Глобальные компоненты/EtuSearchableSelect',
   component: EtuSearchableSelect,
   tags: ['autodocs'],
   parameters: {
+    layout: 'padded',
+    backgrounds: { default: 'app' },
     docs: {
       description: {
         component:
@@ -16,6 +19,7 @@ const meta = {
       },
     },
   },
+  decorators: [canvasLight],
 } satisfies Meta<typeof EtuSearchableSelect>;
 
 export default meta;
@@ -23,6 +27,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Toolbar: Story = {
   name: 'Вариант toolbar',
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.compact)],
   render: () => ({
     components: { EtuSearchableSelect },
     setup() {
@@ -46,6 +51,7 @@ export const Toolbar: Story = {
 
 export const Settings: Story = {
   name: 'Вариант settings',
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.compact)],
   render: () => ({
     components: { EtuSearchableSelect },
     setup() {

@@ -1,175 +1,22 @@
-/*
- * В приложении main.scss задаёт html, body { overflow: hidden; height: 100% }.
- * В превью Storybook тот же main.scss подключается, но класс sb-show-main в новых
- * версиях Storybook на документе может не быть — тогда скролл Docs/Canvas ломается.
- * Этот файл грузится только в Storybook, поэтому снимаем запрет прокрутки глобально.
- */
+
 html,
 body {
   overflow: auto !important;
   height: auto !important;
   min-height: 100%;
+  font-family: var(--etu-font, 'Inter', 'Segoe UI', system-ui, sans-serif);
+  background: var(--etu-bg-app, #f4f6f9);
+  color: var(--etu-text, #111827);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Обёртка контента в режиме Docs (если родитель режет высоту) */
 #storybook-root,
 #storybook-docs {
   min-height: 0;
   overflow: visible !important;
 }
 
-/* --- Документация MDX: «Токены компонентов» и др. --- */
-.docs-tokens-page {
-  max-width: 900px;
-}
-
-.docs-tokens-lead {
-  margin: 0 0 1.5rem;
-  font-size: 15px;
-  line-height: 1.65;
-  color: #4b5563;
-}
-
-.docs-tokens-section {
-  margin-bottom: 2.5rem;
-}
-
-.docs-tokens-h2 {
-  margin: 2rem 0 0.75rem;
-  padding-bottom: 0.5rem;
-  font-size: 1.28rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #111827;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.docs-tokens-h3 {
-  margin: 1.5rem 0 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #6b7280;
-}
-
-.docs-tokens-hint {
-  margin: 0 0 1rem;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #6b7280;
-}
-
-.docs-tokens-caption {
-  margin: 1rem 0 0.35rem;
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.docs-tokens-code-inline {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.88em;
-  font-weight: 500;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-.docs-tokens-wrap {
-  margin: 0.75rem 0 1.25rem;
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-}
-
-.docs-tokens-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.docs-tokens-table th {
-  padding: 11px 16px;
-  font-size: 11px;
-  font-weight: 600;
-  text-align: left;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #64748b;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.docs-tokens-table td {
-  padding: 12px 16px;
-  vertical-align: top;
-  color: #374151;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.docs-tokens-table tr:last-child td {
-  border-bottom: none;
-}
-
-.docs-tokens-table code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12.5px;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-.docs-tokens-table .docs-tokens-val {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  color: #0f172a;
-  white-space: nowrap;
-}
-
-.docs-tokens-callout {
-  margin: 0.75rem 0 0;
-  padding: 16px 18px;
-  font-size: 14px;
-  line-height: 1.65;
-  color: #5b21b6;
-  background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 45%, #eff6ff 100%);
-  border: 1px solid #e9d5ff;
-  border-radius: 12px;
-}
-
-.docs-tokens-callout .docs-tokens-code-inline {
-  background: rgba(255, 255, 255, 0.75);
-}
-
-.docs-tokens-callout--neutral {
-  color: #334155;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-color: #cbd5e1;
-}
-
-.docs-tokens-links {
-  margin: 0.5rem 0 0;
-  padding-left: 1.25rem;
-  font-size: 14px;
-  line-height: 1.75;
-  color: #374151;
-}
-
-.docs-tokens-table--catalog td:first-child {
-  white-space: nowrap;
-}
-
-.docs-tokens-table--catalog .docs-tokens-val code {
-  font-size: 12px;
-}
-
-.docs-tokens-table--corp td:last-child {
-  font-size: 12px;
-  color: #475569;
+.sb-show-main.sb-main-padded,
+.sb-show-main .sb-main-padded {
+  background: var(--etu-bg-app, #f4f6f9);
 }

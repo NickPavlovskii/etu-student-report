@@ -1,12 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 import EtuTeaLoader from '@/components/global/EtuTeaLoader.vue';
 import { etuTeaLoaderOverlayStoryArgs } from '../mocks/etu-tea-loader';
+import { canvasLight, canvasLightMaxWidth, CANVAS_WIDTH } from '../helpers/decorators';
 
 const meta = {
   title: 'Глобальные компоненты/EtuTeaLoader',
   component: EtuTeaLoader,
   tags: ['autodocs'],
   parameters: {
+    layout: 'padded',
+    backgrounds: { default: 'app' },
     docs: {
       description: {
         component:
@@ -15,6 +18,7 @@ const meta = {
       },
     },
   },
+  decorators: [canvasLight],
 } satisfies Meta<typeof EtuTeaLoader>;
 
 export default meta;
@@ -30,6 +34,7 @@ export const Inline: Story = {
 
 export const Overlay: Story = {
   name: 'Оверлей в контейнере',
+  decorators: [canvasLightMaxWidth(CANVAS_WIDTH.compact)],
   render: (args) => ({
     components: { EtuTeaLoader },
     setup() {

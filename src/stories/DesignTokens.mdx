@@ -4,20 +4,20 @@ import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/bloc
 
 <Title>Глобальные CSS-переменные</Title>
 
-<div class="docs-tokens-page">
+<div className="docs-tokens-page">
 
-<p class="docs-tokens-lead">
-  Переменные объявлены в <code class="docs-tokens-code-inline">src/scss/_variables.scss</code> и импортируются через <code class="docs-tokens-code-inline">src/scss/main.scss</code>. Их можно использовать в любых стилях приложения для согласованных цветов текста и границ.
-</p>
+<div className="docs-tokens-lead">
+  Переменные объявлены в <code className="docs-tokens-code-inline">src/scss/_variables.scss</code> и импортируются через <code className="docs-tokens-code-inline">src/scss/main.scss</code>. Их можно использовать в любых стилях приложения для согласованных цветов текста и границ.
+</div>
 
-<h2 class="docs-tokens-h2">Корпоративные цвета (Corporate Color Codes)</h2>
+<h2 className="docs-tokens-h2">Корпоративные цвета (Corporate Color Codes)</h2>
 
-<p class="docs-tokens-hint">
+<div className="docs-tokens-hint">
   Официальная палитра для печати и экрана. Для вёрстки достаточно <strong>Hex</strong>; CMYK — для полиграфии.
-</p>
+</div>
 
-<div class="docs-tokens-wrap">
-  <table class="docs-tokens-table docs-tokens-table--corp">
+<div className="docs-tokens-wrap">
+  <table className="docs-tokens-table docs-tokens-table--corp">
     <thead>
       <tr>
         <th>Название</th>
@@ -29,27 +29,27 @@ import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/bloc
     <tbody>
       <tr>
         <td>Navy blue (тёмно-синий)</td>
-        <td class="docs-tokens-val"><code>#05336e</code></td>
-        <td class="docs-tokens-val">R:5 G:51 B:110</td>
+        <td className="docs-tokens-val"><code>#05336e</code></td>
+        <td className="docs-tokens-val">R:5 G:51 B:110</td>
         <td>C:100% M:75% Y:0% K:37%</td>
       </tr>
       <tr>
         <td>Tan / bronze (бронза)</td>
-        <td class="docs-tokens-val"><code>#bb8d54</code></td>
-        <td class="docs-tokens-val">R:187 G:141 B:84</td>
+        <td className="docs-tokens-val"><code>#bb8d54</code></td>
+        <td className="docs-tokens-val">R:187 G:141 B:84</td>
         <td>C:0% M:30% Y:70% K:40%</td>
       </tr>
       <tr>
         <td>Gray (серый)</td>
-        <td class="docs-tokens-val"><code>#6d6e71</code></td>
-        <td class="docs-tokens-val">R:109 G:110 B:113</td>
+        <td className="docs-tokens-val"><code>#6d6e71</code></td>
+        <td className="docs-tokens-val">R:109 G:110 B:113</td>
         <td>C:0% M:0% Y:0% K:70%</td>
       </tr>
     </tbody>
   </table>
 </div>
 
-<h3 class="docs-tokens-h3">Образцы</h3>
+<h3 className="docs-tokens-h3">Образцы</h3>
 
 <ColorPalette>
   <ColorItem
@@ -69,11 +69,11 @@ import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/bloc
   />
 </ColorPalette>
 
-<h2 class="docs-tokens-h2">Переменные темы приложения (<code class="docs-tokens-code-inline">:root</code>)</h2>
+<h2 className="docs-tokens-h2">Переменные темы приложения (<code className="docs-tokens-code-inline">:root</code>)</h2>
 
-<p class="docs-tokens-hint">
-  Значения ниже совпадают с текущим <code class="docs-tokens-code-inline">_variables.scss</code> в репозитории.
-</p>
+<div className="docs-tokens-hint">
+  Значения ниже совпадают с текущим <code className="docs-tokens-code-inline">_variables.scss</code> в репозитории.
+</div>
 
 <ColorPalette>
   <ColorItem
@@ -93,7 +93,7 @@ import { Meta, Title, ColorPalette, ColorItem } from '@storybook/addon-docs/bloc
   />
 </ColorPalette>
 
-<p class="docs-tokens-caption">Пример использования в CSS:</p>
+<div className="docs-tokens-caption">Пример использования в CSS:</div>
 
 ```css
 .my-block {
