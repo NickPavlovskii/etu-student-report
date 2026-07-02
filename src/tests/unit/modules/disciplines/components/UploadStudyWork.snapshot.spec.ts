@@ -152,7 +152,7 @@ describe('UploadStudyWork snapshot: загрузка учебной работы
     const confirmButtons = wrapper
       .findAll('button')
       .filter((button) => button.text().includes('Загрузить'));
-    await confirmButtons.at(-1)!.trigger('click');
+    await confirmButtons[confirmButtons.length - 1]!.trigger('click');
 
     const payload = wrapper.emitted('submit')?.[0]?.[0] as Record<string, unknown>;
     expect({
