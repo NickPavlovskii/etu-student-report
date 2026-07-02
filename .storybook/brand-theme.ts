@@ -1,6 +1,5 @@
 import { create } from 'storybook/theming/create';
 
-/** Дизайн-токены ИС «Отчёты» (согласованы с src/scss и страницами приложения) */
 export const etuBrand = {
   navy: '#05336e',
   blue: '#2563eb',
@@ -22,7 +21,6 @@ export const etuBrand = {
   fontMono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
 } as const;
 
-/** Светлая тема UI Storybook — как в рабочем интерфейсе ИС «Отчёты» */
 export const etuTheme = create({
   base: 'light',
   brandTitle: 'ИС «Отчёты» · UI-kit',
