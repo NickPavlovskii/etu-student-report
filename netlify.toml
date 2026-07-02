@@ -4,6 +4,16 @@
   command = "npm run build"
   publish = "dist/frontend/contents/panda/client"
 
+# Storybook (site etu-storybook, ветки storybook / storybook-ui-kit).
+# PWA-site (etu-report) на main использует [build] выше.
+[context.storybook-ui-kit]
+  command = "npm run build-storybook"
+  publish = "storybook-static"
+
+[context.storybook]
+  command = "npm run build-storybook"
+  publish = "storybook-static"
+
 # Vue Router (history): прямые заходы на /auth, /disciplines/... и обновление страницы
 # без этого Netlify отдаёт 404 — статика отдаётся по пути, остальное — index.html
 # force = false — не подменять существующие файлы (в т.ч. /assets/*.js), иначе при 404
