@@ -25,6 +25,41 @@
 
 Этот репозиторий — **фронтенд (SPA/PWA)**: интерфейс в браузере, данные приходят с **бэкенд-API** (отдельный сервер).
 
+## Документы и материалы проекта
+
+| # | Материал | Ссылка |
+|---|----------|--------|
+| 1 | 🎨 Макеты интерфейса (Figma) | [открыть →](https://www.figma.com/design/PrjP3KfCcN75dqbui7dXxv/ИС-%22Хранения-отчетов%22?node-id=0-1&p=f&t=E0ahp0hEarQElY6G-0) |
+| 2 | 📋 Техническое задание (ТЗ) | [открыть →](https://drive.google.com/file/d/1ihtUTZQSWKKoW0C1yoj3QHlrE__pAQtM/view?usp=drive_link) |
+| 3 | 📖 Руководство пользователя | [открыть →](https://drive.google.com/file/d/1mLg8U7OABEI-qzc_d-pGqNCTDx7Ud1H7/view?usp=drive_link) |
+| 4 | ✅ Акт внедрения | [открыть →](https://drive.google.com/file/d/1sH_75bRLwjyn3f6H9XWFb90_JjrqEc1w/view?usp=drive_link) |
+| 5 | 🎓 ВКР (PDF) | [открыть →](https://drive.google.com/file/d/1XJWnvLFAaZxdjnd_0a-4KBNXE7hB1S_e/view?usp=drive_link) |
+| 6 | 📄 Статья | [открыть →](https://drive.google.com/file/d/1-8N_WGgyaZuHD8EGF5LhBDxWms3EX4cE/view?usp=drive_link) |
+| 7 | 📊 Презентация к защите | [открыть →](https://docs.google.com/presentation/d/1pU6WyQsEZWTusmJ_zry6T_g5bf-HA6Fj/edit?usp=drive_link&ouid=107322948642047659645&rtpof=true&sd=true) |
+| 8 | 🔷 Диаграмма прецедентов (Use Case) | [открыть →](https://drive.google.com/file/d/1zGYmhjedD3JOsEQSM-w7pD-1qzdxd6HE/view?usp=drive_link) |
+| 9 | 🏆 Диплом участника конференции | [открыть →](https://drive.google.com/file/d/18s-J5TAuWR45ScMVKw8UcnaogIT3-eZF/view?usp=drive_link) |
+
+---
+
+## Технологический стек
+
+| Слой | Технологии |
+|------|------------|
+| **Фреймворк** | [Vue 3](https://vuejs.org/) (Composition API, `<script setup>`) |
+| **Язык** | [TypeScript](https://www.typescriptlang.org/) |
+| **Сборка** | [Vite](https://vitejs.dev/) |
+| **Маршрутизация** | [Vue Router](https://router.vuejs.org/) |
+| **UI** | [Vuetify 3](https://vuetifyjs.com/), [Element Plus](https://element-plus.org/), иконки [MDI](https://materialdesignicons.com/) |
+| **Стили** | SCSS, [Tailwind CSS](https://tailwindcss.com/) (через Vite) |
+| **HTTP** | [Axios](https://axios-http.com/) |
+| **Таблицы / Excel** | [SheetJS (xlsx)](https://sheetjs.com/) |
+| **Тесты** | [Vitest](https://vitest.dev/), [Vue Test Utils](https://test-utils.vuejs.org/), jsdom |
+| **UI-документация** | [Storybook 10](https://storybook.js.org/) |
+
+Инструменты разработки: ESLint, `vue-tsc` для проверки типов перед сборкой.
+
+---
+
 ## Диаграмма прецедентов
 
 <div align="center">
@@ -45,7 +80,7 @@
 
 <img src="docs/diagrams/business-process-bpmn.png" alt="BPMN: бизнес-процесс ИС «Отчёты» — авторизация, шаблоны, загрузка, автопроверка, хранение" width="920" />
 
-<p><em>Модель процесса в нотации BPMN 2.0 (Camunda): ETU ID → шаблоны и виды контроля → одиночная / массовая загрузка (файлы или Moodle) → <code>POST /validate</code> → <code>POST /reports</code> → хранилище отчётов.</em></p>
+<p><em>Модель процесса в нотации BPMN 2.0 (Camunda)</em></p>
 
 </div>
 
@@ -88,40 +123,7 @@
 
 **Роли:** преподаватель (фазы 1–3), администратор кафедры и зав. кафедры — те же шаги при ведении дисциплин + управление кафедрой.
 
-## Документы и материалы проекта
 
-| # | Материал | Ссылка |
-|---|----------|--------|
-| 1 | 🎨 Макеты интерфейса (Figma) | [открыть →](https://www.figma.com/design/PrjP3KfCcN75dqbui7dXxv/ИС-%22Хранения-отчетов%22?node-id=0-1&p=f&t=E0ahp0hEarQElY6G-0) |
-| 2 | 📋 Техническое задание (ТЗ) | [открыть →](https://drive.google.com/file/d/1ihtUTZQSWKKoW0C1yoj3QHlrE__pAQtM/view?usp=drive_link) |
-| 3 | 📖 Руководство пользователя | [открыть →](https://drive.google.com/file/d/1mLg8U7OABEI-qzc_d-pGqNCTDx7Ud1H7/view?usp=drive_link) |
-| 4 | ✅ Акт внедрения | [открыть →](https://drive.google.com/file/d/1sH_75bRLwjyn3f6H9XWFb90_JjrqEc1w/view?usp=drive_link) |
-| 5 | 🎓 ВКР (PDF) | [открыть →](https://drive.google.com/file/d/1XJWnvLFAaZxdjnd_0a-4KBNXE7hB1S_e/view?usp=drive_link) |
-| 6 | 📄 Статья | [открыть →](https://drive.google.com/file/d/1-8N_WGgyaZuHD8EGF5LhBDxWms3EX4cE/view?usp=drive_link) |
-| 7 | 📊 Презентация к защите | [открыть →](https://docs.google.com/presentation/d/1pU6WyQsEZWTusmJ_zry6T_g5bf-HA6Fj/edit?usp=drive_link&ouid=107322948642047659645&rtpof=true&sd=true) |
-| 8 | 🔷 Диаграмма прецедентов (Use Case) | [открыть →](https://drive.google.com/file/d/1zGYmhjedD3JOsEQSM-w7pD-1qzdxd6HE/view?usp=drive_link) |
-| 9 | 🏆 Диплом участника конференции | [открыть →](https://drive.google.com/file/d/18s-J5TAuWR45ScMVKw8UcnaogIT3-eZF/view?usp=drive_link) |
-
----
-
-## Технологический стек
-
-| Слой | Технологии |
-|------|------------|
-| **Фреймворк** | [Vue 3](https://vuejs.org/) (Composition API, `<script setup>`) |
-| **Язык** | [TypeScript](https://www.typescriptlang.org/) |
-| **Сборка** | [Vite](https://vitejs.dev/) |
-| **Маршрутизация** | [Vue Router](https://router.vuejs.org/) |
-| **UI** | [Vuetify 3](https://vuetifyjs.com/), [Element Plus](https://element-plus.org/), иконки [MDI](https://materialdesignicons.com/) |
-| **Стили** | SCSS, [Tailwind CSS](https://tailwindcss.com/) (через Vite) |
-| **HTTP** | [Axios](https://axios-http.com/) |
-| **Таблицы / Excel** | [SheetJS (xlsx)](https://sheetjs.com/) |
-| **Тесты** | [Vitest](https://vitest.dev/), [Vue Test Utils](https://test-utils.vuejs.org/), jsdom |
-| **UI-документация** | [Storybook 10](https://storybook.js.org/) |
-
-Инструменты разработки: ESLint, `vue-tsc` для проверки типов перед сборкой.
-
----
 
 ## Тесты и Storybook
 
