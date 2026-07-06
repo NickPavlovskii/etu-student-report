@@ -43,7 +43,17 @@
 
 <div align="center">
 
-<img src="docs/diagrams/business-process.png" alt="Бизнес-процесс ИС «Отчёты»: шаблоны → привязка → загрузка" width="920" />
+<img src="docs/diagrams/business-process-bpmn.png" alt="BPMN: бизнес-процесс ИС «Отчёты» — авторизация, шаблоны, загрузка, автопроверка, хранение" width="920" />
+
+<p><em>Модель процесса в нотации BPMN 2.0 (Camunda): ETU ID → шаблоны и виды контроля → одиночная / массовая загрузка (файлы или Moodle) → <code>POST /validate</code> → <code>POST /reports</code> → хранилище отчётов.</em></p>
+
+</div>
+
+<div align="center">
+
+<img src="docs/diagrams/business-process.png" alt="Бизнес-процесс ИС «Отчёты» по фазам: шаблоны → привязка → загрузка" width="920" />
+
+<p><em>Упрощённая схема по трём фазам (см. таблицы ниже).</em></p>
 
 </div>
 
